@@ -6,6 +6,7 @@ import configparser
 import concurrent.futures
 import math
 from pprint import pprint
+import requests
 
 
 class Database:
@@ -74,7 +75,6 @@ class Database:
 
         Movie_Director (movie_id, director_id)
 
-        :param: None
         :return: None
         """
 
@@ -97,15 +97,16 @@ class Database:
         create_actor = "CREATE TABLE IF NOT EXISTS Actor (" \
                        "actor_id INT AUTO_INCREMENT PRIMARY KEY, " \
                        "actor_name VARCHAR(255) NOT NULL, " \
-                       "wiki_link VARCHAR(255) NOT NULL);"
+                       "tmdb_id VARCHAR(255) NOT NULL);"
         create_director = "CREATE TABLE IF NOT EXISTS Director (" \
                           "director_id INT AUTO_INCREMENT PRIMARY KEY, " \
                           "director_name VARCHAR(255) NOT NULL, " \
                           "wiki_link VARCHAR(255) NOT NULL);"
+        # "PRIMARY KEY (movie_id, actor_id, movie_character), " \
         create_movie_actor = "CREATE TABLE IF NOT EXISTS Movie_Actor (" \
                              "movie_id INT NOT NULL, " \
                              "actor_id INT NOT NULL, " \
-                             "PRIMARY KEY (movie_id, actor_id), " \
+                             "movie_character TEXT NOT NULL," \
                              "FOREIGN KEY (movie_id) REFERENCES Movie(movie_id), " \
                              "FOREIGN KEY (actor_id) REFERENCES Actor(actor_id));"
         create_movie_director = "CREATE TABLE IF NOT EXISTS Movie_Director (" \
@@ -132,6 +133,10 @@ class Database:
         # Insert first 3 columns into Movie table (id, title, synopsis), release data is the current date
         def process_movie(row):
             print(f"Inserting : {row['title'], row['overview']}")
+            # Check if title is already in the database
+            self.cursor.execute("SELECT title FROM Movie WHERE title = ?", (row["title"],))
+            if self.cursor.fetchone() is not None:
+                return
             release_date = self.get_release_date(row["title"]) or "2025-05-01"
             try:
                 self.cursor.execute("INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)",
@@ -231,13 +236,94 @@ class Database:
         self.cursor.execute(stmt, args)
         return self.cursor.fetchall()
 
+    # Very sketchy function, gets the job done
+    def get_actors_from_API(self, movie_id: int) -> list:
+        url = "https://api.themoviedb.org/3/movie/" + str(movie_id) + "/credits?language=en-US"
+        print(url)
+
+        headers = {
+            "accept": "application/json",
+            # Header not working, insert your own API key, please see docs
+            "Authorization": ""
+        }
+
+        response = requests.get(url, headers=headers)
+        print(response.json()['cast'])
+        return response.json()['cast']
+
+    def update_actors_for_db(self):
+        self.cursor.execute("SELECT * FROM Movie")
+        for movie in self.cursor.fetchall():
+            movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
+            database_movie_id = movie[0]
+            actors = self.get_actors_from_API(movie_id)
+            for actor in actors:
+                name = actor['name']
+                actor_id = actor['id']
+                character = actor['character']
+                try:
+                    # Check if actor exists in database
+                    self.cursor.execute("SELECT actor_id FROM Actor WHERE actor_name LIKE ?", (name,))
+                    if self.cursor.fetchone() is None:
+                        self.cursor.execute("INSERT INTO Actor (actor_name, tmdb_id) VALUES (?, ?)",
+                                            (name, actor_id))
+                        self.connection.commit()
+                    else:
+                        self.cursor.execute("UPDATE Actor SET tmdb_id = ? WHERE actor_name LIKE ?", (actor_id, name))
+                        self.connection.commit()
+                except mariadb.IntegrityError as e:
+                    with open("actors.txt", "a") as f:
+                        f.write(f"[-] Error Inserting actor, {name} to Movie_Actor table\n {e}\n")
+                except mariadb.DataError as e:
+                    with open("actors.txt", "a") as f:
+                        f.write(f"[-] Error Inserting actor, {name} to Movie_Actor table\n {e}\n")
+                try:
+                    # Actor ID is the actor_id in Actor table
+                    self.cursor.execute("SELECT actor_id FROM Actor WHERE actor_name LIKE ?", (name,))
+                    db_actor_id = self.cursor.fetchone()[0]
+                    if db_actor_id is not None:
+                        # Check if actor is already in Movie_Actor table
+                        self.cursor.execute("SELECT * FROM Movie_Actor WHERE movie_id = ? AND actor_id = ?",
+                                            (database_movie_id, db_actor_id))
+                        if self.cursor.fetchone() is None:
+                            self.cursor.execute(
+                                "INSERT INTO Movie_Actor (movie_id, actor_id, movie_character) VALUES (?, ?, ?)",
+                                (database_movie_id, db_actor_id, character))
+                            self.connection.commit()
+                        else:
+                            self.cursor.execute(
+                                "UPDATE Movie_Actor SET movie_character = ? WHERE movie_id = ? AND actor_id = ?",
+                                (character, database_movie_id, db_actor_id))
+                            self.connection.commit()
+                except mariadb.IntegrityError as e:
+                    f.write(f"[-] Error Inserting actor, {actor['name']} to Movie_Actor table\n {e}\n")
+                except mariadb.DataError as e:
+                    with open("actors.txt", "a") as f:
+                        f.write(f"[-] Error Inserting actor, {actor['name']} to Movie_Actor table\n {e}\n")
+
 
 if __name__ == "__main__":
     db = Database()
-    # db.create_tables()
+    #db.create_tables()
+    #db.update_actors_for_db()
     # db.seed()
 
-    # Movie = tmdb.Search().movie(query="The Matrix")['results'][0]
-    # stuff = tmdb.Movies(Movie).info()
+    # movie_id = tmdb.Search().movie(query="The Conjuring: The Devil Made Me Do It")['results'][0]['id']
+    # print(movie_id)
 
-    # pprint(Movie)
+    # url = "https://api.themoviedb.org/3/movie/" + str(movie_id) + "/credits?language=en-US"
+
+    # headers = {
+    #     "accept": "application/json",
+    #     # Header is not valid, get your own API key
+    #     "Authorization": ""
+    # }
+
+    # response = requests.get(url, headers=headers)
+
+    # # Get name, character
+    # cast_dict = response.json()['cast']
+    # for actor in cast_dict:
+    #     print(f"Name: {actor['name']}, Character: {actor['character']}")
+
+    # print(response.text)
