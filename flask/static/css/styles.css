@@ -1,0 +1,146 @@
+/*#page{*/
+/*    display: none;*/
+/*}*/
+
+body {
+    background: lightgrey;
+}
+
+hr {
+
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 100px; /* Height of the footer */
+    background: #6cf;
+}
+
+.centerObject {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.qrcode {
+    width: 20%;
+    min-width: 200px;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 30px;
+}
+
+.searchBar {
+    width: 80%;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 10%;
+    z-index: 1;
+}
+
+.rowSpace {
+    padding: 20px;
+}
+
+.center {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.floatLeft {
+    display: block;
+    text-align: left;
+    float: left;
+}
+
+.floatRight {
+    display: block;
+    text-align: right;
+    float: right;
+}
+
+.alert {
+    padding: 20px;
+    margin: 5px;
+    color: #970020;
+    background-color: #ffd5de;
+}
+
+.currentTemp {
+
+}
+
+.currentWeather {
+    width: 150px;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.currentWeatherText {
+    padding-left: 40px;
+}
+
+.padTop {
+    padding-top: 30px;
+}
+
+/* Loading */
+#loading {
+    width: 100%;
+    height: 100vh;
+    background-color: #428BCA;
+}
+
+.loading_container {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+}
+
+#spin {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#loading h1 {
+    color: #FFF;
+    margin-left: 10px;
+}
+
+    /* Remove the navbar's default rounded borders and increase the bottom margin */
+    .navbar {
+      margin-bottom: 50px;
+      border-radius: 0;
+    }
+
+    /* Remove the jumbotron's default bottom margin */
+     .jumbotron {
+      margin-bottom: 0;
+    }
+
+    /* Add a gray background color and some padding to the footer */
+    footer {
+      background-color: #f2f2f2;
+      padding: 25px;
+    }
