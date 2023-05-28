@@ -10,6 +10,7 @@ import requests
 
 
 class Database:
+    # TODO: Swap to .sql script file (Once we have the final schema and data)
     dataset = "TMDB_updated.csv"
 
     def __init__(self) -> None:
@@ -126,6 +127,7 @@ class Database:
         self.cursor.execute(create_movie_director)
 
     def seed(self) -> None:
+        # TODO: Swap to .sql script file
         # Open the CSV file and read it into a pandas dataframe
         df = pd.read_csv(self.dataset)
         error_array = []
@@ -137,7 +139,7 @@ class Database:
             self.cursor.execute("SELECT title FROM Movie WHERE title = ?", (row["title"],))
             if self.cursor.fetchone() is not None:
                 return
-            release_date = self.get_release_date(row["title"]) or "2025-05-01"
+            release_date = self.get_release_date(row["title"]) or "2045-05-31"
             try:
                 self.cursor.execute("INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)",
                                     (row["title"], release_date, row["overview"]))
@@ -177,6 +179,70 @@ class Database:
     def get_movie_by_title(self, title: str) -> tuple:
         self.cursor.execute("SELECT * FROM Movie WHERE title = ?", (title,))
         return self.cursor.fetchone()
+
+    def Actor(self, actor_name: str) -> tuple:
+        """
+        Get All movies an actor has been in
+        :param actor_name: Actor's name
+        :type actor_name: str
+        :return: Tuple of movies (title, release_date)
+        :rtype: tuple
+        """
+        stmt = "Select Movie.title, Movie.release_date " \
+               "FROM Movie, Movie_Actor, Actor " \
+               "WHERE Actor.actor_name = ? " \
+               "AND  Movie.movie_id = Movie_Actor.movie_id " \
+               "AND Movie_Actor.actor_id = Actor.actor_id " \
+               "ORDER BY release_date DESC;"
+
+        self.cursor.execute(stmt, (actor_name,))
+        return self.cursor.fetchone()
+
+    def Movie_list(self, limit: int = 30) -> list:
+        """
+        Get all movies in the database, for the home page (30 most recent)
+        :return: Dictionary of movie information {title: {release_date, poster, genres}}
+        :rtype: dict
+        """
+        poster_link = "https://image.tmdb.org/t/p/original"
+        result = {}
+        movie_info = {}
+
+        stmt = "SELECT title, release_date " \
+               "FROM Movie " \
+               "WHERE release_date < CURRENT_DATE() " \
+               "ORDER BY release_date DESC " \
+               "LIMIT ?;"
+        self.cursor.execute(stmt, (limit,))
+        movies = self.cursor.fetchall()
+        for movie in movies:
+            # Use tmdb api to get the image link
+            try:
+                movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
+
+                movie_info = tmdb.Movies(movie_id).info()
+
+                if movie_info is not None:
+                    if movie_info['poster_path'] is not None:
+                        poster = poster_link + movie_info['poster_path']
+                    else:
+                        poster = None
+                    if movie_info['backdrop_path'] is not None:
+                        banner = poster_link + movie_info['backdrop_path']
+                    else:
+                        banner = None
+                else:
+                    poster = None
+                    banner = None
+            except IndexError:
+                # Not all movies we have in the database are in the tmdb database
+                continue
+
+            # Convert date to string
+            movie_date = movie[1].strftime("%d %B %Y")
+            result[movie[0]] = {'release_date': movie_date, 'poster': poster, 'banner': banner}
+
+        return result
 
     def populate_genres(self, title: str) -> None:
         database_movie_id = self.get_movie_by_title(title)[0]
@@ -222,7 +288,7 @@ class Database:
             release_date = tmdb.Search().movie(query=movie)['results'][0]['release_date']
             return release_date
         except IndexError as e:
-            return "2025-05-01"
+            return "2045-05-31"
 
     def run(self, stmt: str, args: tuple = ()) -> tuple:
         """
@@ -254,7 +320,13 @@ class Database:
     def update_actors_for_db(self):
         self.cursor.execute("SELECT * FROM Movie")
         for movie in self.cursor.fetchall():
-            movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
+            try:
+                movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
+            except IndexError as e:
+                movie_id = None
+                continue
+            if movie_id is None or movie_id == 0:
+                continue
             database_movie_id = movie[0]
             actors = self.get_actors_from_API(movie_id)
             for actor in actors:
@@ -304,26 +376,8 @@ class Database:
 
 if __name__ == "__main__":
     db = Database()
-    #db.create_tables()
-    #db.update_actors_for_db()
+    # db.create_tables()
+    # db.update_actors_for_db()
     # db.seed()
 
-    # movie_id = tmdb.Search().movie(query="The Conjuring: The Devil Made Me Do It")['results'][0]['id']
-    # print(movie_id)
-
-    # url = "https://api.themoviedb.org/3/movie/" + str(movie_id) + "/credits?language=en-US"
-
-    # headers = {
-    #     "accept": "application/json",
-    #     # Header is not valid, get your own API key
-    #     "Authorization": ""
-    # }
-
-    # response = requests.get(url, headers=headers)
-
-    # # Get name, character
-    # cast_dict = response.json()['cast']
-    # for actor in cast_dict:
-    #     print(f"Name: {actor['name']}, Character: {actor['character']}")
-
-    # print(response.text)
+    pprint(db.Movie_list())
