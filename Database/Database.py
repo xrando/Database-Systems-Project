@@ -5,13 +5,10 @@ import tmdbsimple as tmdb
 import configparser
 import concurrent.futures
 import math
-from pprint import pprint
 import requests
 
 
 class Database:
-    # TODO: Swap to .sql script file (Once we have the final schema and data)
-    dataset = "TMDB_updated.csv"
 
     def __init__(self) -> None:
         """
@@ -102,7 +99,7 @@ class Database:
         create_director = "CREATE TABLE IF NOT EXISTS Director (" \
                           "director_id INT AUTO_INCREMENT PRIMARY KEY, " \
                           "director_name VARCHAR(255) NOT NULL, " \
-                          "wiki_link VARCHAR(255) NOT NULL);"
+                          "tmdb_id VARCHAR(255) NOT NULL);"
         # "PRIMARY KEY (movie_id, actor_id, movie_character), " \
         create_movie_actor = "CREATE TABLE IF NOT EXISTS Movie_Actor (" \
                              "movie_id INT NOT NULL, " \
@@ -126,8 +123,260 @@ class Database:
         self.cursor.execute(create_movie_actor)
         self.cursor.execute(create_movie_director)
 
-    def seed(self) -> None:
-        # TODO: Swap to .sql script file
+    def seed(self, seed_file: str = None) -> None:
+        """
+        Seeds the database with the data from the seed_file
+
+        :param seed_file: The file to seed the database with
+        :type seed_file: str
+        :return: None
+        """
+        if seed_file is None:
+            print(f"Seed file must be specified")
+            sys.exit(1)
+
+        # Connect to the database
+        try:
+            self.cursor.execute("USE DBMS_Movie")
+        except mariadb.Error as e:
+            print(f"Error connecting to MariaDB Platform: {e}")
+            sys.exit(1)
+
+        # Open the seed file
+        with open(seed_file, 'r') as f:
+            # Execute the seed file
+            try:
+                self.cursor.execute(f.read())
+            except mariadb.Error as e:
+                print(f"Error executing seed file: {e}")
+                sys.exit(1)
+        # Commit the changes
+        self.connection.commit()
+
+    def get_movie(self, movie_id: int) -> tuple:
+        self.cursor.execute("SELECT * FROM Movie WHERE movie_id = ?", (movie_id,))
+        return self.cursor.fetchone()
+
+    def get_movie_by_title(self, title: str) -> tuple:
+        self.cursor.execute("SELECT * FROM Movie WHERE title = ?", (title,))
+        return self.cursor.fetchone()
+
+    def Actor(self, actor_name: str = None, actor_tmdb_id: str = None) -> list[tuple]:
+        """
+        Get All movies an actor has been in, and their roles
+        :param actor_name: Actor's name
+        :type actor_name: str
+        :param actor_tmdb_id: Actor's tmdb id
+        :type actor_tmdb_id: str
+        :return: List of movies (title, release_date, movie_character)
+        :rtype: List[tuple]
+        """
+        movies = []
+        if actor_name:
+            try:
+                stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
+                       "FROM Movie INNER JOIN Movie_Actor " \
+                       "ON Movie.movie_id = Movie_Actor.movie_id " \
+                       "INNER JOIN Actor " \
+                       "ON Movie_Actor.actor_id = Actor.actor_id " \
+                       "WHERE Actor.actor_name = ? " \
+                       "ORDER BY Movie.release_date DESC; "
+                self.cursor.execute(stmt, (actor_name,))
+                movies = self.cursor.fetchall()
+            except mariadb.Error as e:
+                print(f"Error getting movies: {e}")
+                sys.exit(1)
+        elif actor_tmdb_id:
+            try:
+                stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
+                       "FROM Movie INNER JOIN Movie_Actor " \
+                       "ON Movie.movie_id = Movie_Actor.movie_id " \
+                       "INNER JOIN Actor " \
+                       "ON Movie_Actor.actor_id = Actor.actor_id " \
+                       "WHERE Actor.tmdb_id = ? " \
+                       "ORDER BY Movie.release_date DESC; "
+                self.cursor.execute(stmt, (actor_tmdb_id,))
+                movies = self.cursor.fetchall()
+            except mariadb.Error as e:
+                print(f"Error getting movies: {e}")
+                sys.exit(1)
+
+        result = []
+        for movie in movies:
+            result += [(movie[0], movie[1].strftime("%B %d, %Y"), movie[2])]
+
+        return result
+
+    def Director(self, director_name: str = None, director_tmdb_id: str = None) -> list[tuple]:
+        """
+        Get all movies a director has directed
+        :param director_name: Director's name
+        :type director_name: str
+        :param director_tmdb_id: Director's tmdb_id
+        :type director_tmdb_id: str
+        :return: List of movies (title, release_date)
+        :rtype: List[tuple]
+        """
+        movies = []
+        if director_name is not None:
+            try:
+                stmt = "SELECT Movie.title, Movie.release_date " \
+                       "FROM Movie " \
+                       "INNER JOIN Movie_Director " \
+                       "ON Movie.movie_id = Movie_Director.movie_id " \
+                       "INNER JOIN Director " \
+                       "ON Movie_Director.director_id = Director.director_id " \
+                       "WHERE Director.director_name = ? " \
+                       "ORDER BY release_date DESC;"
+                self.cursor.execute(stmt, (director_name,))
+                movies = self.cursor.fetchall()
+            except mariadb.Error as e:
+                print(f"Error: {e}")
+                return []
+        elif director_tmdb_id is not None:
+            try:
+                stmt = "SELECT Movie.title, Movie.release_date " \
+                       "FROM Movie " \
+                       "INNER JOIN Movie_Director " \
+                       "ON Movie.movie_id = Movie_Director.movie_id " \
+                       "INNER JOIN Director " \
+                       "ON Movie_Director.director_id = Director.director_id " \
+                       "WHERE Director.tmdb_id = ? " \
+                       "ORDER BY release_date DESC;"
+                self.cursor.execute(stmt, (director_tmdb_id,))
+                movies = self.cursor.fetchall()
+            except mariadb.Error as e:
+                print(f"Error: {e}")
+                return []
+
+        result = []
+        for movie in movies:
+            result += [(movie[0], movie[1].strftime("%B %d, %Y"))]
+
+        return result
+
+    def Movie_list(self, page: int = 1) -> list[tuple]:
+        """
+        Get all movies in the database, for the home page (30 most recent)
+
+        :param page: Page number (For Frontend)
+        :type page: int
+        :return: List of movies (title, release_date)
+        :rtype: list[tuple]
+        """
+        poster_link = "https://image.tmdb.org/t/p/original"
+        result = []
+        LIMIT = 30
+        OFFSET = (page - 1) * LIMIT
+
+        stmt = "SELECT title, release_date " \
+               "FROM Movie " \
+               "WHERE release_date < CURRENT_DATE() " \
+               "ORDER BY release_date DESC " \
+               "LIMIT ? " \
+               "OFFSET ?;"
+        self.cursor.execute(stmt, (LIMIT, OFFSET))
+        movies = self.cursor.fetchall()
+        for movie in movies:
+            # Use tmdb api to get the image link
+            try:
+                movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
+                movie_info = tmdb.Movies(movie_id).info()
+
+                if movie_info is not None:
+                    if movie_info['poster_path'] is not None:
+                        poster = poster_link + movie_info['poster_path']
+                    else:
+                        poster = None
+                    if movie_info['backdrop_path'] is not None:
+                        banner = poster_link + movie_info['backdrop_path']
+                    else:
+                        banner = None
+                else:
+                    poster = None
+                    banner = None
+            except IndexError:
+                # Not all movies we have in the database are in the tmdb database
+                continue
+
+            # Convert date to string
+            movie_date = movie[1].strftime("%d %B %Y")
+            # result[movie[0]] = {'release_date': movie_date, 'poster': poster, 'banner': banner}
+            result += [(movie[0], movie_date, poster, banner)]
+
+        return result
+
+    def carousel(self) -> list[tuple]:
+        """
+        Returns a list of 5 movies that are closest to release date
+        :return: List of movies (title, release_date, banner)
+        :rtype: list[tuple]
+        """
+        poster_link = "https://image.tmdb.org/t/p/original"
+        result = []
+
+        stmt = "SELECT title, release_date " \
+               "FROM Movie " \
+               "WHERE release_date > CURRENT_DATE() " \
+               "ORDER BY release_date ASC " \
+               "LIMIT 5;"
+        self.cursor.execute(stmt)
+        movies = self.cursor.fetchall()
+        for movie in movies:
+            # Use tmdb api to get the image link
+            try:
+                movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
+                movie_info = tmdb.Movies(movie_id).info()
+
+                if movie_info is not None:
+                    if movie_info['backdrop_path'] is not None:
+                        banner = poster_link + movie_info['backdrop_path']
+                    else:
+                        banner = None
+                else:
+                    banner = None
+            except IndexError:
+                # Not all movies we have in the database are in the tmdb database
+                continue
+
+            # Convert date to string
+            movie_date = movie[1].strftime("%d %B %Y")
+            result += [(movie[0], movie_date, banner)]
+
+        return result
+
+    def get_genre_id(self, genre_name: str) -> int:
+        try:
+            self.cursor.execute("SELECT genre_id FROM Genre WHERE name LIKE ?", (genre_name,))
+            return self.cursor.fetchone()[0]
+        except mariadb.DataError as e:
+            # Genre does not exist
+            pass
+
+    def get_release_date(self, movie: str) -> str:
+        try:
+            self.cursor.execute("SELECT release_date FROM Movie WHERE title LIKE ?", (movie,))
+            return self.cursor.fetchone()[0].strftime("%B %d, %Y")
+        except mariadb.DataError as e:
+            # Movie does not exist
+            pass
+
+    def run(self, stmt: str, args: tuple = ()) -> tuple:
+        """
+        Run a SQL statement and return the result
+        :param stmt: SQL statement to run
+        :type stmt: str
+        :param args: Arguments to pass to the SQL statement
+        :type args: tuple
+        :return: Result of the SQL statement
+        """
+        self.cursor.execute(stmt, args)
+        return self.cursor.fetchall()
+
+    # Data Collection Functions (Do not use in production)
+
+    def populate_with_csv(self) -> None:
+        raise NotImplementedError
         # Open the CSV file and read it into a pandas dataframe
         df = pd.read_csv(self.dataset)
         error_array = []
@@ -172,79 +421,8 @@ class Database:
 
         print(f"Error array: {error_array}")
 
-    def get_movie(self, movie_id: int) -> tuple:
-        self.cursor.execute("SELECT * FROM Movie WHERE movie_id = ?", (movie_id,))
-        return self.cursor.fetchone()
-
-    def get_movie_by_title(self, title: str) -> tuple:
-        self.cursor.execute("SELECT * FROM Movie WHERE title = ?", (title,))
-        return self.cursor.fetchone()
-
-    def Actor(self, actor_name: str) -> tuple:
-        """
-        Get All movies an actor has been in
-        :param actor_name: Actor's name
-        :type actor_name: str
-        :return: Tuple of movies (title, release_date)
-        :rtype: tuple
-        """
-        stmt = "Select Movie.title, Movie.release_date " \
-               "FROM Movie, Movie_Actor, Actor " \
-               "WHERE Actor.actor_name = ? " \
-               "AND  Movie.movie_id = Movie_Actor.movie_id " \
-               "AND Movie_Actor.actor_id = Actor.actor_id " \
-               "ORDER BY release_date DESC;"
-
-        self.cursor.execute(stmt, (actor_name,))
-        return self.cursor.fetchone()
-
-    def Movie_list(self, limit: int = 30) -> list:
-        """
-        Get all movies in the database, for the home page (30 most recent)
-        :return: Dictionary of movie information {title: {release_date, poster, genres}}
-        :rtype: dict
-        """
-        poster_link = "https://image.tmdb.org/t/p/original"
-        result = {}
-        movie_info = {}
-
-        stmt = "SELECT title, release_date " \
-               "FROM Movie " \
-               "WHERE release_date < CURRENT_DATE() " \
-               "ORDER BY release_date DESC " \
-               "LIMIT ?;"
-        self.cursor.execute(stmt, (limit,))
-        movies = self.cursor.fetchall()
-        for movie in movies:
-            # Use tmdb api to get the image link
-            try:
-                movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
-
-                movie_info = tmdb.Movies(movie_id).info()
-
-                if movie_info is not None:
-                    if movie_info['poster_path'] is not None:
-                        poster = poster_link + movie_info['poster_path']
-                    else:
-                        poster = None
-                    if movie_info['backdrop_path'] is not None:
-                        banner = poster_link + movie_info['backdrop_path']
-                    else:
-                        banner = None
-                else:
-                    poster = None
-                    banner = None
-            except IndexError:
-                # Not all movies we have in the database are in the tmdb database
-                continue
-
-            # Convert date to string
-            movie_date = movie[1].strftime("%d %B %Y")
-            result[movie[0]] = {'release_date': movie_date, 'poster': poster, 'banner': banner}
-
-        return result
-
     def populate_genres(self, title: str) -> None:
+        raise NotImplementedError
         database_movie_id = self.get_movie_by_title(title)[0]
         try:
             movie_id = tmdb.Search().movie(query=title)['results'][0]['id']
@@ -275,35 +453,8 @@ class Database:
             # Movie does not exist on TMDB
             pass
 
-    def get_genre_id(self, genre_name: str) -> int:
-        try:
-            self.cursor.execute("SELECT genre_id FROM Genre WHERE name LIKE ?", (genre_name,))
-            return self.cursor.fetchone()[0]
-        except mariadb.DataError as e:
-            # Genre does not exist
-            pass
-
-    def get_release_date(self, movie: str) -> str:
-        try:
-            release_date = tmdb.Search().movie(query=movie)['results'][0]['release_date']
-            return release_date
-        except IndexError as e:
-            return "2045-05-31"
-
-    def run(self, stmt: str, args: tuple = ()) -> tuple:
-        """
-        Run a SQL statement and return the result
-        :param stmt: SQL statement to run
-        :type stmt: str
-        :param args: Arguments to pass to the SQL statement
-        :type args: tuple
-        :return: Result of the SQL statement
-        """
-        self.cursor.execute(stmt, args)
-        return self.cursor.fetchall()
-
-    # Very sketchy function, gets the job done
     def get_actors_from_API(self, movie_id: int) -> list:
+        raise NotImplementedError
         url = "https://api.themoviedb.org/3/movie/" + str(movie_id) + "/credits?language=en-US"
         print(url)
 
@@ -314,10 +465,64 @@ class Database:
         }
 
         response = requests.get(url, headers=headers)
-        print(response.json()['cast'])
-        return response.json()['cast']
+        # print(response.json()['crew'])
+        # return response.json()['crew']
+
+    def update_directors_for_db(self):
+        raise NotImplementedError
+        self.cursor.execute("SELECT * FROM Movie")
+        for movie in self.cursor.fetchall():
+            print(f"Updating movie: {movie[1]} with id: {movie[0]}")
+            try:
+                movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
+            except IndexError as e:
+                movie_id = None
+                continue
+            if movie_id is None or movie_id == 0:
+                continue
+            database_movie_id = movie[0]
+            crew = self.get_actors_from_API(movie_id)
+            for person in crew:
+                try:
+                    if person['job'] == "Director" or person['job'] == "director":
+                        name = person['name']
+                        director_id = person['id']
+                        try:
+                            # Check if director exists in database
+                            self.cursor.execute("SELECT director_id FROM Director WHERE director_name LIKE ?", (name,))
+                            if self.cursor.fetchone() is None:
+                                self.cursor.execute("INSERT INTO Director (director_name, tmdb_id) VALUES (?, ?)",
+                                                    (name, director_id))
+                                self.connection.commit()
+                            try:
+                                # Get director_id from director table
+                                self.cursor.execute("SELECT director_id FROM Director WHERE director_name LIKE ?",
+                                                    (name,))
+                                director_db_id = self.cursor.fetchone()[0]
+                                self.cursor.execute("INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)",
+                                                    (database_movie_id, director_db_id))
+                                self.connection.commit()
+                            except mariadb.IntegrityError as e:
+                                pass
+                        except mariadb.DataError as e:
+                            # Director does not exist, insert into database
+                            self.cursor.execute("INSERT INTO Director (director_name, tmdb_id) VALUES (?, ?)",
+                                                (name, director_id))
+                            self.connection.commit()
+                            try:
+                                self.cursor.execute("SELECT director_id FROM Director WHERE director_name LIKE ?",
+                                                    (name,))
+                                director_db_id = self.cursor.fetchone()[0]
+                                self.cursor.execute("INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)",
+                                                    (database_movie_id, director_db_id))
+                                self.connection.commit()
+                            except mariadb.IntegrityError as e:
+                                pass
+                except KeyError as e:
+                    pass
 
     def update_actors_for_db(self):
+        raise NotImplementedError
         self.cursor.execute("SELECT * FROM Movie")
         for movie in self.cursor.fetchall():
             try:
@@ -376,8 +581,25 @@ class Database:
 
 if __name__ == "__main__":
     db = Database()
-    # db.create_tables()
-    # db.update_actors_for_db()
-    # db.seed()
 
-    pprint(db.Movie_list())
+    # Printing all movies in pages
+    print("Page 1")
+    print(db.Movie_list(page=1))
+
+    print("Page 2")
+    print(db.Movie_list(page=2))
+
+    # Actors with name
+    print(db.Actor(actor_name="Tom Hanks"))
+
+    # Actors with tmdb_id
+    print(db.Actor(actor_tmdb_id="31"))
+
+    # Directors with name
+    print(db.Director(director_name="Steven Spielberg"))
+    
+    # Directors with tmdb_id
+    print(db.Director(director_tmdb_id="488"))
+
+    # Carousels
+    print(db.carousel())
