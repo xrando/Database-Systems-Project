@@ -27,8 +27,7 @@ class Database:
         tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
         if tmdb.API_KEY == "":
-            print("Please enter your TMDB API key in the config.ini file")
-            sys.exit(1)
+            raise ValueError("Please enter your TMDB API key in the config.ini file")
 
         try:
             self.connection = mariadb.connect(user=user,
@@ -132,8 +131,7 @@ class Database:
         :return: None
         """
         if seed_file is None:
-            print(f"Seed file must be specified")
-            sys.exit(1)
+            raise ValueError("Please provide a seed file (seed_file='path/to/file.sql')")
 
         # Connect to the database
         try:
@@ -161,93 +159,108 @@ class Database:
         self.cursor.execute("SELECT * FROM Movie WHERE title = ?", (title,))
         return self.cursor.fetchone()
 
-    def Actor(self, actor_name: str = None, actor_tmdb_id: str = None) -> list[tuple]:
+    def Actor(self,
+              actor_name: str = None,
+              actor_tmdb_id: str = None,
+              order_by = None
+              ) -> list[tuple]:
         """
         Get All movies an actor has been in, and their roles
         :param actor_name: Actor's name
         :type actor_name: str
         :param actor_tmdb_id: Actor's tmdb id
         :type actor_tmdb_id: str
+        :param order_by: Order by release_date or title, ASC or DESC
+        :type order_by: list
         :return: List of movies (title, release_date, movie_character)
         :rtype: List[tuple]
         """
-        movies = []
-        if actor_name:
-            try:
-                stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
-                       "FROM Movie INNER JOIN Movie_Actor " \
-                       "ON Movie.movie_id = Movie_Actor.movie_id " \
-                       "INNER JOIN Actor " \
-                       "ON Movie_Actor.actor_id = Actor.actor_id " \
-                       "WHERE Actor.actor_name = ? " \
-                       "ORDER BY Movie.release_date DESC; "
-                self.cursor.execute(stmt, (actor_name,))
-                movies = self.cursor.fetchall()
-            except mariadb.Error as e:
-                print(f"Error getting movies: {e}")
-                sys.exit(1)
-        elif actor_tmdb_id:
-            try:
-                stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
-                       "FROM Movie INNER JOIN Movie_Actor " \
-                       "ON Movie.movie_id = Movie_Actor.movie_id " \
-                       "INNER JOIN Actor " \
-                       "ON Movie_Actor.actor_id = Actor.actor_id " \
-                       "WHERE Actor.tmdb_id = ? " \
-                       "ORDER BY Movie.release_date DESC; "
-                self.cursor.execute(stmt, (actor_tmdb_id,))
-                movies = self.cursor.fetchall()
-            except mariadb.Error as e:
-                print(f"Error getting movies: {e}")
-                sys.exit(1)
+        if order_by is None:
+            order_by = ["release_date", "DESC"]
+        orders = {
+            "release_date": "release_date",
+            "title": "title",
+            "movie_id": "movie_id"
+        }
+        if order_by[0] not in orders:
+            raise ValueError("order_by must be one of: release_date, title")
 
+        movies = []
+        stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
+               "FROM Movie INNER JOIN Movie_Actor " \
+               "ON Movie.movie_id = Movie_Actor.movie_id " \
+               "INNER JOIN Actor " \
+               "ON Movie_Actor.actor_id = Actor.actor_id "
+
+        if actor_name and not actor_tmdb_id:
+            stmt += "WHERE Actor.actor_name = ? "
+        elif actor_tmdb_id and not actor_name:
+            stmt += "WHERE Actor.tmdb_id = ? "
+        else:
+            raise ValueError("Either ONE actor_name or actor_tmdb_id must be specified")
+
+        stmt += "ORDER BY ? ?"
+
+        try:
+            self.cursor.execute(stmt, (actor_name or actor_tmdb_id, orders[order_by[0]], order_by[1]))
+            movies = self.cursor.fetchall()
+        except mariadb.Error as e:
+            print(f"Error getting movies: {e}")
+            sys.exit(1)
         result = []
         for movie in movies:
             result += [(movie[0], movie[1].strftime("%B %d, %Y"), movie[2])]
 
         return result
 
-    def Director(self, director_name: str = None, director_tmdb_id: str = None) -> list[tuple]:
+    def Director(self,
+                 director_name: str = None,
+                 director_tmdb_id: str = None,
+                 order_by=None
+                 ) -> list[tuple]:
         """
         Get all movies a director has directed
         :param director_name: Director's name
         :type director_name: str
         :param director_tmdb_id: Director's tmdb_id
         :type director_tmdb_id: str
+        :param order_by: Order by release_date or title, ASC or DESC
+        :type order_by: list
         :return: List of movies (title, release_date)
         :rtype: List[tuple]
         """
+        if order_by is None:
+            order_by = ["release_date", "DESC"]
         movies = []
-        if director_name is not None:
-            try:
-                stmt = "SELECT Movie.title, Movie.release_date " \
-                       "FROM Movie " \
-                       "INNER JOIN Movie_Director " \
-                       "ON Movie.movie_id = Movie_Director.movie_id " \
-                       "INNER JOIN Director " \
-                       "ON Movie_Director.director_id = Director.director_id " \
-                       "WHERE Director.director_name = ? " \
-                       "ORDER BY release_date DESC;"
-                self.cursor.execute(stmt, (director_name,))
-                movies = self.cursor.fetchall()
-            except mariadb.Error as e:
-                print(f"Error: {e}")
-                return []
-        elif director_tmdb_id is not None:
-            try:
-                stmt = "SELECT Movie.title, Movie.release_date " \
-                       "FROM Movie " \
-                       "INNER JOIN Movie_Director " \
-                       "ON Movie.movie_id = Movie_Director.movie_id " \
-                       "INNER JOIN Director " \
-                       "ON Movie_Director.director_id = Director.director_id " \
-                       "WHERE Director.tmdb_id = ? " \
-                       "ORDER BY release_date DESC;"
-                self.cursor.execute(stmt, (director_tmdb_id,))
-                movies = self.cursor.fetchall()
-            except mariadb.Error as e:
-                print(f"Error: {e}")
-                return []
+        orders = {
+            "release_date": "release_date",
+            "title": "title"
+        }
+        if order_by[0] not in orders:
+            raise ValueError("order_by must be one of: release_date, title")
+        if order_by[1] not in ["ASC", "DESC"]:
+            raise ValueError("order_by[1] must be one of: ASC, DESC")
+
+        stmt = "SELECT Movie.title, Movie.release_date " \
+               "FROM Movie " \
+               "INNER JOIN Movie_Director " \
+               "ON Movie.movie_id = Movie_Director.movie_id " \
+               "INNER JOIN Director " \
+               "ON Movie_Director.director_id = Director.director_id "
+        if director_name is not None and director_tmdb_id is None:
+            stmt += "WHERE Director.director_name = ? "
+        elif director_tmdb_id is not None and director_name is None:
+            stmt += "WHERE Director.tmdb_id = ? "
+        else:
+            raise ValueError("Either ONE director_name or director_tmdb_id must be specified")
+
+        stmt += "ORDER BY ? ?"
+        try:
+            self.cursor.execute(stmt, (director_name or director_tmdb_id, orders[order_by[0]], order_by[1]))
+            movies = self.cursor.fetchall()
+        except mariadb.Error as e:
+            print(f"Error: {e}")
+            return []
 
         result = []
         for movie in movies:
@@ -255,19 +268,20 @@ class Database:
 
         return result
 
-    def Movie_list(self, page: int = 1) -> list[tuple]:
+    def Movie_list(self, page: int = 1, limit: int = 30) -> list[tuple]:
         """
         Get all movies in the database, for the home page (30 most recent)
 
         :param page: Page number (For Frontend)
         :type page: int
+        :param limit: Number of movies per page
+        :type limit: int
         :return: List of movies (title, release_date)
         :rtype: list[tuple]
         """
         poster_link = "https://image.tmdb.org/t/p/original"
         result = []
-        LIMIT = 30
-        OFFSET = (page - 1) * LIMIT
+        offset = (page - 1) * limit
 
         stmt = "SELECT title, release_date " \
                "FROM Movie " \
@@ -275,7 +289,7 @@ class Database:
                "ORDER BY release_date DESC " \
                "LIMIT ? " \
                "OFFSET ?;"
-        self.cursor.execute(stmt, (LIMIT, OFFSET))
+        self.cursor.execute(stmt, (limit, offset))
         movies = self.cursor.fetchall()
         for movie in movies:
             # Use tmdb api to get the image link
@@ -301,10 +315,26 @@ class Database:
 
             # Convert date to string
             movie_date = movie[1].strftime("%d %B %Y")
-            # result[movie[0]] = {'release_date': movie_date, 'poster': poster, 'banner': banner}
             result += [(movie[0], movie_date, poster, banner)]
 
         return result
+
+    def get_pages_left(self, pages: int = 1, limit: int = 30) -> int:
+        """
+        Get the number of pages left
+        :param pages: Number of pages
+        :type pages: int
+        :param limit: Number of movies per page
+        :type limit: int
+        :return: Number of pages left
+        :rtype: int
+        """
+        stmt = "SELECT COUNT(*) " \
+               "FROM Movie " \
+               "WHERE release_date < CURRENT_DATE();"
+        self.cursor.execute(stmt)
+        total_movies = self.cursor.fetchone()[0]
+        return math.ceil(total_movies / limit) - pages
 
     def carousel(self) -> list[tuple]:
         """
@@ -583,14 +613,14 @@ if __name__ == "__main__":
     db = Database()
 
     # Printing all movies in pages
-    print("Page 1")
-    print(db.Movie_list(page=1))
+    print(f"Page 1 of {db.get_pages_left(pages=1, limit=10)}")
+    print(db.Movie_list(page=1, limit=10))
 
-    print("Page 2")
-    print(db.Movie_list(page=2))
+    print(f"Page 2 of {db.get_pages_left(pages=2, limit=10)}")
+    print(db.Movie_list(page=2, limit=10))
 
     # Actors with name
-    print(db.Actor(actor_name="Tom Hanks"))
+    print(db.Actor(actor_name="Tom Hanks", order_by=["movie_id", "DESC"]))
 
     # Actors with tmdb_id
     print(db.Actor(actor_tmdb_id="31"))

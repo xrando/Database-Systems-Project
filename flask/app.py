@@ -1,7 +1,8 @@
 import flask_login
-from flask import Flask, render_template, request, url_for, redirect, flash
+from flask import Flask, render_template, request, url_for, redirect, flash, app
 from flask_login import LoginManager, login_required, UserMixin, login_user
 from datetime import timedelta
+import Database.Database as Database
 
 
 # from . import db
@@ -51,7 +52,12 @@ def login_page():
 @app.route('/home')
 @login_required
 def home():
-    return render_template('index.html')
+    db = Database.Database()
+    movie_list = db.Movie_list(page=8, limit=12)
+    pages = db.get_pages_left(pages=8, limit=12)
+    carousel = db.carousel()
+
+    return render_template('index.html', movie_list=movie_list, pages=pages, carousel=carousel)
 
 
 # # Error handling page for not found sites / locations
