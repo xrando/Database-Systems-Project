@@ -6,6 +6,7 @@ import configparser
 import concurrent.futures
 import math
 import requests
+import hashlib
 
 
 class Database:
@@ -113,6 +114,14 @@ class Database:
                                 "FOREIGN KEY (movie_id) REFERENCES Movie(movie_id), " \
                                 "FOREIGN KEY (director_id) REFERENCES Director(director_id));"
 
+        create_user = "CREATE TABLE IF NOT EXISTS User (" \
+                        "user_id INT AUTO_INCREMENT PRIMARY KEY, " \
+                        "user_username VARCHAR(255) NOT NULL, " \
+                        "user_password VARCHAR(255) NOT NULL, " \
+                        "user_profilename VARCHAR(255) NOT NULL, " \
+                        "PRIMARY KEY (user_id, user_username);"
+
+
         # Create the tables in the database
         self.cursor.execute(create_movie)
         self.cursor.execute(create_genre)
@@ -121,6 +130,7 @@ class Database:
         self.cursor.execute(create_director)
         self.cursor.execute(create_movie_actor)
         self.cursor.execute(create_movie_director)
+        self.cursor.execute(create_user)
 
     def seed(self, seed_file: str = None) -> None:
         """
@@ -158,6 +168,7 @@ class Database:
     def get_movie_by_title(self, title: str) -> tuple:
         self.cursor.execute("SELECT * FROM Movie WHERE title = ?", (title,))
         return self.cursor.fetchone()
+
 
     def Actor(self,
               actor_name: str = None,
@@ -608,28 +619,48 @@ class Database:
                     with open("actors.txt", "a") as f:
                         f.write(f"[-] Error Inserting actor, {actor['name']} to Movie_Actor table\n {e}\n")
 
+    # User functions
+    def get_user_by_id(self, id: int) -> tuple:
+        try:
+            self.cursor.execute("SELECT * FROM User WHERE user_id = ?", (id,))
+        except mariadb.DataError as e:
+            print(f"[-] Error retrieving user from database\n {e}")
+        return self.cursor.fetchone()
+
+
+    def get_password_by_username(self, username: str) -> tuple:
+        try:
+            self.cursor.execute("SELECT user_id, user_password FROM User WHERE user_username = ?", (username,))
+        except mariadb.DataError as e:
+            print(f"[-] Error retrieving user from database\n {e}")
+        return self.cursor.fetchone()
 
 if __name__ == "__main__":
     db = Database()
 
-    # Printing all movies in pages
-    print(f"Page 1 of {db.get_pages_left(pages=1, limit=10)}")
-    print(db.Movie_list(page=1, limit=10))
-
-    print(f"Page 2 of {db.get_pages_left(pages=2, limit=10)}")
-    print(db.Movie_list(page=2, limit=10))
-
-    # Actors with name
-    print(db.Actor(actor_name="Tom Hanks", order_by=["movie_id", "DESC"]))
-
-    # Actors with tmdb_id
-    print(db.Actor(actor_tmdb_id="31"))
-
-    # Directors with name
-    print(db.Director(director_name="Steven Spielberg"))
-    
-    # Directors with tmdb_id
-    print(db.Director(director_tmdb_id="488"))
-
-    # Carousels
-    print(db.carousel())
+    # Retrieving user
+    user = db.get_password_by_username("admin")
+    print(user)
+    user = db.get_user_by_id(2200559)
+    print(user)
+    # # Printing all movies in pages
+    # print(f"Page 1 of {db.get_pages_left(pages=1, limit=10)}")
+    # print(db.Movie_list(page=1, limit=10))
+    #
+    # print(f"Page 2 of {db.get_pages_left(pages=2, limit=10)}")
+    # print(db.Movie_list(page=2, limit=10))
+    #
+    # # Actors with name
+    # print(db.Actor(actor_name="Tom Hanks", order_by=["movie_id", "DESC"]))
+    #
+    # # Actors with tmdb_id
+    # print(db.Actor(actor_tmdb_id="31"))
+    #
+    # # Directors with name
+    # print(db.Director(director_name="Steven Spielberg"))
+    #
+    # # Directors with tmdb_id
+    # print(db.Director(director_tmdb_id="488"))
+    #
+    # # Carousels
+    # print(db.carousel())
