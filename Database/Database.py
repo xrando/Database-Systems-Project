@@ -24,7 +24,7 @@ class Database:
         password = config.get('MARIADB_SERVER', 'PASSWORD')
         host = config.get('MARIADB_SERVER', 'HOST')
         port = int(config.get('MARIADB_SERVER', 'PORT'))
-        database = config.get('MARIADB_SERVER', 'DATABASE')
+        database = config.get('MARIADB_SERVER', 'DATABASE1')
         tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
         if tmdb.API_KEY == "":
@@ -114,13 +114,6 @@ class Database:
                                 "FOREIGN KEY (movie_id) REFERENCES Movie(movie_id), " \
                                 "FOREIGN KEY (director_id) REFERENCES Director(director_id));"
 
-        create_user = "CREATE TABLE IF NOT EXISTS User (" \
-                        "user_id INT AUTO_INCREMENT PRIMARY KEY, " \
-                        "user_username VARCHAR(255) NOT NULL, " \
-                        "user_password VARCHAR(255) NOT NULL, " \
-                        "user_profilename VARCHAR(255) NOT NULL, " \
-                        "PRIMARY KEY (user_id, user_username);"
-
 
         # Create the tables in the database
         self.cursor.execute(create_movie)
@@ -130,7 +123,6 @@ class Database:
         self.cursor.execute(create_director)
         self.cursor.execute(create_movie_actor)
         self.cursor.execute(create_movie_director)
-        self.cursor.execute(create_user)
 
     def seed(self, seed_file: str = None) -> None:
         """
@@ -622,7 +614,7 @@ class Database:
     # User functions
     def get_user_by_id(self, id: int) -> tuple:
         try:
-            self.cursor.execute("SELECT * FROM User WHERE user_id = ?", (id,))
+            self.cursor.execute("SELECT * FROM User WHERE id = ?", (id,))
         except mariadb.DataError as e:
             print(f"[-] Error retrieving user from database\n {e}")
         return self.cursor.fetchone()
@@ -630,7 +622,7 @@ class Database:
 
     def get_password_by_username(self, username: str) -> tuple:
         try:
-            self.cursor.execute("SELECT user_id, user_password FROM User WHERE user_username = ?", (username,))
+            self.cursor.execute("SELECT id, password FROM User WHERE username = ?", (username,))
         except mariadb.DataError as e:
             print(f"[-] Error retrieving user from database\n {e}")
         return self.cursor.fetchone()
@@ -638,11 +630,6 @@ class Database:
 if __name__ == "__main__":
     db = Database()
 
-    # Retrieving user
-    user = db.get_password_by_username("admin")
-    print(user)
-    user = db.get_user_by_id(2200559)
-    print(user)
     # # Printing all movies in pages
     # print(f"Page 1 of {db.get_pages_left(pages=1, limit=10)}")
     # print(db.Movie_list(page=1, limit=10))

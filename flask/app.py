@@ -2,11 +2,13 @@ from flask import Flask, render_template, request, url_for, redirect, flash, app
 from flask_login import LoginManager, login_required, UserMixin, login_user
 from datetime import timedelta
 import Database.Database as Database
+import Database.User as DBUser
 
 
 login_manager = LoginManager()
 app = Flask(__name__)
 db = Database.Database()
+dbUser = DBUser.Database()
 login_manager.init_app(app)
 app.config.update(
     TESTING=True,
@@ -16,7 +18,7 @@ app.config.update(
 
 class User(UserMixin):
     def __init__(self, id):
-        user_data = db.get_user_by_id(id)
+        user_data = dbUser.get_user_by_id(id)
         print(user_data)
         self.id = user_data[0]
         self.username = user_data[1]
@@ -26,7 +28,7 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     # Retrieve the user from the database using the provided user_id
-    user_data = db.get_user_by_id(user_id)
+    user_data = dbUser.get_user_by_id(user_id)
     if user_data:
         id, username, password, profilename = user_data
         return User(id)
@@ -41,11 +43,11 @@ def login_page():
         username = request.form['username']
         password = request.form['password']
         # Check if username and password are correct
-        db_password = db.get_password_by_username(username)
+        db_password = dbUser.get_password_by_username(username)
         if db_password:
             if password == db_password[1]:
                 print("Matched, logging in...")
-                user = User(db.get_user_by_id(db_password[0])[0])
+                user = User(dbUser.get_user_by_id(db_password[0])[0])
                 login_user(user, remember=True, duration=timedelta(minutes=5))
                 return redirect(url_for('home'))
         # if username == 'admin' and password == 'admin':
