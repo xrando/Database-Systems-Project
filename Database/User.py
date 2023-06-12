@@ -1,12 +1,6 @@
 import mariadb
 import sys
-import pandas as pd
-import tmdbsimple as tmdb
 import configparser
-import concurrent.futures
-import math
-import requests
-import hashlib
 
 
 class Database:
@@ -20,11 +14,11 @@ class Database:
         config = configparser.ConfigParser()
         config.read('../Config/config.ini')
 
-        user = config.get('MARIADB_SERVER', 'USERNAME')
-        password = config.get('MARIADB_SERVER', 'PASSWORD')
-        host = config.get('MARIADB_SERVER', 'HOST')
-        port = int(config.get('MARIADB_SERVER', 'PORT'))
-        database = config.get('MARIADB_SERVER', 'DATABASE2')
+        user = config.get('DBMS_USER', 'USERNAME')
+        password = config.get('DBMS_USER', 'PASSWORD')
+        host = config.get('DBMS_USER', 'HOST')
+        port = int(config.get('DBMS_USER', 'PORT'))
+        database = config.get('DBMS_USER', 'DATABASE')
 
         try:
             self.connection = mariadb.connect(user=user,

@@ -20,11 +20,11 @@ class Database:
         config = configparser.ConfigParser()
         config.read('../Config/config.ini')
 
-        user = config.get('MARIADB_SERVER', 'USERNAME')
-        password = config.get('MARIADB_SERVER', 'PASSWORD')
-        host = config.get('MARIADB_SERVER', 'HOST')
-        port = int(config.get('MARIADB_SERVER', 'PORT'))
-        database = config.get('MARIADB_SERVER', 'DATABASE1')
+        user = config.get('DBMS_MOVIE', 'USERNAME')
+        password = config.get('DBMS_MOVIE', 'PASSWORD')
+        host = config.get('DBMS_MOVIE', 'HOST')
+        port = int(config.get('DBMS_MOVIE', 'PORT'))
+        database = config.get('DBMS_MOVIE', 'DATABASE')
         tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
         if tmdb.API_KEY == "":
