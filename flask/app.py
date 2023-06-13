@@ -30,7 +30,7 @@ def load_user(user_id):
     # Retrieve the user from the database using the provided user_id
     user_data = dbUser.get_user_by_id(user_id)
     if user_data:
-        id, username, password, profilename = user_data
+        id, username, password, profilename, email, dob = user_data
         return User(id)
 
     return None
@@ -39,6 +39,7 @@ def load_user(user_id):
 # Site Landing Page
 @app.route('/', methods=['GET', 'POST'])
 def login_page():
+    error = None
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -55,10 +56,32 @@ def login_page():
         #     login_user(user, remember=True, duration=timedelta(minutes=5))
         #     return redirect(url_for('home'))
         else:
-            flash('Username or Password is incorrect')
+            print('Username or Password is incorrect')
+            error = 'Username or Password is incorrect'
             return redirect(url_for('login_page'))
-    return render_template('login.html')
+    return render_template('login.html', error=error)
 
+
+# Site Landing Page
+@app.route('/sign-up', methods=['GET', 'POST'])
+def signup_page():
+    error = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        profilename = request.form['profilename']
+        email = request.form['email']
+        dob = request.form['dob']
+        # Check if username and password are correct
+        check = dbUser.check_username_exists(username)
+        if check:
+            print('Username already exists')
+            error = 'Username already exists'
+        else:
+            dbUser.create_user(username, password, profilename, email, dob)
+            print('Account Created')
+            return redirect(url_for('login_page'))
+    return render_template('signup.html', error=error)
 
 # Error Site Route
 @app.route('/home')

@@ -102,6 +102,20 @@ class Database:
             print(f"[-] Error retrieving user from database\n {e}")
         return self.cursor.fetchone()
 
+    def check_username_exists(self, username: str) -> bool:
+        try:
+            self.cursor.execute("SELECT id FROM User WHERE username = ?", (username,))
+        except mariadb.DataError as e:
+            print(f"[-] Error retrieving user from database\n {e}")
+        return self.cursor.fetchone() is not None
+
+    def create_user(self, username: str, password: str, profilename: str, email: str, dob: str) -> None:
+        try:
+            self.cursor.execute("INSERT INTO User (username, password, profilename, email, dob) VALUES (?, ?, ?, ?, ?)", (username, password, profilename, email, dob))
+        except mariadb.DataError as e:
+            print(f"[-] Error creating user in database\n {e}")
+        self.connection.commit()
+
 
 if __name__ == "__main__":
     db = Database()
