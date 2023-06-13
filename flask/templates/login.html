@@ -9,9 +9,10 @@
 <div class="container">
     <div class="row">
         <div class="text-center">
-            <h1>Login</h1>
+
             <h1>Welcome Rotten</h1>
             <h1>CSC MovieDB</h1>
+            <h2>Login</h2>
         </div>
         <br>
         <form method="post">
@@ -27,12 +28,13 @@
             <br>
             <div class="form-group text-center">
                 <button class="btn btn-primary" type="submit">Login</button>
-                    <p>Click <a href="{{ url_for('signup_page') }}">here</a> to sign up</p>
+                <p>Click <a href="{{ url_for('signup_page') }}">here</a> to sign up</p>
+                {% if error %}
+                    <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
+                {% endif %}
             </div>
         </form>
-        {% if error %}
-            <p class="error"><strong>Error:</strong> {{ error }}</p>
-        {% endif %}
+
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"

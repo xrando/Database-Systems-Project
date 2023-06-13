@@ -11,14 +11,14 @@
         <div class="col"></div>
         <div class="col">
             <div class="text-center">
-                <h1>Sign Up</h1>
                 <h1>Welcome Rotten</h1>
                 <h1>CSC MovieDB</h1>
+                <h2>Sign Up</h2>
             </div>
             <br>
             <div class="form-group text-center">
                 {% if error %}
-                    <p class="error"><strong>Error:</strong> {{ error }}</p>
+                    <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
                 {% endif %}
             </div>
             <form method="post">

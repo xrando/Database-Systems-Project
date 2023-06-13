@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, app
-from flask_login import LoginManager, login_required, UserMixin, login_user
+from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
 from datetime import timedelta
 import Database.Database as Database
 import Database.User as DBUser
@@ -51,10 +51,9 @@ def login_page():
                 user = User(dbUser.get_user_by_id(db_password[0])[0])
                 login_user(user, remember=True, duration=timedelta(minutes=5))
                 return redirect(url_for('home'))
-        # if username == 'admin' and password == 'admin':
-        #     user = User()
-        #     login_user(user, remember=True, duration=timedelta(minutes=5))
-        #     return redirect(url_for('home'))
+            else:
+                print('Username or Password is incorrect')
+                error = 'Username or Password is incorrect'
         else:
             print('Username or Password is incorrect')
             error = 'Username or Password is incorrect'
@@ -82,6 +81,12 @@ def signup_page():
             print('Account Created')
             return redirect(url_for('login_page'))
     return render_template('signup.html', error=error)
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('login_page'))
+
 
 # Error Site Route
 @app.route('/home')
