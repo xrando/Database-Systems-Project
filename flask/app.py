@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, app
-from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user
+from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user, current_user
 from datetime import timedelta
 import Database.DBMS_Movie.DBMS_Movie as DBMS_Movie
 import Database.User as DBUser
+
 
 login_manager = LoginManager()
 app = Flask(__name__)
@@ -24,7 +25,6 @@ class User(UserMixin):
         self.password = user_data[2]
         self.name = user_data[3]
 
-
 @login_manager.user_loader
 def load_user(user_id):
     # Retrieve the user from the database using the provided user_id
@@ -39,6 +39,8 @@ def load_user(user_id):
 # Site Landing Page
 @app.route('/', methods=['GET', 'POST'])
 def login_page():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     error = None
     if request.method == 'POST':
         username = request.form['username']
@@ -64,6 +66,8 @@ def login_page():
 # Site Landing Page
 @app.route('/sign-up', methods=['GET', 'POST'])
 def signup_page():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     error = None
     if request.method == 'POST':
         username = request.form['username']
@@ -82,7 +86,6 @@ def signup_page():
             return redirect(url_for('login_page'))
     return render_template('signup.html', error=error)
 
-
 @app.route('/logout')
 def logout():
     logout_user()
@@ -91,6 +94,7 @@ def logout():
 
 # Error Site Route
 @app.route('/home')
+@login_required
 def home():
     page = 1
     limit = 12

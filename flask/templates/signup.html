@@ -4,79 +4,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body>
+<body class="login-background">
 <div class="container">
+    <div class="row header"></div>
     <div class="row">
-        <div class="col"></div>
-        <div class="col">
-            <div class="text-center">
-                <h1>Welcome Rotten</h1>
-                <h1>CSC MovieDB</h1>
-                <h2>Sign Up</h2>
-            </div>
-            <br>
-            <div class="form-group text-center">
-                {% if error %}
-                    <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
-                {% endif %}
-            </div>
-            <form method="post">
-                <div class="row">
-                    <div class="col">
-                        <label for="username">Username:</label>
-                    </div>
-                    <div class="col">
-                        <input type="text" placeholder="Username" name="username" value="{{ request.form.username }}">
-                    </div>
-                </div>
-                <br>
-                <div class="row">
-                    <div class="col">
-                        <label for="password">Password:</label>
-                    </div>
-                    <div class="col">
-                        <input type="password" placeholder="Password" name="password"
-                               value="{{ request.form.password }}">
-                    </div>
-                </div>
-                <br>
-                <div class="row">
-                    <div class="col">
-                        <label for="profilename">Profile Name:</label>
-                    </div>
-                    <div class="col">
-                        <input type="text" placeholder="Profile name" name="profilename"
-                               value="{{ request.form.profilename }}">
-                    </div>
-                </div>
-                <br>
-                <div class="row">
-                    <div class="col">
-                        <label for="email">Email:</label>
-                    </div>
-                    <div class="col">
-                        <input type="email" placeholder="Email" name="email" value="{{ request.form.email }}">
-                    </div>
-                </div>
-                <br>
-                <div class="row">
-                    <div class="col">
-                        <label for="date">Date of Birth:</label>
-                    </div>
-                    <div class="col">
-                        <input type="date" placeholder="Date of Birth" name="dob" value="{{ request.form.dob }}">
-                    </div>
+        <div class="col-sm-3"></div>
+        <div class="col-sm-3">
+            <div class="signup-box">
+                <div class="text-center">
+                    <h1>Welcome Rotten</h1>
+                    <h1>CSC MovieDB</h1>
+                    <h2>Sign Up</h2>
                 </div>
                 <br>
                 <div class="form-group text-center">
-                    <button class="btn btn-primary" type="submit">Sign Up</button>
-                    <p>Click <a href="{{ url_for('login_page') }}">here</a> to login</p>
+                    {% if error %}
+                        <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
+                    {% endif %}
                 </div>
-            </form>
+                <form method="post">
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-3">
+                            <label class="signup-fields" for="username">Username:</label>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="text" placeholder="Username" name="username"
+                                   value="{{ request.form.username }}">
+                        </div>
+                        <div class="col-sm-3"></div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-3">
+                            <label class="signup-fields" for="password">Password:</label>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="password" placeholder="Password" name="password"
+                                   value="{{ request.form.password }}">
+                        </div>
+                        <div class="col-sm-3"></div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-3">
+                            <label class="signup-fields" for="profilename">Profile Name:</label>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="text" placeholder="Profile name" name="profilename"
+                                   value="{{ request.form.profilename }}">
+                        </div>
+                        <div class="col-sm-3"></div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-3">
+                            <label class="signup-fields" for="email">Email:</label>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="email" placeholder="Email" name="email" value="{{ request.form.email }}">
+                        </div>
+                        <div class="col-sm-3"></div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-3">
+                            <label class="signup-fields" for="date">Date of Birth:</label>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="date" placeholder="Date of Birth" name="dob" value="{{ request.form.dob }}">
+                        </div>
+                        <div class="col-sm-3"></div>
+                    </div>
+                    <br>
+                    <div class="form-group text-center">
+                        <button class="btn btn-primary" type="submit">Sign Up</button>
+                        <p>Click <a href="{{ url_for('login_page') }}">here</a> to login</p>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="col"></div>
+        <div class="col-sm-3"></div>
     </div>
+    <div class="row footer"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"

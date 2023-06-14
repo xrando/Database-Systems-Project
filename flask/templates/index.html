@@ -44,7 +44,7 @@
         {% for chunk in movie_list|batch(3) %}
             <div class="row pt-3">
                 {% for movie in chunk %}
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="card">
                             <img class="card-img-top" src="{{ movie[3] }}" alt="{{ movie[0] }} Poster"
                                  style="width: 100%;">
