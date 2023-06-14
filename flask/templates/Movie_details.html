@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container pt-3 pb-3 flex">
+    <!-- Banner image -->
+    <div class="banner text-center">
+        <img src="{{ movie[4] }}" alt="{{ movie[0] }}" class="img-fluid">
+    </div>
+    </div>
+
+    <div class="container-fluid">
+        <h1>{{ movie[0] }}</h1>
+        <p>Release Date: {{ movie[1] }}</p>
+        <p>Synopsis: {{ movie[2] }}</p>
+    <p>Director: <a href= {{ director[1] }}>{{ director[0] }}</a></p>
+    </div>
+        <!-- Genre -->
+    <div class="container-fluid">
+        <h2>Genre</h2>
+        <ul>
+            {% for genre in genres %}
+                <li>{{ genre }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Actors -->
+    <div class="container-fluid">
+        <h2>Actors</h2>
+    <!-- Create table of name(actor[0]) and character(actor[2]) -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Character</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for actor in actors %}
+                    <tr>
+                        <td><a href= {{ actor[1] }}>{{ actor[0] }}</a></td>
+                        <td>{{ actor[2] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+
+{% endblock %}

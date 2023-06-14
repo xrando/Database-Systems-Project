@@ -37,23 +37,21 @@
             </a>
         </div>
     </div>
-
-
-
     <!-- Movie Listings from movie_list -->
     <!-- Each movie is a card That shows poster (movie[3], title (movie[0]), and year (movie[1]) -->
     <!-- Each row has 5 cards -->
-    <div class="container">
+    <div class="container pt-3 flex">
         {% for chunk in movie_list|batch(3) %}
-            <div class="row">
+            <div class="row pt-3">
                 {% for movie in chunk %}
                     <div class="col-md-3">
                         <div class="card">
                             <img class="card-img-top" src="{{ movie[3] }}" alt="{{ movie[0] }} Poster"
                                  style="width: 100%;">
                             <div class="card-body">
-                                <h5 class="card-title">{{ movie[0] }}</h5>
-                                <p class="card-text"><small class="text-muted">{{ movie[1] }}</small></p>
+                                <h5 class="card-title"><a href="{{ url_for('movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a></h5>
+                                <p class="card-text"><small class="text-muted"><a
+                                                href="{{ url_for('movie_page', movie_name=movie[0]) }}">{{ movie[1] }}</a></small>
                             </div>
                         </div>
                     </div>
@@ -62,17 +60,42 @@
         {% endfor %}
     </div>
 
-    <div class="container">
+    <div class="container d-flex justify-content-center pt-1">
         <!-- Pages left nav -->
         <!-- Need to get current page from flask -->
         <ul class="pagination">
-            {% if pages > 1 %}
-                <li class="page-item">Page {{ pages }} of {{ pages }}</li>
+            <!-- If there are more than 1 page, show first and previous -->
+            {% if pages > 1 or page == pages %}
+                <li class="page-item"><a href="{{ url_for('home_page', page=1) }}" class="page-link">First</a></li>
             {% endif %}
-            {% if pages > 1 %}
-                <li class="page-item">Previous</li>
+            <li class="page-item"><a href="{{ url_for('home_page', page=page-1) }}" class="page-link">Previous</a></li>
+            <!-- Show only the +/- 3 pages from current page -->
+            {% if page > 3 %}
+                {% set start = page - 3 %}
+            {% else %}
+                {% set start = 1 %}
             {% endif %}
+            {% if page + 3 < pages %}
+                {% set end = page + 3 %}
+            {% else %}
+                {% set end = pages %}
+            {% endif %}
+            {% for p in range(start, end+1) %}
+                {% if p == page %}
+                    <li class="page-item active"><a href="{{ url_for('home_page', page=p) }}" class="page-link">{{ p }}</a></li>
+                {% else %}
+                    <li class="page-item"><a href="{{ url_for('home_page', page=p) }}" class="page-link">{{ p }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {#        <li class="page-item">Page {{ page }} of {{ pages }}</li>#}
+            <!-- Next page -->
+            {% if pages > 1 %}
+                <li class="page-item"><a href="{{ url_for('home_page', page=page+1) }}" class="page-link">Next</a></li>
+                <li class="page-item"><a href="{{ url_for('home_page', page=pages) }}" class="page-link">Last</a></li>
+            {% endif %}
+
         </ul>
 
     </div>
+
 {% endblock %}
