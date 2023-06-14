@@ -98,9 +98,6 @@ def home():
     pages = DBMS_Movie.get_pages_left(pages=page, limit=limit)
     carousel = DBMS_Movie.carousel()
 
-    from pprint import pprint
-    pprint(carousel)
-
     return render_template('index.html', movie_list=movie_list, pages=pages, carousel=carousel, page=page)
 
 
@@ -121,8 +118,6 @@ def movie_page(movie_name):
     movie_genres = movie['genres']
     movie_director = movie['director']
     movie_actors = movie['actors']
-    from pprint import pprint
-    pprint(movie)
     return render_template('Movie_details.html',
                            movie=movie_details,
                            genres=movie_genres,
@@ -137,4 +132,4 @@ def movie_page(movie_name):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8000)
