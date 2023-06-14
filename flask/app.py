@@ -94,7 +94,6 @@ def logout():
 
 # Error Site Route
 @app.route('/home')
-@login_required
 def home():
     page = 1
     limit = 12
