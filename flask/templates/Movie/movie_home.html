@@ -32,11 +32,13 @@
             {% if pages_left > 1 and page != 1 %}
                 <li class="page-item"><a href="{{ url_for('home_page', page=1) }}" class="page-link">First</a></li>
             {% endif %}
+
             <!-- If current page is not 1, show previous page -->
             {% if page != 1 and page-1 > 0 %}
                 <li class="page-item"><a href="{{ url_for('home_page', page=page-1) }}" class="page-link">Previous</a>
                 </li>
             {% endif %}
+
             <!-- Show only the +/- 3 pages from current page, show -3 pages if pages left is less than 3 -->
             {% set start = page - 3 if page - 3 > 0 else 1 %}
             {% set end = page + 3 if page + 3 <= total_pages else total_pages %}
@@ -45,6 +47,7 @@
                 {% set start = page - pages_left if page - pages_left > 0 else 1 %}
                 {% set end = page + pages_left if page + pages_left <= total_pages else total_pages %}
             {% endif %}
+
             <!-- Loop through the pages and show the page number -->
             {% for p in range(start|float|round|int, end|float|round|int + 1) %}
                 {% if p == page %}
@@ -55,11 +58,13 @@
                     </li>
                 {% endif %}
             {% endfor %}
+
             <!-- if current page is not the last page, show next page -->
             {% if page != total_pages and page+1 <= total_pages %}
                 <li class="page-item"><a href="{{ url_for('home_page', page=page+1) }}" class="page-link">Next</a>
                 </li>
             {% endif %}
+
             <! -- If there are more than 1 page and current page is not the last page, show last page -->
             {% if pages_left > 1 and page != total_pages %}
                 <li class="page-item"><a href="{{ url_for('home_page', page=total_pages) }}"

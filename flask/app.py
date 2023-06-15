@@ -96,9 +96,9 @@ def logout():
 @app.route('/home', methods=['GET'])
 def home():
     page = 1
-    limit = 12
+    limit = int(config.get("MOVIE", "LIMIT"))
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
-    pages = DBMS_Movie.get_pages(pages=page, limit=12)
+    pages = DBMS_Movie.get_pages(pages=page, limit=limit)
     pages_left = pages["pages_left"]
     total_pages = pages["total_pages"]
     carousel = DBMS_Movie.carousel()
@@ -115,7 +115,8 @@ def home():
 
 @app.route('/home/page/<int:page>', methods=['GET'])
 def home_page(page):
-    pages = DBMS_Movie.get_pages(pages=page, limit=12)
+    limit = int(config.get("MOVIE", "LIMIT"))
+    pages = DBMS_Movie.get_pages(pages=page, limit=limit)
     pages_left = pages["pages_left"]
     total_pages = pages["total_pages"]
 
@@ -125,7 +126,7 @@ def home_page(page):
     elif page > total_pages:
         raise Exception('Page not found')
 
-    movie_list = DBMS_Movie.Movie_list(page=page, limit=12)
+    movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
     carousel = DBMS_Movie.carousel()
 
     # Reload Movies block in index.html
@@ -140,14 +141,21 @@ def home_page(page):
 
 
 @app.route('/movie/<string:movie_name>', methods=['GET'])
-def movie_page(movie_name):
+def movie_page(movie_name: str = None) -> str:
+    """
+    Get all movie details and render movie page
+    :param movie_name: Movie name
+    :return: Render movie page
+    """
     # Remove (year) from movie name
     movie_name = movie_name.split('(')[0]
     movie = DBMS_Movie.get_movie_by_title(movie_name)
+
     movie_details = movie['movie']
     movie_genres = movie['genres']
     movie_director = movie['director']
     movie_actors = movie['actors']
+
     return render_template(
         'Movie/Movie_details.html',
         movie=movie_details,
@@ -158,8 +166,52 @@ def movie_page(movie_name):
 
 
 @app.route('/actor/<string:actor_name>', methods=['GET'])
-def actor_page(actor):
-    raise NotImplementedError
+@app.route('/actor/<int:tmdb_id>', methods=['GET'])
+def actor(actor_name: str = None, tmdb_id: int = None) -> str:
+    """
+    Get all actor details and render actor page. Either actor_name or tmdb_id must be provided
+
+    :param order:
+    :param order_by:
+    :param actor_name: Actor's name
+    :param tmdb_id: Actor's TMDB ID
+    :return:
+    """
+    if not actor_name and not tmdb_id:
+        raise Exception('Actor name or TMDB ID must be provided')
+
+    actor_details = DBMS_Movie.Actor(
+        actor_name=actor_name if actor_name else None,
+        actor_tmdb_id=tmdb_id if tmdb_id else None,
+    )
+
+    if not actor_details:
+        # TODO: Convert to error page
+        raise Exception('Actor not found')
+
+    movie_list = actor_details['movies']
+
+    actor_details = actor_details['actor']
+    actor_name = actor_details['name']
+    actor_aka = actor_details['also_known_as']
+    actor_bio = actor_details['biography']
+    actor_birthday = actor_details['birthday']
+    actor_deathday = actor_details['deathday']
+    actor_tmdb_page = config.get('MOVIE', 'TMDB_PERSON_URL') + str(actor_details['id'])
+    actor_profile_path = config.get('MOVIE', 'TMDB_IMAGE_URL') + actor_details['profile_path'] if \
+        actor_details['profile_path'] else None
+
+    return render_template(
+        'Actor/Actor.html',
+        actor_name=actor_name,
+        actor_aka=actor_aka,
+        actor_bio=actor_bio,
+        actor_birthday=actor_birthday,
+        actor_deathday=actor_deathday,
+        actor_profile_path=actor_profile_path,
+        actor_tmdb_page=actor_tmdb_page,
+        movie_list=movie_list
+    )
 
 
 @app.route('/director/<string:director_name>', methods=['GET'])

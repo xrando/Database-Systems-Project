@@ -129,7 +129,16 @@ class DBMS_Movie:
 
     def get_movie_by_title(self, title: str) -> dict:
         """
-        Get a movie by title (movie, director, actors, genres)
+        Get a movie by title as a dictionary of the following format:
+
+        movie: (title, release_date, synopsis, poster_link, banner_link, movie_id)
+
+        genres: [genre_name]
+
+        director: (director_name, director tmdb link)
+
+        actors: (actor_name, actor tmdb link, character)
+
         :param title: Movie title
         :return: Movie dictionary
         :rtype: dict
@@ -137,7 +146,9 @@ class DBMS_Movie:
         result = {}
         poster_link = config.get('MOVIE', 'TMDB_IMAGE_URL')
 
-        movie_stmt = "Select Movie.title as movie_title, Movie.release_date, Movie.synopsis FROM Movie WHERE Movie.title = ?"
+        movie_stmt = "Select Movie.title as movie_title, Movie.release_date, Movie.synopsis, Movie.movie_id " \
+                     "FROM Movie " \
+                     "WHERE Movie.title = ?"
         director_stmt = "SELECT Director.director_name as director_name, Director.tmdb_id as director_tmdb_id " \
                         "FROM Director INNER JOIN Movie_Director " \
                         "ON Director.director_id = Movie_Director.director_id " \
@@ -183,7 +194,7 @@ class DBMS_Movie:
             # Convert date to string
             movie_date = movie[1].strftime("%d %B %Y")
 
-            result["movie"] = (movie[0], movie_date, movie[2], poster, banner)
+            result["movie"] = (movie[0], movie_date, movie[2], poster, banner, movie[3])
 
             self.cursor.execute(director_stmt, (title,))
             director = self.cursor.fetchone()
@@ -197,26 +208,25 @@ class DBMS_Movie:
             # TODO: This gotta be in the actor page instead
             self.cursor.execute(actor_stmt, (title,))
             actors = self.cursor.fetchall()
-            actor_results = []
-            for actor in actors:
-                actor_tmdb_id = actor[1]
-                actor_name = actor[0].replace(" ", "-")
-                actor_link = config.get("MOVIE", "TMDB_PERSON_URL") + actor_tmdb_id + "-" + actor_name
-                # Replace actor[1] with link
-                actor = (actor[0], actor_link, actor[2])
-                actor_results.append(actor)
-            result["actors"] = actor_results
+            # actor_results = []
+            # for actor in actors:
+            #     actor_tmdb_id = actor[1]
+            #     actor_name = actor[0].replace(" ", "-")
+            #     actor_link = config.get("MOVIE", "TMDB_PERSON_URL") + actor_tmdb_id + "-" + actor_name
+            #     # Replace actor[1] with link
+            #     actor = (actor[0], actor_link, actor[2])
+            #     actor_results.append(actor)
+            result["actors"] = list(actors)
 
             self.cursor.execute(genre_stmt, (title,))
             genres = self.cursor.fetchall()
             result["genres"] = [genre[0] for genre in genres]
         except mariadb.Error as e:
             print(f"Error executing statement: {e}")
-            sys.exit(1)
 
         return result
 
-    def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> list[tuple]:
+    def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> dict:
         """
         Get All movies an actor has been in, and their roles
         :param actor_name: Actor's name
@@ -225,16 +235,16 @@ class DBMS_Movie:
         :type actor_tmdb_id: str
         :param order_by: Order by release_date or title, ASC or DESC
         :type order_by: list
-        :return: List of movies (title, release_date, movie_character)
-        :rtype: List[tuple]
+        :return: List of movies (title, release_date, movie_character) and actor's profile from tmdb
+        :rtype: dict
         """
+        movies = []
         if order_by is None:
             order_by = ["release_date", "DESC"]
         orders = {"release_date": "release_date", "title": "title", "movie_id": "movie_id"}
         if order_by[0] not in orders:
-            raise ValueError("order_by must be one of: release_date, title")
+            raise ValueError(f"order_by[0] must be one of {list(orders.keys())}")
 
-        movies = []
         stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
                "FROM Movie INNER JOIN Movie_Actor " \
                "ON Movie.movie_id = Movie_Actor.movie_id " \
@@ -248,19 +258,53 @@ class DBMS_Movie:
         else:
             raise ValueError("Either ONE actor_name or actor_tmdb_id must be specified")
 
-        stmt += "ORDER BY ? ?"
+        # SQL Statements cannot be parameterized for ORDER BY, Parameters are sanitized by above code
+        stmt += f"ORDER BY {orders[order_by[0]]} {order_by[1]}"
 
         try:
-            self.cursor.execute(stmt, (actor_name or actor_tmdb_id, orders[order_by[0]], order_by[1]))
+            self.cursor.execute(stmt, (actor_name or actor_tmdb_id,))
             movies = self.cursor.fetchall()
         except mariadb.Error as e:
             print(f"Error getting movies: {e}")
-            sys.exit(1)
-        result = []
-        for movie in movies:
-            result += [(movie[0], movie[1].strftime("%B %d, %Y"), movie[2])]
 
-        return result
+        movie_result = []
+        for movie in movies:
+            movie_result.append((movie[0], movie[1].strftime("%d %B %Y"), movie[2]))
+
+        # Get actor's detail from DB
+        if actor_tmdb_id:
+            stmt = "SELECT actor_name " \
+                    "FROM Actor " \
+                    "WHERE tmdb_id = ?"
+            try:
+                self.cursor.execute(stmt, (actor_tmdb_id,))
+                actor_name = self.cursor.fetchone()[0]
+            except mariadb.Error as e:
+                print(f"Error getting actor's name: {e}")
+
+            try:
+                actor_info = tmdb.People(actor_tmdb_id).info()
+            except IndexError:
+                actor_info = None
+        elif actor_name:
+            stmt = "SELECT tmdb_id " \
+                    "FROM Actor " \
+                    "WHERE actor_name = ?"
+            try:
+                self.cursor.execute(stmt, (actor_name,))
+                actor_tmdb_id = self.cursor.fetchone()[0]
+            except mariadb.Error as e:
+                print(f"Error getting actor's tmdb_id: {e}")
+
+            if actor_tmdb_id is not None:
+                try:
+                    actor_info = tmdb.People(actor_tmdb_id).info()
+                except IndexError:
+                    actor_info = None
+        else:
+            actor_info = None
+
+        return {"movies": movie_result, "actor": actor_info}
 
     def Director(self, director_name: str = None, director_tmdb_id: str = None, order_by=None) -> list[tuple]:
         """
@@ -457,219 +501,6 @@ def get_release_date(self, movie: str) -> str:
         pass
 
 
-def run(self, stmt: str, args: tuple = ()) -> tuple:
-    """
-    Run a SQL statement and return the result
-    :param stmt: SQL statement to run
-    :type stmt: str
-    :param args: Arguments to pass to the SQL statement
-    :type args: tuple
-    :return: Result of the SQL statement
-    """
-    self.cursor.execute(stmt, args)
-    return self.cursor.fetchall()
-
-
-# Data Collection Functions (Do not use in production)
-
-def populate_with_csv(self) -> None:
-    raise NotImplementedError
-    # Open the CSV file and read it into a pandas dataframe
-    df = pd.read_csv(self.dataset)
-    error_array = []
-
-    # Insert first 3 columns into Movie table (id, title, synopsis), release data is the current date
-    def process_movie(row):
-        print(f"Inserting : {row['title'], row['overview']}")
-        # Check if title is already in the database
-        self.cursor.execute("SELECT title FROM Movie WHERE title = ?", (row["title"],))
-        if self.cursor.fetchone() is not None:
-            return
-        release_date = self.get_release_date(row["title"]) or "2045-05-31"
-        try:
-            self.cursor.execute("INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)",
-                                (row["title"], release_date, row["overview"]))
-            self.connection.commit()
-            self.populate_genres(row["title"])
-        except mariadb.DataError as e:
-            # Insert title into error array
-            error_array.append(row["title"])
-        except mariadb.Error as e:
-            with open("error_log.txt", "a") as error_log:
-                error_log.write(f"Error inserting {row['title']}: {e}\n")
-
-    num_rows = len(df)
-    num_threads = 4  # Define the number of threads you want to use
-    chunk_size = math.ceil(num_rows / num_threads)
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = []
-        for i in range(num_threads):
-            start = i * chunk_size
-            end = (i + 1) * chunk_size
-            chunk = df.iloc[start:end]
-            future = executor.submit(chunk.apply(process_movie, axis=1))
-            futures.append(future)
-
-        # Wait for all threads to finish
-        concurrent.futures.wait(futures)
-
-        executor.shutdown()
-
-    print(f"Error array: {error_array}")
-
-
-def populate_genres(self, title: str) -> None:
-    raise NotImplementedError
-    database_movie_id = self.get_movie_by_title(title)[0]
-    try:
-        movie_id = tmdb.Search().movie(query=title)['results'][0]['id']
-        movie = tmdb.Movies(movie_id)
-        genres = movie.info()['genres']
-        for genre in genres:
-            try:
-                # Search if genre exists in database
-                self.cursor.execute("SELECT genre_id FROM Genre WHERE name LIKE ?", (genre['name'],))
-                if self.cursor.fetchone() is None:
-                    raise mariadb.DataError
-
-            except mariadb.DataError as e:
-                # Genre does not exist, insert into database
-                print(f"Inserting into Genre: {genre['name']}")
-                self.cursor.execute("INSERT INTO Genre (name) VALUES (?)", (genre['name'],))
-                self.connection.commit()
-            try:
-                print(f"Inserting into Movie_Genre: {movie_id, self.get_genre_id(genre['name'])}")
-                self.cursor.execute("INSERT INTO Movie_Genre (movie_id, genre_id) VALUES (?, ?)",
-                                    (database_movie_id, self.get_genre_id(genre['name'])))
-                self.connection.commit()
-            except mariadb.DataError as e:
-                pass
-            except mariadb.IntegrityError as e:
-                pass
-    except IndexError as e:
-        # Movie does not exist on TMDB
-        pass
-
-
-def get_actors_from_API(self, movie_id: int) -> list:
-    raise NotImplementedError
-    url = "https://api.themoviedb.org/3/movie/" + str(movie_id) + "/credits?language=en-US"
-    print(url)
-
-    headers = {"accept": "application/json",  # Header not working, insert your own API key, please see docs
-               "Authorization": ""}
-
-    response = requests.get(url, headers=headers)  # print(response.json()['crew'])  # return response.json()['crew']
-
-
-def update_directors_for_db(self):
-    raise NotImplementedError
-    self.cursor.execute("SELECT * FROM Movie")
-    for movie in self.cursor.fetchall():
-        print(f"Updating movie: {movie[1]} with id: {movie[0]}")
-        try:
-            movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
-        except IndexError as e:
-            movie_id = None
-            continue
-        if movie_id is None or movie_id == 0:
-            continue
-        database_movie_id = movie[0]
-        crew = self.get_actors_from_API(movie_id)
-        for person in crew:
-            try:
-                if person['job'] == "Director" or person['job'] == "director":
-                    name = person['name']
-                    director_id = person['id']
-                    try:
-                        # Check if director exists in database
-                        self.cursor.execute("SELECT director_id FROM Director WHERE director_name LIKE ?", (name,))
-                        if self.cursor.fetchone() is None:
-                            self.cursor.execute("INSERT INTO Director (director_name, tmdb_id) VALUES (?, ?)",
-                                                (name, director_id))
-                            self.connection.commit()
-                        try:
-                            # Get director_id from director table
-                            self.cursor.execute("SELECT director_id FROM Director WHERE director_name LIKE ?", (name,))
-                            director_db_id = self.cursor.fetchone()[0]
-                            self.cursor.execute("INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)",
-                                                (database_movie_id, director_db_id))
-                            self.connection.commit()
-                        except mariadb.IntegrityError as e:
-                            pass
-                    except mariadb.DataError as e:
-                        # Director does not exist, insert into database
-                        self.cursor.execute("INSERT INTO Director (director_name, tmdb_id) VALUES (?, ?)",
-                                            (name, director_id))
-                        self.connection.commit()
-                        try:
-                            self.cursor.execute("SELECT director_id FROM Director WHERE director_name LIKE ?", (name,))
-                            director_db_id = self.cursor.fetchone()[0]
-                            self.cursor.execute("INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)",
-                                                (database_movie_id, director_db_id))
-                            self.connection.commit()
-                        except mariadb.IntegrityError as e:
-                            pass
-            except KeyError as e:
-                pass
-
-
-def update_actors_for_db(self):
-    raise NotImplementedError
-    self.cursor.execute("SELECT * FROM Movie")
-    for movie in self.cursor.fetchall():
-        try:
-            movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
-        except IndexError as e:
-            movie_id = None
-            continue
-        if movie_id is None or movie_id == 0:
-            continue
-        database_movie_id = movie[0]
-        actors = self.get_actors_from_API(movie_id)
-        for actor in actors:
-            name = actor['name']
-            actor_id = actor['id']
-            character = actor['character']
-            try:
-                # Check if actor exists in database
-                self.cursor.execute("SELECT actor_id FROM Actor WHERE actor_name LIKE ?", (name,))
-                if self.cursor.fetchone() is None:
-                    self.cursor.execute("INSERT INTO Actor (actor_name, tmdb_id) VALUES (?, ?)", (name, actor_id))
-                    self.connection.commit()
-                else:
-                    self.cursor.execute("UPDATE Actor SET tmdb_id = ? WHERE actor_name LIKE ?", (actor_id, name))
-                    self.connection.commit()
-            except mariadb.IntegrityError as e:
-                with open("actors.txt", "a") as f:
-                    f.write(f"[-] Error Inserting actor, {name} to Movie_Actor table\n {e}\n")
-            except mariadb.DataError as e:
-                with open("actors.txt", "a") as f:
-                    f.write(f"[-] Error Inserting actor, {name} to Movie_Actor table\n {e}\n")
-            try:
-                # Actor ID is the actor_id in Actor table
-                self.cursor.execute("SELECT actor_id FROM Actor WHERE actor_name LIKE ?", (name,))
-                db_actor_id = self.cursor.fetchone()[0]
-                if db_actor_id is not None:
-                    # Check if actor is already in Movie_Actor table
-                    self.cursor.execute("SELECT * FROM Movie_Actor WHERE movie_id = ? AND actor_id = ?",
-                                        (database_movie_id, db_actor_id))
-                    if self.cursor.fetchone() is None:
-                        self.cursor.execute(
-                            "INSERT INTO Movie_Actor (movie_id, actor_id, movie_character) VALUES (?, ?, ?)",
-                            (database_movie_id, db_actor_id, character))
-                        self.connection.commit()
-                    else:
-                        self.cursor.execute(
-                            "UPDATE Movie_Actor SET movie_character = ? WHERE movie_id = ? AND actor_id = ?",
-                            (character, database_movie_id, db_actor_id))
-                        self.connection.commit()
-            except mariadb.IntegrityError as e:
-                f.write(f"[-] Error Inserting actor, {actor['name']} to Movie_Actor table\n {e}\n")
-            except mariadb.DataError as e:
-                with open("actors.txt", "a") as f:
-                    f.write(f"[-] Error Inserting actor, {actor['name']} to Movie_Actor table\n {e}\n")
 
 
 def parse_args() -> None:

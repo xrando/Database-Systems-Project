@@ -26,6 +26,7 @@
     <!-- Actors -->
     <div class="container-fluid">
         <h2>Actors</h2>
+
     <!-- Create table of name(actor[0]) and character(actor[2]) -->
         <table class="table table-striped">
             <thead>
@@ -37,11 +38,12 @@
             <tbody>
                 {% for actor in actors %}
                     <tr>
-                        <td><a href= {{ actor[1] }}>{{ actor[0] }}</a></td>
+                        <td><a href= "{{ url_for('actor', tmdb_id=actor[1]) }}">{{ actor[0] }}</a></td>
                         <td>{{ actor[2] }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
+    </table>
 
 
 {% endblock %}
