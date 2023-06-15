@@ -46,6 +46,9 @@ class DBMS_Movie:
             except mariadb.Error as e:
                 print(f"Error connecting to MariaDB Platform: {e}")
                 sys.exit(1)
+        except mariadb.OperationalError as e:
+            print(f"Error connecting to MariaDB Platform: {e}")
+            sys.exit(1)
 
     def create_tables(self) -> None:
         """
@@ -314,10 +317,12 @@ class DBMS_Movie:
         :rtype: list[tuple]
         """
         poster_link = "https://image.tmdb.org/t/p/original"
+        default_poster_link = "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg"
+        default_banner_link = "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie-816x576.jpg"
         result = []
         offset = (page - 1) * limit
 
-        stmt = "SELECT title, release_date " \
+        stmt = "SELECT title, release_date, synopsis " \
                "FROM Movie " \
                "WHERE release_date < CURRENT_DATE() " \
                "ORDER BY release_date DESC " \
@@ -335,40 +340,48 @@ class DBMS_Movie:
                     if movie_info['poster_path'] is not None:
                         poster = poster_link + movie_info['poster_path']
                     else:
-                        poster = None
+                        poster = default_poster_link
                     if movie_info['backdrop_path'] is not None:
                         banner = poster_link + movie_info['backdrop_path']
                     else:
-                        banner = None
+                        banner = default_banner_link
                 else:
-                    poster = None
-                    banner = None
+                    poster = default_poster_link
+                    banner = default_banner_link
             except IndexError:
                 # Not all movies we have in the database are in the tmdb database
                 continue
 
+            # Movie title + (year)
+            movie_title = movie[0] + " (" + movie[1].strftime("%Y") + ")"
             # Convert date to string
             movie_date = movie[1].strftime("%d %B %Y")
-            result += [(movie[0], movie_date, poster, banner)]
+
+            # Shorten synopsis
+            synopsis = movie[2][:100] + "..."
+            result += [(movie_title, movie_date, synopsis, poster, banner)]
 
         return result
 
-    def get_pages_left(self, pages: int = 1, limit: int = 30) -> int:
+    def get_pages(self, pages: int = 1, limit: int = 30) -> dict[str, int]:
         """
-        Get the number of pages left
+        Get the number of pages
         :param pages: Number of pages
         :type pages: int
         :param limit: Number of movies per page
         :type limit: int
-        :return: Number of pages left
-        :rtype: int
+        :return: total_pages, pages_left
+        :rtype: dict[str, int]
         """
-        stmt = "SELECT COUNT(*) " \
+        stmt = "SELECT ceil(count(*) / ?), ceil(count(*) / ?) - ? " \
                "FROM Movie " \
                "WHERE release_date < CURRENT_DATE();"
-        self.cursor.execute(stmt)
-        total_movies = self.cursor.fetchone()[0]
-        return math.ceil(total_movies / limit) - pages
+
+        self.cursor.execute(stmt, (limit, limit, pages))
+        total_pages, pages_left = self.cursor.fetchone()
+        print(f"Total pages: {total_pages}, Pages left: {pages_left}")
+
+        return {"total_pages": total_pages, "pages_left": pages_left}
 
     def carousel(self) -> list[tuple]:
         """

@@ -3,17 +3,16 @@ from flask_login import LoginManager, login_required, UserMixin, login_user, log
 from datetime import timedelta
 import Database.DBMS_Movie.DBMS_Movie as DBMS_Movie
 import Database.User as DBUser
-
+import configparser
 
 login_manager = LoginManager()
 app = Flask(__name__)
 DBMS_Movie = DBMS_Movie.DBMS_Movie()
 dbUser = DBUser.Database()
 login_manager.init_app(app)
-app.config.update(
-    TESTING=True,
-    SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf'
-)
+config = configparser.ConfigParser()
+config.read('../Config/config.ini')
+app.config.update(TESTING=True, SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf')
 
 
 class User(UserMixin):
@@ -24,6 +23,7 @@ class User(UserMixin):
         self.username = user_data[1]
         self.password = user_data[2]
         self.name = user_data[3]
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -86,6 +86,7 @@ def signup_page():
             return redirect(url_for('login_page'))
     return render_template('signup.html', error=error)
 
+
 @app.route('/logout')
 def logout():
     logout_user()
@@ -93,39 +94,68 @@ def logout():
 
 
 # Error Site Route
-@app.route('/home')
+@app.route('/home', methods=['GET'])
 def home():
     page = 1
     limit = 12
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
-    pages = DBMS_Movie.get_pages_left(pages=page, limit=limit)
+    pages = DBMS_Movie.get_pages(pages=page, limit=12)
+    pages_left = pages["pages_left"]
+    total_pages = pages["total_pages"]
     carousel = DBMS_Movie.carousel()
 
-    return render_template('index.html', movie_list=movie_list, pages=pages, carousel=carousel, page=page)
+    return render_template(
+        'index.html',
+        movie_list=movie_list,
+        total_pages=total_pages,
+        pages_left=pages_left,
+        carousel=carousel,
+        page=page
+    )
 
 
-@app.route('/home/page/<int:page>')
+@app.route('/home/page/<int:page>', methods=['GET'])
 def home_page(page):
+    pages = DBMS_Movie.get_pages(pages=page, limit=12)
+    pages_left = pages["pages_left"]
+    total_pages = pages["total_pages"]
+
+    # TODO: Convert to error page
+    if page < 1:
+        raise Exception('Page not found')
+    elif page > total_pages:
+        raise Exception('Page not found')
+
     movie_list = DBMS_Movie.Movie_list(page=page, limit=12)
-    pages = DBMS_Movie.get_pages_left(pages=page, limit=12)
     carousel = DBMS_Movie.carousel()
 
     # Reload Movies block in index.html
-    return render_template('index.html', movie_list=movie_list, pages=pages, carousel=carousel, page=page)
+    return render_template(
+        'index.html',
+        movie_list=movie_list,
+        total_pages=total_pages,
+        pages_left=pages_left,
+        carousel=carousel,
+        page=page
+    )
 
 
-@app.route('/movie/<string:movie_name>')
+@app.route('/movie/<string:movie_name>', methods=['GET'])
 def movie_page(movie_name):
+    # Remove (year) from movie name
+    movie_name = movie_name.split('(')[0]
     movie = DBMS_Movie.get_movie_by_title(movie_name)
     movie_details = movie['movie']
     movie_genres = movie['genres']
     movie_director = movie['director']
     movie_actors = movie['actors']
-    return render_template('Movie_details.html',
-                           movie=movie_details,
-                           genres=movie_genres,
-                           director=movie_director,
-                           actors=movie_actors)
+    return render_template(
+        'Movie_details.html',
+        movie=movie_details,
+        genres=movie_genres,
+        director=movie_director,
+        actors=movie_actors
+    )
 
 
 # # Error handling page for not found sites / locations
@@ -135,4 +165,8 @@ def movie_page(movie_name):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run(
+        host=config.get('FLASK', 'HOST'),
+        port=int(config.get('FLASK', 'PORT')),
+        debug=bool(config.get('FLASK', 'DEBUG'))
+    )

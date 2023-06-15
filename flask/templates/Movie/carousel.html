@@ -1,0 +1,40 @@
+{% block carousel %}
+    <div class="container">
+        <div id="movieCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                {% for item in carousel %}
+                    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="{{ loop.index0 }}"
+                            aria-current="true" aria-label="Slide {{ loop.index0 }}"
+                            {% if loop.first %}class="active"{% endif %}></button>
+                {% endfor %}
+            </div>
+
+            <!-- The slideshow -->
+            <div class="carousel-inner">
+                {% for item in carousel %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <a href="{{ url_for('movie_page', movie_name=item[0]) }}" class="stretched-link">
+                        <img src="{{ item[2] }}" alt="{{ item[0] }}" style="width:100%;">
+                        </a>
+                        <div class="carousel-caption">
+                            <h3>{{ item[0] }}</h3>
+                            <p>{{ item[1] }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Left and right controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#movieCarousel"
+                    data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#movieCarousel"
+                    data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+    </div>
+{% endblock %}
