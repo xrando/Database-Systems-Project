@@ -1,11 +1,9 @@
+#!/usr/bin/env python3
+
 import mariadb
 import sys
-import pandas as pd
 import tmdbsimple as tmdb
 import configparser
-import concurrent.futures
-import math
-import requests
 import argparse
 
 config = configparser.ConfigParser()
@@ -274,8 +272,8 @@ class DBMS_Movie:
         # Get actor's detail from DB
         if actor_tmdb_id:
             stmt = "SELECT actor_name " \
-                    "FROM Actor " \
-                    "WHERE tmdb_id = ?"
+                   "FROM Actor " \
+                   "WHERE tmdb_id = ?"
             try:
                 self.cursor.execute(stmt, (actor_tmdb_id,))
                 actor_name = self.cursor.fetchone()[0]
@@ -288,8 +286,8 @@ class DBMS_Movie:
                 actor_info = None
         elif actor_name:
             stmt = "SELECT tmdb_id " \
-                    "FROM Actor " \
-                    "WHERE actor_name = ?"
+                   "FROM Actor " \
+                   "WHERE actor_name = ?"
             try:
                 self.cursor.execute(stmt, (actor_name,))
                 actor_tmdb_id = self.cursor.fetchone()[0]
@@ -501,9 +499,9 @@ def get_release_date(self, movie: str) -> str:
         pass
 
 
-
-
 def parse_args() -> None:
+    import subprocess
+    import os
     """
     Parse command line arguments
     -t, --table-create: Create tables in database (this uses the tables.sql file)
@@ -514,7 +512,8 @@ def parse_args() -> None:
         description="**UNTESTED! RUN AT YOUR OWN RISK** Database Management System for Movie Database",
         prog="DBMS Movie")
     parser.add_argument("-m", "--migration", action="store_true", help="Run migration script (tables.sql)")
-    parser.add_argument("-s", "--seed", action="store_true", help="Seed database with data (seed.sql)")
+    parser.add_argument("-s", "--seed", action="store_true",
+                        help="Seed database with data (seed.sql) This will create tables if they do not exist")
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
@@ -526,9 +525,12 @@ def parse_args() -> None:
     port = int(config.get('DBMS_MOVIE', 'PORT'))
     database = config.get('DBMS_MOVIE', 'DATABASE')
     try:
-        connection = mariadb.connect(user=user, password=password, host=host, port=port, database=database)
+        connection = mariadb.connect(user=user, password=password, host=host, port=port)
         cursor = connection.cursor()
-    except mariadb.Error as e:
+        # Create database if it does not exist
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database};")
+        cursor.execute(f"USE {database};")
+    except mariadb.Error:
         print(f"[-] Error connecting to database\n {e}")
         return
 
@@ -537,29 +539,43 @@ def parse_args() -> None:
         Create tables in database
         :return: None
         """
-        with open("tables.sql", "r") as f:
-            sql = f.read()
-            try:
-                cursor.execute(sql)
-                connection.commit()
-            except mariadb.DataError as e:
-                print(f"[-] Error creating tables\n {e}")
-                return
+
+        file = "tables.sql"
+        if not os.path.exists(file):
+            print(f"[-] Error: {file} does not exist")
+            return
+
+        file_path = os.path.abspath(file)
+
+        try:
+            command = f"mysql --database {database} -u {user} -p{password} --host {host} --port {port} < '{file_path}'"
+            subprocess.run(command, shell=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"[-] Error creating tables\n {e}")
+            return
+
         print("[+] Tables created successfully")
 
     def seed_database() -> None:
         """
-        Seed database with data
+        Seed database with data with sqldump
         :return: None
         """
-        with open("seed.sql", "r") as f:
-            sql = f.read()
-            try:
-                cursor.execute(sql)
-                connection.commit()
-            except mariadb.DataError as e:
-                print(f"[-] Error seeding database\n {e}")
-                return
+
+        file = "Seed.sql"
+        if not os.path.exists(file):
+            print(f"[-] Error: {file} does not exist")
+            return
+
+        file_path = os.path.abspath(file)
+
+        try:
+            command = f"mysql --database {database} -u {user} -p{password} --host {host} --port {port} < '{file_path}'"
+            subprocess.run(command, shell=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"[-] Error seeding database\n {e}")
+            return
+
         print("[+] Database seeded successfully")
 
     action_map = {"migration": migration, "seed": seed_database}
