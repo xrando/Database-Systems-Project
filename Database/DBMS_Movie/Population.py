@@ -1,3 +1,21 @@
+def get_genre_id(self, genre_name: str) -> int:
+    try:
+        self.cursor.execute("SELECT genre_id FROM Genre WHERE name LIKE ?", (genre_name,))
+        return self.cursor.fetchone()[0]
+    except mariadb.DataError as e:
+        # Genre does not exist
+        pass
+
+
+def get_release_date(self, movie: str) -> str:
+    try:
+        self.cursor.execute("SELECT release_date FROM Movie WHERE title LIKE ?", (movie,))
+        return self.cursor.fetchone()[0].strftime("%B %d, %Y")
+    except mariadb.DataError as e:
+        # Movie does not exist
+        pass
+
+
 def run(self, stmt: str, args: tuple = ()) -> tuple:
     """
     Run a SQL statement and return the result
@@ -154,6 +172,7 @@ def update_directors_for_db(self):
                             pass
             except KeyError as e:
                 pass
+
 
 def update_actors_for_db(self):
     raise NotImplementedError

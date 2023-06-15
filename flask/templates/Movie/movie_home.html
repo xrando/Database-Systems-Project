@@ -28,8 +28,8 @@
         <!-- Pages left nav -->
         <!-- Need to get current page from flask -->
         <ul class="pagination">
-            <!-- If there are more than 1 page and current page is not 1, show first page -->
-            {% if pages_left > 1 and page != 1 %}
+            <!-- If page is not 1 -->
+            {% if page != 1 %}
                 <li class="page-item"><a href="{{ url_for('home_page', page=1) }}" class="page-link">First</a></li>
             {% endif %}
 

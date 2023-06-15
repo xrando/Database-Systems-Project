@@ -16,6 +16,16 @@ except configparser.Error as e:
 
 class DBMS_Movie:
 
+    user = config.get('DBMS_MOVIE', 'USERNAME')
+    password = config.get('DBMS_MOVIE', 'PASSWORD')
+    host = config.get('DBMS_MOVIE', 'HOST')
+    port = int(config.get('DBMS_MOVIE', 'PORT'))
+    database = config.get('DBMS_MOVIE', 'DATABASE')
+    tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+
+    if tmdb.API_KEY == "":
+        raise ValueError("Please enter your TMDB API key in the config.ini file")
+
     def __init__(self) -> None:
         """
         Database Constructor, connects to the database and creates the tables if they do not exist
@@ -23,27 +33,28 @@ class DBMS_Movie:
         All Configurations are stored in the config.ini file in path ../Config/config.ini
         """
 
-        user = config.get('DBMS_MOVIE', 'USERNAME')
-        password = config.get('DBMS_MOVIE', 'PASSWORD')
-        host = config.get('DBMS_MOVIE', 'HOST')
-        port = int(config.get('DBMS_MOVIE', 'PORT'))
-        database = config.get('DBMS_MOVIE', 'DATABASE')
-        tmdb.API_KEY = config.get('TMDB', 'API_KEY')
-
-        if tmdb.API_KEY == "":
-            raise ValueError("Please enter your TMDB API key in the config.ini file")
-
         try:
-            self.connection = mariadb.connect(user=user, password=password, host=host, port=port, database=database)
+            self.connection = mariadb.connect(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                port=self.port,
+                database=self.database
+            )
 
             self.cursor = self.connection.cursor()
         except mariadb.DatabaseError as e:
             # Try to create database
             try:
-                self.connection = mariadb.connect(user=user, password=password, host=host, port=port)
+                self.connection = mariadb.connect(
+                    user=self.user,
+                    password=self.password,
+                    host=self.host,
+                    port=self.port
+                )
                 self.cursor = self.connection.cursor()
-                self.cursor.execute("CREATE DATABASE " + database)
-                self.cursor.execute("USE " + database)
+                self.cursor.execute("CREATE DATABASE IF NOT EXISTS " + self.database)
+                self.cursor.execute("USE " + self.database)
                 self.create_tables()
                 self.seed()
             except mariadb.Error as e:
@@ -100,8 +111,27 @@ class DBMS_Movie:
         :type seed_file: str
         :return: None
         """
+        import os
+        import subprocess
+
         if seed_file is None:
-            raise ValueError("Please provide a seed file (seed_file='path/to/file.sql')")
+            seed_file = "Seed.sql"
+            print(f"[+] No seed file specified, using default seed file: {seed_file}")
+
+        if not os.path.exists(seed_file):
+            print(f"[-] Error: {seed_file} does not exist")
+            return
+
+        file_path = os.path.abspath(seed_file)
+
+        try:
+            command = f"mysql --database {self.database} -u {self.user} -p{self.password} < '{file_path}'"
+            subprocess.run(command, shell=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"[-] Error seeding database\n {e}")
+            return
+
+        print("[+] Database seeded successfully")
 
         # Connect to the database
         try:
@@ -136,6 +166,8 @@ class DBMS_Movie:
         director: (director_name, director tmdb link)
 
         actors: (actor_name, actor tmdb link, character)
+
+        Used for the movie page to display all the information about a movie
 
         :param title: Movie title
         :return: Movie dictionary
@@ -203,17 +235,8 @@ class DBMS_Movie:
             director_link = config.get("MOVIE", "TMDB_PERSON_URL") + director_tmdb_id + "-" + director_name
             result["director"] = (director[0], director_link)
 
-            # TODO: This gotta be in the actor page instead
             self.cursor.execute(actor_stmt, (title,))
             actors = self.cursor.fetchall()
-            # actor_results = []
-            # for actor in actors:
-            #     actor_tmdb_id = actor[1]
-            #     actor_name = actor[0].replace(" ", "-")
-            #     actor_link = config.get("MOVIE", "TMDB_PERSON_URL") + actor_tmdb_id + "-" + actor_name
-            #     # Replace actor[1] with link
-            #     actor = (actor[0], actor_link, actor[2])
-            #     actor_results.append(actor)
             result["actors"] = list(actors)
 
             self.cursor.execute(genre_stmt, (title,))
@@ -227,6 +250,9 @@ class DBMS_Movie:
     def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> dict:
         """
         Get All movies an actor has been in, and their roles
+
+        Used for the actor page
+
         :param actor_name: Actor's name
         :type actor_name: str
         :param actor_tmdb_id: Actor's tmdb id
@@ -291,7 +317,7 @@ class DBMS_Movie:
             try:
                 self.cursor.execute(stmt, (actor_name,))
                 actor_tmdb_id = self.cursor.fetchone()[0]
-            except mariadb.Error as e:
+            except [mariadb.Error, TypeError] as e:
                 print(f"Error getting actor's tmdb_id: {e}")
 
             if actor_tmdb_id is not None:
@@ -355,6 +381,8 @@ class DBMS_Movie:
     def Movie_list(self, page: int = 1, limit: int = 30) -> list[tuple]:
         """
         Get all movies in the database, for the home page (30 most recent)
+
+        Used to show movies in the home page.
 
         :param page: Page number (For Frontend)
         :type page: int
@@ -481,24 +509,6 @@ class DBMS_Movie:
         return result
 
 
-def get_genre_id(self, genre_name: str) -> int:
-    try:
-        self.cursor.execute("SELECT genre_id FROM Genre WHERE name LIKE ?", (genre_name,))
-        return self.cursor.fetchone()[0]
-    except mariadb.DataError as e:
-        # Genre does not exist
-        pass
-
-
-def get_release_date(self, movie: str) -> str:
-    try:
-        self.cursor.execute("SELECT release_date FROM Movie WHERE title LIKE ?", (movie,))
-        return self.cursor.fetchone()[0].strftime("%B %d, %Y")
-    except mariadb.DataError as e:
-        # Movie does not exist
-        pass
-
-
 def parse_args() -> None:
     import subprocess
     import os
@@ -509,11 +519,26 @@ def parse_args() -> None:
     :return: None
     """
     parser = argparse.ArgumentParser(
-        description="**UNTESTED! RUN AT YOUR OWN RISK** Database Management System for Movie Database",
-        prog="DBMS Movie")
-    parser.add_argument("-m", "--migration", action="store_true", help="Run migration script (tables.sql)")
-    parser.add_argument("-s", "--seed", action="store_true",
-                        help="Seed database with data (seed.sql) This will create tables if they do not exist")
+        description="Database Management System for Movie Database. "
+                    "Ensure that you have a Config.ini file in the Config folder. "
+                    "Refer to Sample.Config.ini for an example.",
+        prog="DBMS Movie"
+    )
+
+    parser.add_argument(
+        "-m",
+        "--migration",
+        action="store_true",
+        help="Run migration script (tables.sql)"
+    )
+
+    parser.add_argument(
+        "-s",
+        "--seed",
+        action="store_true",
+        help="Seed database with data (seed.sql) This will create tables if they do not exist"
+    )
+
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
