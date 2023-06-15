@@ -93,7 +93,6 @@ def logout():
     return redirect(url_for('login_page'))
 
 
-# Error Site Route
 @app.route('/home', methods=['GET'])
 def home():
     page = 1
@@ -150,7 +149,7 @@ def movie_page(movie_name):
     movie_director = movie['director']
     movie_actors = movie['actors']
     return render_template(
-        'Movie_details.html',
+        'Movie/Movie_details.html',
         movie=movie_details,
         genres=movie_genres,
         director=movie_director,
@@ -158,6 +157,17 @@ def movie_page(movie_name):
     )
 
 
+@app.route('/actor/<string:actor_name>', methods=['GET'])
+def actor_page(actor):
+    raise NotImplementedError
+
+
+@app.route('/director/<string:director_name>', methods=['GET'])
+def director_page(director):
+    raise NotImplementedError
+
+
+# Error Site Route
 # # Error handling page for not found sites / locations
 # @app.errorhandler(404)
 # def page_not_found(e):

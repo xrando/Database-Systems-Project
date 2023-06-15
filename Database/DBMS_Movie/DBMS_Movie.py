@@ -8,6 +8,13 @@ import math
 import requests
 import argparse
 
+config = configparser.ConfigParser()
+try:
+    config.read('../Config/config.ini')
+except configparser.Error as e:
+    print(f"Error reading config file: {e}")
+    sys.exit(1)
+
 
 class DBMS_Movie:
 
@@ -17,8 +24,6 @@ class DBMS_Movie:
 
         All Configurations are stored in the config.ini file in path ../Config/config.ini
         """
-        config = configparser.ConfigParser()
-        config.read('../Config/config.ini')
 
         user = config.get('DBMS_MOVIE', 'USERNAME')
         password = config.get('DBMS_MOVIE', 'PASSWORD')
@@ -130,7 +135,7 @@ class DBMS_Movie:
         :rtype: dict
         """
         result = {}
-        poster_link = "https://image.tmdb.org/t/p/original"
+        poster_link = config.get('MOVIE', 'TMDB_IMAGE_URL')
 
         movie_stmt = "Select Movie.title as movie_title, Movie.release_date, Movie.synopsis FROM Movie WHERE Movie.title = ?"
         director_stmt = "SELECT Director.director_name as director_name, Director.tmdb_id as director_tmdb_id " \
@@ -186,7 +191,7 @@ class DBMS_Movie:
             # TODO: Show this in director page instead
             director_tmdb_id = director[1]
             director_name = director[0].replace(" ", "-")
-            director_link = "https://www.themoviedb.org/person/" + director_tmdb_id + "-" + director_name
+            director_link = config.get("MOVIE", "TMDB_PERSON_URL") + director_tmdb_id + "-" + director_name
             result["director"] = (director[0], director_link)
 
             # TODO: This gotta be in the actor page instead
@@ -196,7 +201,7 @@ class DBMS_Movie:
             for actor in actors:
                 actor_tmdb_id = actor[1]
                 actor_name = actor[0].replace(" ", "-")
-                actor_link = "https://www.themoviedb.org/person/" + actor_tmdb_id + "-" + actor_name
+                actor_link = config.get("MOVIE", "TMDB_PERSON_URL") + actor_tmdb_id + "-" + actor_name
                 # Replace actor[1] with link
                 actor = (actor[0], actor_link, actor[2])
                 actor_results.append(actor)
@@ -316,9 +321,10 @@ class DBMS_Movie:
         :return: List of movies (title, release_date)
         :rtype: list[tuple]
         """
-        poster_link = "https://image.tmdb.org/t/p/original"
-        default_poster_link = "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg"
-        default_banner_link = "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie-816x576.jpg"
+
+        poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
+        default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
+        default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
         result = []
         offset = (page - 1) * limit
 
@@ -379,8 +385,6 @@ class DBMS_Movie:
 
         self.cursor.execute(stmt, (limit, limit, pages))
         total_pages, pages_left = self.cursor.fetchone()
-        print(f"Total pages: {total_pages}, Pages left: {pages_left}")
-
         return {"total_pages": total_pages, "pages_left": pages_left}
 
     def carousel(self) -> list[tuple]:
@@ -389,7 +393,7 @@ class DBMS_Movie:
         :return: List of movies (title, release_date, banner)
         :rtype: list[tuple]
         """
-        poster_link = "https://image.tmdb.org/t/p/original"
+        poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
         result = []
         current_offset = 0
 
