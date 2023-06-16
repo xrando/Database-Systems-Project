@@ -429,7 +429,7 @@ class DBMS_Movie:
 
         stmt = "SELECT title, release_date, synopsis " \
                "FROM Movie " \
-               "WHERE release_date < CURRENT_DATE() " \
+               "WHERE release_date < CURRENT_DATE() + INTERVAL 1 YEAR " \
                "ORDER BY release_date DESC " \
                "LIMIT ? " \
                "OFFSET ?;"
