@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    {% block Actor %}
+    {% block Director %}
         <!-- Name Field -->
-        <h1>{{ actor_name }}</h1>
+        <h1>{{ director_name }}</h1>
 
         <!-- Profile Picture -->
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-2">
-                    <img src="{{ actor_profile_path }}" alt="{{ actor_name }}" class="img-fluid">
+                    <img src="{{ director_profile_path }}" alt="{{ director_name }}" class="img-fluid">
                     <!-- TMDB Page Link below picture -->
-                    <a href="{{ actor_tmdb_page }}" target="_blank" rel="noopener noreferrer"> <img
+                    <a href="{{ director_tmdb_page }}" target="_blank" rel="noopener noreferrer"> <img
                             src="{{ url_for('static', filename='images/TMDB_Short.png') }}" alt="TMDB"
                             class="img-thumbnail"></a>
                 </div>
@@ -19,25 +19,26 @@
                 <div class="col-md-10">
                     <h2>Personal Info</h2>
                     <div class="accordion" id="accordionExample">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingOne">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseOne" aria-expanded="true"
-                                        aria-controls="collapseOne">
-                                    Also Known As
-                                </button>
-                            </h2>
-                            <div id="collapseOne" class="accordion-collapse collapse show"
-                                 aria-labelledby="headingOne"
-                                 data-bs-parent="#accordionExample">
-                                <div class="accordion-body">
-                                    {% for aka in actor_aka %}
-                                        <p>{{ aka }}</p>
-                                    {% endfor %}
+                        {% if director_aka != None %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="headingOne">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                            data-bs-target="#collapseOne" aria-expanded="true"
+                                            aria-controls="collapseOne">
+                                        Also Known As
+                                    </button>
+                                </h2>
+                                <div id="collapseOne" class="accordion-collapse collapse show"
+                                     aria-labelledby="headingOne"
+                                     data-bs-parent="#accordionExample">
+                                    <div class="accordion-body">
+                                        {% for aka in director_aka %}
+                                            <p>{{ aka }}</p>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
+                        {% endif %}
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="KnownFor">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -50,10 +51,11 @@
                                  aria-labelledby="KnownFor"
                                  data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <p>Acting</p>
+                                    <p>Directing</p>
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingTwo">
@@ -67,7 +69,7 @@
                                  aria-labelledby="headingTwo"
                                  data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <p>{{ actor_birthday }}</p>
+                                    <p>{{ director_birthday }}</p>
                                 </div>
                             </div>
                         </div>
@@ -86,7 +88,7 @@
                                      aria-labelledby="headingFour"
                                      data-bs-parent="#accordionExample">
                                     <div class="accordion-body">
-                                        <p>{{ actor_deathday }}</p>
+                                        <p>{{ director_deathday }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -104,7 +106,7 @@
                                  aria-labelledby="headingThree"
                                  data-bs-parent="#accordionExample">
                                 <div class="accordion-body">
-                                    <p>{{ actor_bio }}</p>
+                                    <p>{{ director_bio }}</p>
                                 </div>
                             </div>
                         </div>
@@ -116,29 +118,30 @@
         </div>
 
         <!-- Movies -->
-        <div class="container-fluid mt-5">
-            <!-- Movies with movie[0] as name, movie[1] as date of release and movie[2] as actor's character -->
-            <!-- Each row should start with year, title "as" character -->
-            <div class="row">
-                <h3>Movies</h3>
-                <table class="table table-striped">
-                    <tbody>
-                    {% for movie in movie_list %}
-                        <tr>
+        {% if movie_list != None or movie_list != [] %}
+            <div class="container-fluid mt-5">
+                <!-- Movies with movie[0] as name, movie[1] as date of release and movie[2] as actor's character -->
+                <!-- Each row should start with year, title "as" character -->
+                <div class="row">
+                    <h3>Movies</h3>
+                    <table class="table table-striped">
+                        <tbody>
+                        {% for movie in movie_list %}
+                            <tr>
 
-                            <td>
-                                {{ movie[1] }}
-                            </td>
+                                <td>
+                                    {{ movie[1] }}
+                                </td>
 
-                            <td>
-                                <a href="{{ url_for('movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a>
-                                as {{ movie[2] }}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                                <td>
+                                    <a href="{{ url_for('movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        {% endif %}
 
     {% endblock %}
 {% endblock %}

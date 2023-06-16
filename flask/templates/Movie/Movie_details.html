@@ -11,7 +11,7 @@
         <h1>{{ movie[0] }}</h1>
         <p>Release Date: {{ movie[1] }}</p>
         <p>Synopsis: {{ movie[2] }}</p>
-    <p>Director: <a href= {{ director[1] }}>{{ director[0] }}</a></p>
+    <p>Director: <a href= {{ url_for('director_page', tmdb_id=director[1]) }}>{{ director[0] }}</a></p>
     </div>
         <!-- Genre -->
     <div class="container-fluid">

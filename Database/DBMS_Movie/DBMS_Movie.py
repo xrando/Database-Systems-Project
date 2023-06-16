@@ -229,11 +229,10 @@ class DBMS_Movie:
             self.cursor.execute(director_stmt, (title,))
             director = self.cursor.fetchone()
 
-            # TODO: Show this in director page instead
             director_tmdb_id = director[1]
-            director_name = director[0].replace(" ", "-")
-            director_link = config.get("MOVIE", "TMDB_PERSON_URL") + director_tmdb_id + "-" + director_name
-            result["director"] = (director[0], director_link)
+            # director_name = director[0].replace(" ", "-")
+            # director_link = config.get("MOVIE", "TMDB_PERSON_URL") + director_tmdb_id + "-" + director_name
+            result["director"] = (director[0], director_tmdb_id)
 
             self.cursor.execute(actor_stmt, (title,))
             actors = self.cursor.fetchall()
@@ -330,7 +329,13 @@ class DBMS_Movie:
 
         return {"movies": movie_result, "actor": actor_info}
 
-    def Director(self, director_name: str = None, director_tmdb_id: str = None, order_by=None) -> list[tuple]:
+    def Director(
+            self,
+            director_name: str = None,
+            director_tmdb_id: str = None,
+            order_by: list = None
+    ) -> dict:
+
         """
         Get all movies a director has directed
         :param director_name: Director's name
@@ -339,8 +344,8 @@ class DBMS_Movie:
         :type director_tmdb_id: str
         :param order_by: Order by release_date or title, ASC or DESC
         :type order_by: list
-        :return: List of movies (title, release_date)
-        :rtype: List[tuple]
+        :return: List of movies (title, release_date) and director's profile from tmdb
+        :rtype: dict
         """
         if order_by is None:
             order_by = ["release_date", "DESC"]
@@ -364,19 +369,43 @@ class DBMS_Movie:
         else:
             raise ValueError("Either ONE director_name or director_tmdb_id must be specified")
 
-        stmt += "ORDER BY ? ?"
+        stmt += f"ORDER BY {orders[order_by[0]]} {order_by[1]}"
         try:
-            self.cursor.execute(stmt, (director_name or director_tmdb_id, orders[order_by[0]], order_by[1]))
+            self.cursor.execute(stmt, (director_name or director_tmdb_id,))
             movies = self.cursor.fetchall()
         except mariadb.Error as e:
             print(f"Error: {e}")
-            return []
+            return {"movies": [], "director": None}
 
         result = []
         for movie in movies:
             result += [(movie[0], movie[1].strftime("%B %d, %Y"))]
 
-        return result
+        director_info = None
+        if director_tmdb_id:
+            try:
+                director_info = tmdb.People(director_tmdb_id).info()
+            except IndexError:
+                director_info = None
+        elif director_name:
+            stmt = "SELECT tmdb_id " \
+                   "FROM Director " \
+                   "WHERE director_name = ?"
+            try:
+                self.cursor.execute(stmt, (director_name,))
+                director_tmdb_id = self.cursor.fetchone()[0]
+            except [mariadb.Error, TypeError] as e:
+                print(f"Error getting director's tmdb_id: {e}")
+
+            if director_tmdb_id is not None:
+                try:
+                    director_info = tmdb.People(director_tmdb_id).info()
+                except IndexError:
+                    director_info = None
+        else:
+            raise ValueError("Either ONE director_name or director_tmdb_id must be specified")
+
+        return {"movies": result, "director": director_info}
 
     def Movie_list(self, page: int = 1, limit: int = 30) -> list[tuple]:
         """
