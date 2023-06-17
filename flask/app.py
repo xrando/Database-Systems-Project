@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, app
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user, current_user
 from datetime import timedelta
-import Database.DBMS_Movie.DBMS_Movie as DBMS_Movie
+import Database.DBMS_Movie as DBMS_Movie
 import Database.User as DBUser
 import configparser
 
@@ -11,7 +11,7 @@ DBMS_Movie = DBMS_Movie.DBMS_Movie()
 dbUser = DBUser.Database()
 login_manager.init_app(app)
 config = configparser.ConfigParser()
-config.read('../Config/Sample.Config.ini')
+config.read('../Config/config.ini')
 app.config.update(TESTING=True, SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf')
 
 

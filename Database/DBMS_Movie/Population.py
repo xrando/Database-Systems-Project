@@ -1,3 +1,7 @@
+####################################################################################################
+# DO NOT USE THIS CODE IN PRODUCTION                                                               #
+####################################################################################################
+
 def get_genre_id(self, genre_name: str) -> int:
     try:
         self.cursor.execute("SELECT genre_id FROM Genre WHERE name LIKE ?", (genre_name,))

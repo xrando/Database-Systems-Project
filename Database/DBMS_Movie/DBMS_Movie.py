@@ -5,23 +5,30 @@ import sys
 import tmdbsimple as tmdb
 import configparser
 import argparse
+import os
 
 config = configparser.ConfigParser()
+config_route = os.path.join(os.path.dirname(__file__), '..', '..', 'Config', 'config.ini')
+
 try:
-    config.read('../../Config/config.ini')
+    config.read(config_route)
 except configparser.Error as e:
     print(f"Error reading config file: {e}")
     sys.exit(1)
 
 
 class DBMS_Movie:
-
-    user = config.get('DBMS_MOVIE', 'USERNAME')
-    password = config.get('DBMS_MOVIE', 'PASSWORD')
-    host = config.get('DBMS_MOVIE', 'HOST')
-    port = int(config.get('DBMS_MOVIE', 'PORT'))
-    database = config.get('DBMS_MOVIE', 'DATABASE')
-    tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+    try:
+        user = config.get('DBMS_MOVIE', 'USERNAME')
+        password = config.get('DBMS_MOVIE', 'PASSWORD')
+        host = config.get('DBMS_MOVIE', 'HOST')
+        port = int(config.get('DBMS_MOVIE', 'PORT'))
+        database = config.get('DBMS_MOVIE', 'DATABASE')
+        tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+    except configparser.Error as e:
+        print(f"Available Configurations: {config.sections()}")
+        print(f"Error reading config file: {e}")
+        sys.exit(1)
 
     if tmdb.API_KEY == "":
         raise ValueError("Please enter your TMDB API key in the config.ini file")
@@ -536,7 +543,8 @@ class DBMS_Movie:
             result += [(movie[0], movie_date, banner)]
 
         return result
-    #search
+
+    # search
     def search_directors(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM director "
@@ -544,6 +552,7 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
+
     def search_movies(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM movie "
@@ -551,6 +560,7 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
+
     def search_actors(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM actor "
@@ -558,6 +568,7 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
+
 
 def parse_args() -> None:
     import subprocess
@@ -591,8 +602,8 @@ def parse_args() -> None:
 
     args = parser.parse_args()
 
-    config = configparser.ConfigParser()
-    config.read('../../Config/config.ini')
+    # config = configparser.ConfigParser()
+    # config.read('../../Config/config.ini')
 
     user = config.get('DBMS_MOVIE', 'USERNAME')
     password = config.get('DBMS_MOVIE', 'PASSWORD')
