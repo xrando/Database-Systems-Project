@@ -43,7 +43,7 @@ def load_user(user_id):
 @app.route('/', methods=['GET', 'POST'])
 def login_page():
     if current_user.is_authenticated:
-        return redirect(url_for('home'))
+        return redirect(url_for('routes.home'))
     error = None
     if request.method == 'POST':
         username = request.form['username']
