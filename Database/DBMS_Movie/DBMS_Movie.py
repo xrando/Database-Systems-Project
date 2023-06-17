@@ -544,7 +544,7 @@ class DBMS_Movie:
 
         return result
 
-    # search
+    #search
     def search_directors(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM director "
@@ -552,7 +552,6 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
-
     def search_movies(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM movie "
@@ -560,7 +559,6 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
-
     def search_actors(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM actor "
@@ -582,7 +580,7 @@ def parse_args() -> None:
     parser = argparse.ArgumentParser(
         description="Database Management System for Movie Database. "
                     "Ensure that you have a Config.ini file in the Config folder. "
-                    "Refer to Sample.Config.ini for an example.",
+                    "Refer to config.ini for an example.",
         prog="DBMS Movie"
     )
 
