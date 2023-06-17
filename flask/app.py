@@ -265,17 +265,15 @@ def director_page(director_name: str = None, tmdb_id: int = None) -> str:
 def search():
     choice = request.form['choice']
     query = request.form['search']
-    if choice == 'directors':
+    if choice == 'director':
         #search for directors
-        #results = ['Director 1', 'Director 2', 'Director 3']
         results = DBMS_Movie.search_directors(query)
         print(results)
-    elif choice == 'actors':
+    elif choice == 'actor':
         #search for actors
-        results = ['Actor 1', 'Actor 2', 'Actor 3']
+        results = DBMS_Movie.search_actors(query)
     elif choice == 'movie':
         #search for movie
-        #results = ['Title 1', 'Title 2', 'Title 3']
         results = DBMS_Movie.search_movies(query)
     else:
         # Handle invalid choice

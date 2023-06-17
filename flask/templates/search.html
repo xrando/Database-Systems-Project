@@ -9,9 +9,14 @@
     <tbody>
       {% for result in results %}
       <tr>
+        {% if choice == 'movie' %}
         <td><a href="/{{ choice }}/{{ result[1] }}">{{ result[1] }}</a></td>
+        {% elif choice == 'director' %}
+        <td><a href="/{{ choice }}/{{ result[2] }}">{{ result[1] }}</a></td>
+        {% elif choice == 'actor' %}
+        <td><a href="/{{ choice }}/{{ result[2] }}">{{ result[1] }}</a></td>
       </tr>
-      {% endfor %}
+      {% endif %} {% endfor %}
     </tbody>
   </table>
 </div>
