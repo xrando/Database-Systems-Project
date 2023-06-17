@@ -23,6 +23,8 @@ class User(UserMixin):
         self.username = user_data[1]
         self.password = user_data[2]
         self.name = user_data[3]
+        self.email = user_data[4]
+        self.dob = user_data[5]
 
 
 @login_manager.user_loader
@@ -260,30 +262,46 @@ def director_page(director_name: str = None, tmdb_id: int = None) -> str:
         director_tmdb_page=director_tmdb_page
     )
 
-#search
+
+# search
 @app.route('/search', methods=['POST'])
 def search():
     choice = request.form['choice']
     query = request.form['search']
     if choice == 'director':
-        #search for directors
+        # search for directors
         results = DBMS_Movie.search_directors(query)
         print(results)
     elif choice == 'actor':
-        #search for actors
+        # search for actors
         results = DBMS_Movie.search_actors(query)
     elif choice == 'movie':
-        #search for movie
+        # search for movie
         results = DBMS_Movie.search_movies(query)
     else:
         # Handle invalid choice
         results = []
     return render_template('search.html', results=results, choice=choice)
+
+
 # Error Site Route
 # # Error handling page for not found sites / locations
 # @app.errorhandler(404)
 # def page_not_found(e):
 #     return render_template('404.html'), 404
+
+# Profile Page
+@app.route('/profile', methods=['GET'])
+def profile():
+    # Get user's username
+    print(current_user.id)
+
+    userData = User(dbUser.get_user_by_id(current_user.id)[0])
+
+    return render_template(
+        'profile.html',
+        userData=userData,
+    )
 
 
 if __name__ == '__main__':

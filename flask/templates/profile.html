@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="row text-center">
+            <h1>User Profile</h1>
+            <div class="linespace-medium"></div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-6">
+                <div class="row linespace-small">
+                    <div class="row linespace-small">
+                        <div class="col-sm">User ID:</div>
+                        <div class="col-sm"><input type="text" value="{{ userData.id }}" disabled></div>
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">Username:</div>
+                        <div class="col-sm"><input type="text" value="{{ userData.username }}" disabled></div>
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">Profile Name:</div>
+                        <div class="col-sm"><input type="text" value="{{ userData.name }}" disabled></div>
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">Email:</div>
+                        <div class="col-sm"><input type="text" value="{{ userData.email }}" disabled></div>
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">Date of Birth</div>
+                        <div class="col-sm"><input type="date" value="{{ userData.dob }}" disabled></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+
+    <div class="linespace-medium"></div>
+    <div class="row text-center">
+        <h1>User Watchlist</h1>
+        <div class="linespace-medium"></div>
+    </div>
+
+
+    <div class="linespace-medium"></div>
+    <div class="row text-center">
+        <h1>Following</h1>
+        <div class="linespace-medium"></div>
+    </div>
+
+    </div>
+{% endblock %}

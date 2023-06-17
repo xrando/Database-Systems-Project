@@ -42,3 +42,15 @@
 .signup-fields {
     padding-left: 20px;
 }
+
+.linespace-small {
+    padding-top: 20px;
+}
+
+.linespace-medium {
+    padding-top: 40px;
+}
+
+.linespace-large {
+    padding-top: 60px;
+}
