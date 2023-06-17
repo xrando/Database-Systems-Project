@@ -158,12 +158,23 @@ def movie_page(movie_name: str = None) -> str:
     movie_director = movie['director']
     movie_actors = movie['actors']
 
+    #get movie reviews
+    movieID = DBMS_Movie.get_movieID(movie_name)
+    #json object containing all reviews for a movie
+    data = handler.find_documents('reviews', {'movie_id': movieID})
+    print(data[0]['movie_id'])
+    print(data[0]['ratings'])
+    print(data[0]['comments'])
+    reviews = []
+    for rating, comment in zip(data[0]['ratings'], data[0]['comments']):
+        reviews.append((rating, comment))
     return render_template(
         'Movie/Movie_details.html',
         movie=movie_details,
         genres=movie_genres,
         director=movie_director,
-        actors=movie_actors
+        actors=movie_actors,
+        reviews=reviews
     )
 
 

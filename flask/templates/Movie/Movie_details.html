@@ -45,7 +45,27 @@
             </tbody>
         </table>
     </div>
-    
+
+    <!-- View Reviews -->
+    <div class="container-fluid">
+        <h2>Reviews</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Rating</th>
+                    <th>Comments</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in reviews %}
+                    <tr>
+                        <td>{{ review[0] }}</td>
+                        <td>{{ review[1] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     <!-- Submit Reviews -->
 {#    {% if user.is_authenticated %}#}
     <div class="container-fluid">
