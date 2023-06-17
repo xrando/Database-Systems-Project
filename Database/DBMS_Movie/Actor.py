@@ -1,7 +1,28 @@
 import mariadb
 import tmdbsimple as tmdb
+import configparser
+import os
 
-def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> dict:
+config = configparser.ConfigParser()
+config_route = os.path.join(os.path.dirname(__file__), '..', '..', 'Config', 'config.ini')
+
+try:
+    config.read(config_route)
+except configparser.Error as e:
+    print(f"Error reading config file: {e}")
+
+conn = mariadb.connect(
+    user=config.get('DBMS_MOVIE', 'USERNAME'),
+    password=config.get('DBMS_MOVIE', 'PASSWORD'),
+    host=config.get('DBMS_MOVIE', 'HOST'),
+    port=int(config.get('DBMS_MOVIE', 'PORT')),
+    database=config.get('DBMS_MOVIE', 'DATABASE')
+)
+cursor = conn.cursor()
+
+tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+
+def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> dict:
     """
     Get All movies an actor has been in, and their roles
 
@@ -40,8 +61,8 @@ def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None
     stmt += f"ORDER BY {orders[order_by[0]]} {order_by[1]}"
 
     try:
-        self.cursor.execute(stmt, (actor_name or actor_tmdb_id,))
-        movies = self.cursor.fetchall()
+        cursor.execute(stmt, (actor_name or actor_tmdb_id,))
+        movies = cursor.fetchall()
     except mariadb.Error as e:
         print(f"Error getting movies: {e}")
 
@@ -55,8 +76,8 @@ def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None
                "FROM Actor " \
                "WHERE tmdb_id = ?"
         try:
-            self.cursor.execute(stmt, (actor_tmdb_id,))
-            actor_name = self.cursor.fetchone()[0]
+            cursor.execute(stmt, (actor_tmdb_id,))
+            actor_name = cursor.fetchone()[0]
         except mariadb.Error as e:
             print(f"Error getting actor's name: {e}")
 
@@ -69,8 +90,8 @@ def Actor(self, actor_name: str = None, actor_tmdb_id: str = None, order_by=None
                "FROM Actor " \
                "WHERE actor_name = ?"
         try:
-            self.cursor.execute(stmt, (actor_name,))
-            actor_tmdb_id = self.cursor.fetchone()[0]
+            cursor.execute(stmt, (actor_name,))
+            actor_tmdb_id = cursor.fetchone()[0]
         except [mariadb.Error, TypeError] as e:
             print(f"Error getting actor's tmdb_id: {e}")
 

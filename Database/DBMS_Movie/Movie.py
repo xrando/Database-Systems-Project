@@ -11,8 +11,19 @@ try:
 except configparser.Error as e:
     print(f"Error reading config file: {e}")
 
+conn = mariadb.connect(
+    user=config.get('DBMS_MOVIE', 'USERNAME'),
+    password=config.get('DBMS_MOVIE', 'PASSWORD'),
+    host=config.get('DBMS_MOVIE', 'HOST'),
+    port=int(config.get('DBMS_MOVIE', 'PORT')),
+    database=config.get('DBMS_MOVIE', 'DATABASE')
+)
+cursor = conn.cursor()
 
-def Movie_list(self, page: int = 1, limit: int = 30) -> list[tuple]:
+tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+
+
+def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     """
     Get all movies in the database, for the home page (30 most recent)
 
@@ -38,8 +49,8 @@ def Movie_list(self, page: int = 1, limit: int = 30) -> list[tuple]:
            "ORDER BY release_date DESC " \
            "LIMIT ? " \
            "OFFSET ?;"
-    self.cursor.execute(stmt, (limit, offset))
-    movies = self.cursor.fetchall()
+    cursor.execute(stmt, (limit, offset))
+    movies = cursor.fetchall()
     for movie in movies:
         # Use tmdb api to get the image link
         try:
@@ -73,7 +84,8 @@ def Movie_list(self, page: int = 1, limit: int = 30) -> list[tuple]:
 
     return result
 
-def get_movie_by_title(self, title: str) -> dict:
+
+def get_movie_by_title(title: str) -> dict:
     """
     Get a movie by title as a dictionary of the following format:
 
@@ -117,8 +129,8 @@ def get_movie_by_title(self, title: str) -> dict:
                  "ON Movie.movie_id = Movie_Genre.movie_id " \
                  "WHERE Movie.title = ?"
     try:
-        self.cursor.execute(movie_stmt, (title,))
-        movie = self.cursor.fetchone()
+        cursor.execute(movie_stmt, (title,))
+        movie = cursor.fetchone()
         try:
             movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
             movie_info = tmdb.Movies(movie_id).info()
@@ -144,20 +156,20 @@ def get_movie_by_title(self, title: str) -> dict:
 
         result["movie"] = (movie[0], movie_date, movie[2], poster, banner, movie[3])
 
-        self.cursor.execute(director_stmt, (title,))
-        director = self.cursor.fetchone()
+        cursor.execute(director_stmt, (title,))
+        director = cursor.fetchone()
 
         director_tmdb_id = director[1]
         # director_name = director[0].replace(" ", "-")
         # director_link = config.get("MOVIE", "TMDB_PERSON_URL") + director_tmdb_id + "-" + director_name
         result["director"] = (director[0], director_tmdb_id)
 
-        self.cursor.execute(actor_stmt, (title,))
-        actors = self.cursor.fetchall()
+        cursor.execute(actor_stmt, (title,))
+        actors = cursor.fetchall()
         result["actors"] = list(actors)
 
-        self.cursor.execute(genre_stmt, (title,))
-        genres = self.cursor.fetchall()
+        cursor.execute(genre_stmt, (title,))
+        genres = cursor.fetchall()
         result["genres"] = [genre[0] for genre in genres]
     except mariadb.Error as e:
         print(f"Error executing statement: {e}")
@@ -165,7 +177,7 @@ def get_movie_by_title(self, title: str) -> dict:
     return result
 
 
-def get_pages(self, pages: int = 1, limit: int = 30) -> dict[str, int]:
+def get_pages(pages: int = 1, limit: int = 30) -> dict[str, int]:
     """
     Get the number of pages
     :param pages: Number of pages
@@ -179,12 +191,12 @@ def get_pages(self, pages: int = 1, limit: int = 30) -> dict[str, int]:
            "FROM Movie " \
            "WHERE release_date < CURRENT_DATE();"
 
-    self.cursor.execute(stmt, (limit, limit, pages))
-    total_pages, pages_left = self.cursor.fetchone()
+    cursor.execute(stmt, (limit, limit, pages))
+    total_pages, pages_left = cursor.fetchone()
     return {"total_pages": total_pages, "pages_left": pages_left}
 
 
-def carousel(self) -> list[tuple]:
+def carousel() -> list[tuple]:
     """
     Returns a list of 5 movies that are within 1 month of current date and have a banner image
     :return: List of movies (title, release_date, banner)
@@ -204,8 +216,8 @@ def carousel(self) -> list[tuple]:
            "OFFSET ?;"
 
     while len(result) < 5:
-        self.cursor.execute(stmt, (len(result) + current_offset,))
-        movie = self.cursor.fetchone()
+        cursor.execute(stmt, (len(result) + current_offset,))
+        movie = cursor.fetchone()
         # Check if movie is in result (duplicate)
         if movie[0] in [x[0] for x in result]:
             current_offset += 1

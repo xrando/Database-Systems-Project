@@ -71,7 +71,7 @@ class DBMS_Movie:
             print(f"Error connecting to MariaDB Platform: {e}")
             sys.exit(1)
 
-    from .Movie import Movie_list, get_movie_by_title, get_pages, carousel
+    from .Movie import Movie_list, get_movie_by_title,get_pages, carousel
     from .Actor import Actor
     from .Director import Director
     from .Search import search_movies, search_directors, search_actors, get_movieID

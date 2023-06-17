@@ -131,7 +131,7 @@
                             </td>
 
                             <td>
-                                <a href="{{ url_for('movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a>
+                                <a href="{{ url_for('routes.movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a>
                                 as {{ movie[2] }}
                         </tr>
                     {% endfor %}
