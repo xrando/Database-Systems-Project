@@ -580,7 +580,7 @@ def parse_args() -> None:
     parser = argparse.ArgumentParser(
         description="Database Management System for Movie Database. "
                     "Ensure that you have a Config.ini file in the Config folder. "
-                    "Refer to Sample.Config.ini for an example.",
+                    "Refer to config.ini for an example.",
         prog="DBMS Movie"
     )
 
