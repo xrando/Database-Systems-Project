@@ -37,7 +37,7 @@ def search_movies(name: str) -> tuple:
                    "WHERE title "
                    "LIKE %s"
                    "LIMIT 30", ('%' + name + '%',))
-    return self.cursor.fetchall()
+    return cursor.fetchall()
 
 
 def search_actors(name: str) -> tuple:
