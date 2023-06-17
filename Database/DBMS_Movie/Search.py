@@ -20,3 +20,9 @@ def search_actors(self, name: str) -> tuple:
                         "LIKE %s"
                         "LIMIT 30", ('%' + name + '%',))
     return self.cursor.fetchall()
+
+def get_movieID(self, title: str) -> int:
+    self.cursor.execute("SELECT movie_id "
+                        "FROM movie "
+                        "WHERE title = %s", (title,))
+    return self.cursor.fetchone()[0]
