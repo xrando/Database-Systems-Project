@@ -8,7 +8,7 @@ import argparse
 
 config = configparser.ConfigParser()
 try:
-    config.read('../Config/config.ini')
+    config.read('../../Config/config.ini')
 except configparser.Error as e:
     print(f"Error reading config file: {e}")
     sys.exit(1)
