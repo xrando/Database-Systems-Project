@@ -1,62 +1,56 @@
 from pymongo import MongoClient
 
-# Connect to MongoDB
-client = MongoClient('mongodb://localhost:27017/')
+class MongoDBHandler:
+    def __init__(self, connection_string, database_name):
+        self.client = MongoClient(connection_string)
+        self.db = self.client[database_name]
 
-# Create a new database
-db = client['movie_db']
+    def insert_document(self, collection_name, document):
+        collection = self.db[collection_name]
+        result = collection.insert_one(document)
+        print('Inserted ID:', result.inserted_id)
 
-# Create collections
-reviews = db['reviews']
-watchlist = db['watchlist']
-user_follows = db['user_follows']
-#not sure if needed
-watchlist_arr = db['watchlist_arr']
-alternative_titles = db['alternative_titles']
+    def find_documents(self, collection_name, query={}):
+        collection = self.db[collection_name]
+        return list(collection.find(query))
+
+    def update_document(self, collection_name, query, update_data):
+        collection = self.db[collection_name]
+        collection.update_one(query, {'$set': update_data})
+
+    def delete_documents(self, collection_name, query):
+        collection = self.db[collection_name]
+        collection.delete_many(query)
 
 
-# Insert a sample document into the collection
-result = reviews.insert_one({
+# Example usage:
+handler = MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+
+handler.insert_document('reviews', {
     'movie_id': 10,
     'ratings_arr': [4, 5, 3],
     'comments_arr': ['Great movie!', 'Loved the acting', 'Could have been better'],
 })
-print('Inserted ID:', result.inserted_id)
 
-watch = watchlist.insert_one({
+handler.insert_document('watchlist', {
     'user_id': 1,
     'watchlist_arr': [1, 2, 3],
 })
-print('Inserted ID:', watch.inserted_id)
 
-following = user_follows.insert_one({
+handler.insert_document('user_follows', {
     'user_id': 1,
-    'following_arr': [1, 2, 3]
+    'following_arr': [1, 2, 3],
 })
-print('Inserted ID:', following.inserted_id)
 
 
-cursor = reviews.find({'movie_id': 10})
-for document in cursor:
-     print(document)
-cursor = watchlist.find({'user_id': 1})
+cursor = handler.find_documents('reviews', {'movie_id': 10})
 for document in cursor:
     print(document)
-cursor = user_follows.find({'user_id': 1})
+
+cursor = handler.find_documents('watchlist', {'user_id': 1})
 for document in cursor:
     print(document)
-# # Find all documents in the reviews collection
-# cursor = reviews.find({})
-#
-# # Iterate over the documents
-# for document in cursor:
-#     print(document)
-#
-#
-# # Find documents with the specific title
-# query = {'movie_id': 10}
-# cursor = reviews.find(query)
-#
-# # Iterate over the matching documents
-# for document in cursor:
-#     print(document)
+
+cursor = handler.find_documents('user_follows', {'user_id': 1})
+for document in cursor:
+    print(document)
