@@ -11,7 +11,7 @@ DBMS_Movie = DBMS_Movie.DBMS_Movie()
 dbUser = DBUser.Database()
 login_manager.init_app(app)
 config = configparser.ConfigParser()
-config.read('../Config/config.ini')
+config.read('../Config/Sample.Config.ini')
 app.config.update(TESTING=True, SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf')
 
 
@@ -279,7 +279,6 @@ def search():
         # Handle invalid choice
         results = []
     return render_template('search.html', results=results, choice=choice)
-
 # Error Site Route
 # # Error handling page for not found sites / locations
 # @app.errorhandler(404)
