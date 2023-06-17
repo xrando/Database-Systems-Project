@@ -260,6 +260,27 @@ def director_page(director_name: str = None, tmdb_id: int = None) -> str:
         director_tmdb_page=director_tmdb_page
     )
 
+#search
+@app.route('/search', methods=['POST'])
+def search():
+    choice = request.form['choice']
+    query = request.form['search']
+    if choice == 'directors':
+        #search for directors
+        #results = ['Director 1', 'Director 2', 'Director 3']
+        results = DBMS_Movie.search_table('director', query)
+        print(results)
+    elif choice == 'actors':
+        #search for actors
+        results = ['Actor 1', 'Actor 2', 'Actor 3']
+    elif choice == 'movie':
+        #search for movie
+        #results = ['Title 1', 'Title 2', 'Title 3']
+        results = DBMS_Movie.search_table('movie', query)
+    else:
+        # Handle invalid choice
+        results = []
+    return render_template('search.html', results=results, choice=choice)
 
 # Error Site Route
 # # Error handling page for not found sites / locations

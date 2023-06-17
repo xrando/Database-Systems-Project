@@ -536,7 +536,11 @@ class DBMS_Movie:
             result += [(movie[0], movie_date, banner)]
 
         return result
-
+    #search
+    def search_table(self, table_name: str, name: str) -> tuple:
+        query = f"SELECT * FROM {table_name} WHERE title LIKE %s"
+        self.cursor.execute(query, ('%' + name + '%',))
+        return self.cursor.fetchall()
 
 def parse_args() -> None:
     import subprocess
