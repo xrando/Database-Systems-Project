@@ -4,7 +4,7 @@ from datetime import timedelta
 import Database.DBMS_Movie as DBMS_Movie
 import Database.User as DBUser
 import configparser
-
+import Database.Mongo as Mongo
 login_manager = LoginManager()
 app = Flask(__name__)
 DBMS_Movie = DBMS_Movie.DBMS_Movie()
@@ -13,7 +13,7 @@ login_manager.init_app(app)
 config = configparser.ConfigParser()
 config.read('../Config/config.ini')
 app.config.update(TESTING=True, SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf')
-
+handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
 
 class User(UserMixin):
     def __init__(self, id):
@@ -283,6 +283,33 @@ def search():
         results = []
     return render_template('search.html', results=results, choice=choice)
 
+# review
+@app.route('/review', methods=['POST'])
+def review():
+    movieName = request.form['movie_name']
+    rating = request.form['rating']
+    comments = request.form['comment']
+    # print(movieName)
+    # print(rating)
+    # print(comments)
+    movieID = DBMS_Movie.get_movieID(movieName)
+    # print(movieID)
+    #if movieID is None, create new movie document
+    # print(handler.find_documents('reviews', {'movie_id': movieID}))
+    if handler.find_documents('reviews', {'movie_id': movieID}) == []:
+        handler.insert_document('reviews', {
+            'movie_id': movieID,
+            'ratings': [rating],
+            'comments': [comments],
+        })
+    # if movieID is found, append ratings and comments
+    else:
+        handler.update_document('reviews', {'movie_id': movieID}, {
+            'ratings': rating,
+            'comments': comments,
+        }, '$push')
+    #return to home page
+    return redirect('/')
 
 # Error Site Route
 # # Error handling page for not found sites / locations

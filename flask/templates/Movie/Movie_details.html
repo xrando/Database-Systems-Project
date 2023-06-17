@@ -43,7 +43,43 @@
                     </tr>
                 {% endfor %}
             </tbody>
-    </table>
-
+        </table>
+    </div>
+    <!-- Reviews -->
+{#    {% if user.is_authenticated %}#}
+        <div class="container-fluid">
+            <form method="POST" action="/review">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Movie Review</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Rating</td>
+                            <td>
+                                <select name="rating">
+                                    <option value="1">1 Star</option>
+                                    <option value="2">2 Star</option>
+                                    <option value="3">3 Star</option>
+                                    <option value="4">4 Star</option>
+                                    <option value="5">5 Star</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Review</td>
+                            <td><textarea name="comment" rows="5" cols="50"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td><input type="hidden" name="movie_name" value="{{ movie[0] }}"></td>
+                            <td><input type="submit" value="Submit"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+{#    {% endif %}#}
 
 {% endblock %}
