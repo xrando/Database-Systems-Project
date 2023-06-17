@@ -268,7 +268,7 @@ def search():
     if choice == 'directors':
         #search for directors
         #results = ['Director 1', 'Director 2', 'Director 3']
-        results = DBMS_Movie.search_table('director', query)
+        results = DBMS_Movie.search_directors(query)
         print(results)
     elif choice == 'actors':
         #search for actors
@@ -276,7 +276,7 @@ def search():
     elif choice == 'movie':
         #search for movie
         #results = ['Title 1', 'Title 2', 'Title 3']
-        results = DBMS_Movie.search_table('movie', query)
+        results = DBMS_Movie.search_movies(query)
     else:
         # Handle invalid choice
         results = []

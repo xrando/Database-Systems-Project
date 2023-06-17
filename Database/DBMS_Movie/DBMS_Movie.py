@@ -537,9 +537,11 @@ class DBMS_Movie:
 
         return result
     #search
-    def search_table(self, table_name: str, name: str) -> tuple:
-        query = f"SELECT * FROM {table_name} WHERE title LIKE %s"
-        self.cursor.execute(query, ('%' + name + '%',))
+    def search_directors(self, name: str) -> tuple:
+        self.cursor.execute("SELECT * FROM director WHERE director_name LIKE %s", ('%' + name + '%',))
+        return self.cursor.fetchall()
+    def search_movies(self, name: str) -> tuple:
+        self.cursor.execute("SELECT * FROM movie WHERE title LIKE %s", ('%' + name + '%',))
         return self.cursor.fetchall()
 
 def parse_args() -> None:
