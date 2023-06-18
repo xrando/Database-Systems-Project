@@ -1,7 +1,6 @@
 import mariadb
 import sys
-import configparser
-import os
+from Config.ConfigManager import ConfigManager
 
 
 class Database:
@@ -12,9 +11,11 @@ class Database:
 
         All Configurations are stored in the config.ini file in path ../Config/config.ini
         """
-        config = configparser.ConfigParser()
-        config_route = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Config', 'config.ini'))
-        config.read(config_route)
+        # Initialize the config manager
+        config_manager = ConfigManager()
+
+        # Get the configuration
+        config = config_manager.get_config()
 
         user = config.get('DBMS_USER', 'USERNAME')
         password = config.get('DBMS_USER', 'PASSWORD')

@@ -1,7 +1,7 @@
 import mariadb
 import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
-from .ConfigManager import ConfigManager
+from Config.ConfigManager import ConfigManager
 
 # Initialize the config manager
 config_manager = ConfigManager()

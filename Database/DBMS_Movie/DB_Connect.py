@@ -1,5 +1,4 @@
 import configparser
-import os
 import sys
 import tmdbsimple as tmdb
 import mariadb
@@ -16,13 +15,10 @@ class DBConnection:
         return cls._instance
 
     def _create_connection(self):
-        config = configparser.ConfigParser()
-        config_route = os.path.join(os.path.dirname(__file__), '..', '..', 'Config', 'config.ini')
+        from Config.ConfigManager import ConfigManager
 
-        try:
-            config.read(config_route)
-        except configparser.Error as e:
-            print(f"Error reading config file: {e}")
+        config_manager = ConfigManager()
+        config = config_manager.get_config()
 
         try:
             user = config.get('DBMS_MOVIE', 'USERNAME')

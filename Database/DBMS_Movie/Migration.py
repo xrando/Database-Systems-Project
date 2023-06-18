@@ -1,7 +1,4 @@
-import mariadb
-import sys
-from .DB_Connect import DBConnection
-from .ConfigManager import ConfigManager
+from Config.ConfigManager import ConfigManager
 
 config_manager = ConfigManager()
 
@@ -11,47 +8,6 @@ config = config_manager.get_config()
 database = config.get('DBMS_MOVIE', 'DATABASE')
 user = config.get('DBMS_MOVIE', 'USERNAME')
 password = config.get('DBMS_MOVIE', 'PASSWORD')
-
-
-def create_tables() -> None:
-    raise NotImplementedError("Use seed() instead")
-    """
-    Database Migration Function, creates the tables in the database
-    Schema of the database:
-
-    Movie (movie_id, title, release_date, synopsis)
-
-    Genre (genre_id, name)
-
-    Movie_Genre (movie_id, genre_id)
-
-    Actor (actor_id, actor_name, wiki_link)
-
-    Director (director_id, director_name, wiki_link)
-
-    Movie_Actor (movie_id, actor_id)
-
-    Movie_Director (movie_id, director_id)
-
-    :return: None
-    """
-    movie_table_file = "tables.sql"
-
-    # Connect to the database
-    try:
-        cursor.execute("USE DBMS_Movie")
-    except mariadb.Error as e:
-        print(f"Error connecting to MariaDB Platform: {e}")
-        sys.exit(1)
-
-    # Open the table file
-    with open(movie_table_file, 'r') as f:
-        # Execute the table file
-        try:
-            cursor.execute(f.read())
-        except mariadb.Error as e:
-            print(f"Error executing table file: {e}")
-            sys.exit(1)
 
 
 def seed(seed_file: str = None) -> None:

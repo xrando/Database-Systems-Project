@@ -1,13 +1,12 @@
 from flask import render_template
 from . import routes
-import configparser
 import Database.DBMS_Movie as DBMS_Movie
-import os
+from Config.ConfigManager import ConfigManager
 
 DBMS_Movie = DBMS_Movie
-config = configparser.ConfigParser()
-config_route = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Config', 'config.ini'))
-config.read(config_route)
+
+config_manager = ConfigManager()
+config = config_manager.get_config()
 
 
 @routes.route('/actor/<string:actor_name>', methods=['GET'])

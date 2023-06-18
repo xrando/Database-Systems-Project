@@ -3,17 +3,16 @@ from flask_login import LoginManager, login_required, UserMixin, login_user, log
 from datetime import timedelta
 from routes import *
 import Database.User as DBUser
+from Config.ConfigManager import ConfigManager
 
 login_manager = LoginManager()
 app = Flask(__name__)
 dbUser = DBUser.Database()
+config_manager = ConfigManager()
+config = config_manager.get_config()
 login_manager.init_app(app)
 app.config.update(TESTING=True, SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf')
 app.register_blueprint(routes)
-
-# config = configparser.ConfigParser()
-# config.read('../Config/config.ini')
-# handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
 
 
 class User(UserMixin):

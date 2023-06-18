@@ -181,3 +181,4 @@ instance/*
 .env
 
 Config/Config.*
+Config/config.ini
