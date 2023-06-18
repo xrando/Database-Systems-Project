@@ -44,8 +44,8 @@ class DBConnection:
                 database=config.get('DBMS_MOVIE', 'DATABASE')
             )
             return connection
-        except mariadb.DatabaseError as e:
-            # Try to create database
+        except mariadb.ProgrammingError as e:
+            print(f"You don't have a database named {database} in your MariaDB instance, creating it now...")
             try:
                 connection = mariadb.connect(
                     user=user,
@@ -57,11 +57,8 @@ class DBConnection:
                 cursor.execute("CREATE DATABASE IF NOT EXISTS " + database)
                 cursor.execute("USE " + database)
 
-                # Migration untested here
-                # TODO: Test migration
-                from Migration import create_tables, seed
-                create_tables(cursor)
-                seed(cursor)
+                from .Migration import seed
+                seed()
 
                 return connection
             except mariadb.Error as e:
