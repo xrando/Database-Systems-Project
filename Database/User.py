@@ -33,7 +33,7 @@ class Database:
             self.cursor = self.connection.cursor()
             print("[+] Connected to Database")
         except mariadb.ProgrammingError as e:
-        # Try to create database
+            # Try to create database
             try:
                 self.connection = mariadb.connect(user=user,
                                                   password=password,
@@ -114,9 +114,19 @@ class Database:
 
     def create_user(self, username: str, password: str, profilename: str, email: str, dob: str) -> None:
         try:
-            self.cursor.execute("INSERT INTO User (username, password, profilename, email, dob) VALUES (?, ?, ?, ?, ?)", (username, password, profilename, email, dob))
+            self.cursor.execute("INSERT INTO User (username, password, profilename, email, dob) VALUES (?, ?, ?, ?, ?)",
+                                (username, password, profilename, email, dob))
         except mariadb.DataError as e:
             print(f"[-] Error creating user in database\n {e}")
+        self.connection.commit()
+
+    def update_user(self, id: int, username: str, password: str, profilename: str, email: str, dob: str) -> None:
+        try:
+            self.cursor.execute(
+                "UPDATE User SET username = ?, password = ?, profilename = ?, email = ?, dob = ? WHERE id = ?",
+                (username, password, profilename, email, dob, id))
+        except mariadb.DataError as e:
+            print(f"[-] Error updating user in database\n {e}")
         self.connection.commit()
 
 

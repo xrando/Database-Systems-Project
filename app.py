@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, app
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user, current_user
 from datetime import timedelta
+
+import Database.Mongo as Mongo
 from routes import *
 import Database.User as DBUser
 from Config.ConfigManager import ConfigManager
@@ -95,7 +97,6 @@ def logout():
     return redirect(url_for('login_page'))
 
 
-
 # Error Site Route
 # # Error handling page for not found sites / locations
 # @app.errorhandler(404)
@@ -103,16 +104,36 @@ def logout():
 #     return render_template('404.html'), 404
 
 # Profile Page
-@app.route('/profile', methods=['GET'])
-def profile():
-    # Get user's username
+@app.route('/profile', methods=['GET', 'POST'])
+def profile(success=None):
+    # Mongodb handler
+    dbHandler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+
+    # Get user's username and data
     print(current_user.id)
-
     userData = User(dbUser.get_user_by_id(current_user.id)[0])
+    # Update user's data
+    print(success)
+    if request.method == 'POST':
+        username = request.form['username']
+        password = userData.password
+        profilename = request.form['profilename']
+        email = request.form['email']
+        dob = request.form['dob']
+        dbUser.update_user(current_user.id, username, password, profilename, email, dob)
+        success = 'Profile Updated'
+        return redirect(url_for('profile', success=success))
 
+    userFollows = dbHandler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
+    userFollowsName = []
+    for user in userFollows:
+        userFollowsName.append(dbUser.get_user_by_id(user)[3])
+    print(userFollows)
     return render_template(
         'profile.html',
         userData=userData,
+        success=success,
+        userFollows=userFollowsName,
     )
 
 

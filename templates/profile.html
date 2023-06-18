@@ -9,27 +9,43 @@
             <div class="col-sm-3"></div>
             <div class="col-sm-6">
                 <div class="row linespace-small">
-                    <div class="row linespace-small">
-                        <div class="col-sm">User ID:</div>
-                        <div class="col-sm"><input type="text" value="{{ userData.id }}" disabled></div>
-                    </div>
-                    <div class="row linespace-small">
-                        <div class="col-sm">Username:</div>
-                        <div class="col-sm"><input type="text" value="{{ userData.username }}" disabled></div>
-                    </div>
-                    <div class="row linespace-small">
-                        <div class="col-sm">Profile Name:</div>
-                        <div class="col-sm"><input type="text" value="{{ userData.name }}" disabled></div>
-                    </div>
-                    <div class="row linespace-small">
-                        <div class="col-sm">Email:</div>
-                        <div class="col-sm"><input type="text" value="{{ userData.email }}" disabled></div>
-                    </div>
-                    <div class="row linespace-small">
-                        <div class="col-sm">Date of Birth</div>
-                        <div class="col-sm"><input type="date" value="{{ userData.dob }}" disabled></div>
-                    </div>
-
+                    <form action="/profile" method="post">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        {% if error %}
+                            <div class="row">
+                                <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
+                            </div>
+                        {% endif %}
+                        {% if success %}
+                            <div class="row">
+                                <p class="success text-success"><strong>Success:</strong> {{ success }}</p>
+                            </div>
+                        {% endif %}
+                        <div class="row linespace-small">
+                            <div class="col-sm">User ID:</div>
+                            <div class="col-sm"><input type="text" value="{{ userData.id }}" disabled></div>
+                        </div>
+                        <div class="row linespace-small">
+                            <div class="col-sm">Username:</div>
+                            <div class="col-sm"><input type="text" name="username" value="{{ userData.username }}">
+                            </div>
+                        </div>
+                        <div class="row linespace-small">
+                            <div class="col-sm">Profile Name:</div>
+                            <div class="col-sm"><input type="text" name="profilename" value="{{ userData.name }}"></div>
+                        </div>
+                        <div class="row linespace-small">
+                            <div class="col-sm">Email:</div>
+                            <div class="col-sm"><input type="text" name="email" value="{{ userData.email }}"></div>
+                        </div>
+                        <div class="row linespace-small">
+                            <div class="col-sm">Date of Birth</div>
+                            <div class="col-sm"><input type="date" name="dob" value="{{ userData.dob }}"></div>
+                        </div>
+                        <div class="row linespace-small">
+                            <input class="btn btn-primary" type="submit" value="Update Profile">
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -46,8 +62,26 @@
     <div class="linespace-medium"></div>
     <div class="row text-center">
         <h1>Following</h1>
-        <div class="linespace-medium"></div>
+        <div class="linespace-small"></div>
     </div>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div class="container testimonial-group border">
+                <div class="row linespace-small">
+                    {% for follow in userFollows %}
+                        <div class="col text-center">
+                            <img src="{{ url_for('static', filename='images/profile.png') }}" class="profile-icon"
+                                 alt="">
+                            <span><p>{{ follow }}</p></span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="linespace-medium"></div>
 
     </div>
 {% endblock %}
