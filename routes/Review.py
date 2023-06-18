@@ -3,14 +3,14 @@ import configparser
 from flask import request, redirect
 
 import Database.DBMS_Movie as DBMS_Movie
-import Database.User as DBUser
 from Database import Mongo
+import os
 from . import routes
 
 DBMS_Movie = DBMS_Movie
-dbUser = DBUser.Database()
 config = configparser.ConfigParser()
-config.read('../Config/config.ini')
+config_route = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Config', 'config.ini'))
+config.read(config_route)
 handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
 
 
