@@ -9,15 +9,13 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-2">
-                    <img src="{{ actor_profile_path }}" alt="{{ actor_name }}" class="img-fluid">
-                    <!-- TMDB Page Link below picture -->
-                    <a href="{{ actor_tmdb_page }}" target="_blank" rel="noopener noreferrer"> <img
-                            src="{{ url_for('static', filename='images/TMDB_Short.png') }}" alt="TMDB"
-                            class="img-thumbnail"></a>
-                </div>
-
-                <div class="col-md-10">
-                    <h2>Personal Info</h2>
+                    <div class="container-fluid">
+                        <img src="{{ actor_profile_path }}" alt="{{ actor_name }}" class="img-fluid">
+                        <!-- TMDB Page Link below picture -->
+                        <a href="{{ actor_tmdb_page }}" target="_blank" rel="noopener noreferrer"> <img
+                                src="{{ url_for('static', filename='images/TMDB_Short.png') }}" alt="TMDB"
+                                class="img-thumbnail"></a>
+                    </div>
                     <div class="accordion" id="accordionExample">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingOne">
@@ -91,52 +89,56 @@
                                 </div>
                             </div>
                         {% endif %}
+                    </div>
+                </div>
 
+                <div class="col-md-10">
+                    <div class="accordion" id="accordionExample2">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingThree">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseThree" aria-expanded="false"
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapseThree" aria-expanded="true"
                                         aria-controls="collapseThree">
                                     Biography
                                 </button>
                             </h2>
-                            <div id="collapseThree" class="accordion-collapse collapse"
+                            <div id="collapseThree" class="accordion-collapse collapse show"
                                  aria-labelledby="headingThree"
-                                 data-bs-parent="#accordionExample">
+                                 data-bs-parent="#accordionExample2">
                                 <div class="accordion-body">
                                     <p>{{ actor_bio }}</p>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Movies -->
+                        <div class="container-fluid mt-3">
+                            <!-- Movies with movie[0] as name, movie[1] as date of release and movie[2] as actor's character -->
+                            <!-- Each row should start with year, title "as" character -->
+                            <div class="row">
+                                <h3>Movies</h3>
+                                <table class="table table-striped">
+                                    <tbody>
+                                    {% for movie in movie_list %}
+                                        <tr>
+
+                                            <td>
+                                                {{ movie[1] }}
+                                            </td>
+
+                                            <td>
+                                                <a href="{{ url_for('routes.movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a>
+                                                as {{ movie[2] }}
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
-            </div>
-        </div>
 
-        <!-- Movies -->
-        <div class="container-fluid mt-5">
-            <!-- Movies with movie[0] as name, movie[1] as date of release and movie[2] as actor's character -->
-            <!-- Each row should start with year, title "as" character -->
-            <div class="row">
-                <h3>Movies</h3>
-                <table class="table table-striped">
-                    <tbody>
-                    {% for movie in movie_list %}
-                        <tr>
-
-                            <td>
-                                {{ movie[1] }}
-                            </td>
-
-                            <td>
-                                <a href="{{ url_for('routes.movie_page', movie_name=movie[0]) }}">{{ movie[0] }}</a>
-                                as {{ movie[2] }}
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
             </div>
         </div>
 
