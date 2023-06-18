@@ -7,7 +7,7 @@ import Database.User as DBUser
 from Database import Mongo
 from . import routes
 
-DBMS_Movie = DBMS_Movie.DBMS_Movie
+DBMS_Movie = DBMS_Movie
 dbUser = DBUser.Database()
 config = configparser.ConfigParser()
 config.read('../Config/config.ini')

@@ -1,26 +1,19 @@
 import mariadb
 import tmdbsimple as tmdb
-import configparser
-import os
+from .DB_Connect import DBConnection
+from .ConfigManager import ConfigManager
 
-config = configparser.ConfigParser()
-config_route = os.path.join(os.path.dirname(__file__), '..', '..', 'Config', 'config.ini')
+# Initialize the config manager
+config_manager = ConfigManager()
 
-try:
-    config.read(config_route)
-except configparser.Error as e:
-    print(f"Error reading config file: {e}")
+# Get the configuration
+config = config_manager.get_config()
 
-conn = mariadb.connect(
-    user=config.get('DBMS_MOVIE', 'USERNAME'),
-    password=config.get('DBMS_MOVIE', 'PASSWORD'),
-    host=config.get('DBMS_MOVIE', 'HOST'),
-    port=int(config.get('DBMS_MOVIE', 'PORT')),
-    database=config.get('DBMS_MOVIE', 'DATABASE')
-)
-cursor = conn.cursor()
+connection = DBConnection().connection
+cursor = connection.cursor()
 
 tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+
 
 def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> dict:
     """

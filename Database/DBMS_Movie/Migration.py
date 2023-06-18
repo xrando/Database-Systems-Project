@@ -1,8 +1,17 @@
 import mariadb
 import sys
+from .DB_Connect import DBConnection
+from .ConfigManager import ConfigManager
 
+config_manager = ConfigManager()
 
-def create_tables(self) -> None:
+# Get the configuration
+config = config_manager.get_config()
+
+connection = DBConnection().connection
+cursor = connection.cursor()
+
+def create_tables() -> None:
     """
     Database Migration Function, creates the tables in the database
     Schema of the database:
@@ -27,7 +36,7 @@ def create_tables(self) -> None:
 
     # Connect to the database
     try:
-        self.cursor.execute("USE DBMS_Movie")
+        cursor.execute("USE DBMS_Movie")
     except mariadb.Error as e:
         print(f"Error connecting to MariaDB Platform: {e}")
         sys.exit(1)
@@ -36,13 +45,13 @@ def create_tables(self) -> None:
     with open(movie_table_file, 'r') as f:
         # Execute the table file
         try:
-            self.cursor.execute(f.read())
+            cursor.execute(f.read())
         except mariadb.Error as e:
             print(f"Error executing table file: {e}")
             sys.exit(1)
 
 
-def seed(self, seed_file: str = None) -> None:
+def seed(seed_file: str = None) -> None:
     """
     Seeds the database with the data from the seed_file
 
@@ -64,7 +73,7 @@ def seed(self, seed_file: str = None) -> None:
     file_path = os.path.abspath(seed_file)
 
     try:
-        command = f"mysql --database {self.database} -u {self.user} -p{self.password} < '{file_path}'"
+        command = f"mysql --database {database} -u {user} -p{password} < '{file_path}'"
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"[-] Error seeding database\n {e}")
@@ -74,7 +83,7 @@ def seed(self, seed_file: str = None) -> None:
 
     # Connect to the database
     try:
-        self.cursor.execute("USE DBMS_Movie")
+        cursor.execute("USE DBMS_Movie")
     except mariadb.Error as e:
         print(f"Error connecting to MariaDB Platform: {e}")
         sys.exit(1)
@@ -83,9 +92,9 @@ def seed(self, seed_file: str = None) -> None:
     with open(seed_file, 'r') as f:
         # Execute the seed file
         try:
-            self.cursor.execute(f.read())
+            cursor.execute(f.read())
         except mariadb.Error as e:
             print(f"Error executing seed file: {e}")
             sys.exit(1)
     # Commit the changes
-    self.connection.commit()
+    connection.commit()

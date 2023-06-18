@@ -1,11 +1,12 @@
 from flask import render_template
-from . import routes
-import Database.DBMS_Movie as DBMS_Movie
-import Database.User as DBUser
 import configparser
 import Database.Mongo as Mongo
+from . import routes
 
-DBMS_Movie = DBMS_Movie.DBMS_Movie
+import Database.DBMS_Movie as DBMS_Movie
+import Database.User as DBUser
+
+DBMS_Movie = DBMS_Movie
 dbUser = DBUser.Database()
 config = configparser.ConfigParser()
 config.read('../Config/config.ini')

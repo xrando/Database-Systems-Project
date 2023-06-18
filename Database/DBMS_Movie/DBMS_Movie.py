@@ -18,6 +18,7 @@ except configparser.Error as e:
 
 
 class DBMS_Movie:
+    raise NotImplementedError("Please implement this class")
     try:
         user = config.get('DBMS_MOVIE', 'USERNAME')
         password = config.get('DBMS_MOVIE', 'PASSWORD')

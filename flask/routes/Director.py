@@ -4,7 +4,7 @@ import Database.DBMS_Movie as DBMS_Movie
 import Database.User as DBUser
 import configparser
 
-DBMS_Movie = DBMS_Movie.DBMS_Movie
+DBMS_Movie = DBMS_Movie
 dbUser = DBUser.Database()
 config = configparser.ConfigParser()
 config.read('../Config/config.ini')
