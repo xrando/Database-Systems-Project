@@ -87,7 +87,7 @@
           </form>
           {% if current_user.is_authenticated %}
           <div class="ms-3">Hi {{ current_user.name }}!</div>
-          <a class="btn btn-danger" href="{{ url_for('logout') }}">Logout</a>
+          <a class="btn btn-link" href="{{ url_for('logout') }}">Logout</a>
           {% else %}
           <a class="btn btn-link" href="{{ url_for('login_page') }}">Login</a>
           {% endif %}
