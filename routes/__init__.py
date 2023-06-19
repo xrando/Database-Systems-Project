@@ -8,5 +8,6 @@ from .Director import *
 from .Search import *
 from .Review import *
 from .Genre import *
+from .Forum import *
 
 #TODO: User routes

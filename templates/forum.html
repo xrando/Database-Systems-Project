@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="accordion" id="forumAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="forumHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#forumCollapse">
+                        Create a new post
+                    </button>
+                </h2>
+                <div id="forumCollapse" class="accordion-collapse collapse" aria-labelledby="forumHeading" data-bs-parent="#forumAccordion">
+                    <div class="accordion-body">
+                        <div class="container-fluid">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Enter Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="POST" action="/post">
+                                        <div class="mb-3">
+                                            <label for="forum" class="form-label">Subject</label>
+                                            <input type="text" name="subject" id="subject" class="form-control">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="comment" class="form-label">Comment</label>
+                                            <textarea name="comment" id="comment" rows="5" class="form-control"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Post</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="accordion" id="forumviewAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="forumviewHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#forumviewCollapse">
+                        View Posts
+                    </button>
+                </h2>
+                <div id="forumviewCollapse" class="accordion-collapse collapse" aria-labelledby="forumviewHeading" data-bs-parent="#forumviewAccordion">
+                    <div class="accordion-body">
+                        <div class="container-fluid">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Post by: GRAB USER NAME</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="forum" class="form-label">Subject</label>
+                                        <input type="text" name="subject" id="subject" class="form-control disabled">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="comment" class="form-label">Comment</label>
+                                        <textarea name="comment" id="comment" rows="5" class="form-control disabled"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
