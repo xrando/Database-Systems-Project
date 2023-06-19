@@ -26,24 +26,3 @@ def search():
         # Handle invalid choice
         results = []
     return render_template('search.html', results=results, choice=choice)
-
-#display movies via genre, ratings etc
-@routes.route('/movie', methods=['GET'])
-def movie():
-    #grab latest movies
-
-
-
-    #grab highly rated movies
-
-
-    #grab movies by genre
-    search_genres('Action')
-
-
-
-
-
-    return render_template(
-        'Movie/movies_display.html'
-    )

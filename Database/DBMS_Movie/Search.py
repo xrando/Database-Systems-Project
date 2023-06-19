@@ -39,16 +39,6 @@ def search_actors(name: str) -> tuple:
                    "LIMIT 30", ('%' + name + '%',))
     return cursor.fetchall()
 
-def search_genres(name: str) -> tuple:
-    cursor.execute("SELECT * "
-                   "FROM movie"
-                   "INNER JOIN movie_genre "
-                   "ON movie.movie_id = movie_genre.movie_id"
-                   "INNER JOIN genre "
-                   "ON movie_genre.genre_id = genre.genre_id"
-                   "WHERE genre.name = %s", (name,))
-    return cursor.fetchall()
-
 def get_movieID(title: str) -> int:
     cursor.execute("SELECT movie_id "
                    "FROM Movie "

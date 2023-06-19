@@ -13,4 +13,4 @@ if config.get('TMDB', 'API_KEY') == "":
 from .Movie import Movie_list, get_movie_by_title, get_pages, carousel, Genre, get_genre_pages
 from .Actor import Actor
 from .Director import Director
-from .Search import search_movies, search_directors, search_actors, get_movieID, search_genres
+from .Search import search_movies, search_directors, search_actors, get_movieID
