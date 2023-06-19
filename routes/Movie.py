@@ -10,7 +10,7 @@ DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
 config = config_manager.get_config()
 
-handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
 
 @routes.route('/home/page/<int:page>', methods=['GET'])
@@ -65,7 +65,7 @@ def movie_page(movie_name: str = None) -> str:
     # get movie reviews
     movieID = DBMS_Movie.get_movieID(movie_name)
     # json object containing all reviews for a movie
-    data = handler.find_documents('reviews', {'movie_id': movieID})
+    data = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID})
     # print(data[0]['movie_id'])
     # print(data[0]['ratings'])
     # print(data[0]['comments'])
@@ -79,14 +79,14 @@ def movie_page(movie_name: str = None) -> str:
     # Error handling just cuz
     if current_user.is_authenticated:
         # Check if movie in watchlist
-        userWatchList = handler.find_documents('watchlist', {'user_id': current_user.id})
+        userWatchList = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id})
         userWatchListId = []
         if userWatchList:
             userWatchList = userWatchList[0]['watchlist_arr']
             for movie in userWatchList:
                 userWatchListId.append(movie)
         else:
-            handler.insert_document('watchlist', {'user_id': current_user.id, 'watchlist_arr': []})
+            handler.insert_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id, 'watchlist_arr': []})
 
         if movieID in userWatchListId:
             inWatchList = True
@@ -96,11 +96,11 @@ def movie_page(movie_name: str = None) -> str:
         # Add to watchlist
         if request.method == 'POST':
             if inWatchList:
-                handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
+                handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id}, {'watchlist_arr': movieID},
                                         '$pull')
                 inWatchList = False
             else:
-                handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
+                handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id}, {'watchlist_arr': movieID},
                                         '$push')
                 inWatchList = True
         else:

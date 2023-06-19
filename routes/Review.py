@@ -8,7 +8,7 @@ from . import routes
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
 config = config_manager.get_config()
-handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
 
 # review
@@ -24,15 +24,15 @@ def review():
     # print(movieID)
     # if movieID is None, create new movie document
     # print(handler.find_documents('reviews', {'movie_id': movieID}))
-    if handler.find_documents('reviews', {'movie_id': movieID}) == []:
-        handler.insert_document('reviews', {
+    if not handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID}):
+        handler.insert_document(config.get('MONGODB', 'REVIEW_COLLECTION'), {
             'movie_id': movieID,
             'ratings': [rating],
             'comments': [comments],
         })
     # if movieID is found, append ratings and comments
     else:
-        handler.update_document('reviews', {'movie_id': movieID}, {
+        handler.update_document(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID}, {
             'ratings': rating,
             'comments': comments,
         }, '$push')

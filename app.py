@@ -108,7 +108,7 @@ def logout():
 @login_required
 def profile(success=None):
     # Mongodb handler
-    handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+    handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
     # Get user's username and data
     print(current_user.id)
@@ -126,17 +126,17 @@ def profile(success=None):
         return redirect(url_for('profile', success=success))
 
     # Print our user follow list
-    userFollows = handler.find_documents('user_follows', {'user_id': current_user.id})
+    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
     userFollowsName = []
     if userFollows:
         userFollows = userFollows[0]['following_arr']
         for user in userFollows:
             userFollowsName.append(dbUser.get_user_by_id(user))
     else:
-        handler.insert_document('user_follows', {'user_id': current_user.id, 'following_arr': []})
+        handler.insert_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id, 'following_arr': []})
 
     # Print Movie watch list
-    movieWatchList = handler.find_documents('watchlist', {'user_id': current_user.id})
+    movieWatchList = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id})
     movieWatchListName = []
     if movieWatchList:
         movieWatchList = movieWatchList[0]['watchlist_arr']
@@ -157,34 +157,34 @@ def profile(success=None):
 @app.route('/profile/<id>', methods=['GET', 'POST'])
 def other_profile(id):
     # Mongodb handler
-    handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+    handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
     # Get user's username and data
     userData = dbUser.get_user_by_id(id)
 
     # Check if user is followed
-    userFollows = handler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
+    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})[0]['following_arr']
     if userFollows:
         if userData[0] in userFollows:
             followed = True
         else:
             followed = False
     else:
-        handler.insert_document('user_follows', {'user_id': current_user.id, 'following_arr': []})
+        handler.insert_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id, 'following_arr': []})
 
     # Follow user
     if request.method == 'POST':
         print("Is user followed: " + str(followed))
         if not followed:
-            handler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
+            handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id}, {'following_arr': userData[0]},
                                     '$push')
         else:
-            handler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
+            handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id}, {'following_arr': userData[0]},
                                     '$pull')
         return redirect(url_for('other_profile', id=id))
 
     # Print our user follow list
-    userFollows = handler.find_documents('user_follows', {'user_id': userData[0]})
+    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': userData[0]})
     userFollowsName = []
     if userFollows:
         userFollows = userFollows[0]['following_arr']
