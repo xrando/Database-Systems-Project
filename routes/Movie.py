@@ -28,6 +28,7 @@ def home(page: int) -> str:
 
     carousel = DBMS_Movie.carousel()
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
+    genres = DBMS_Movie.get_all_genres()
     kwargs = {}
 
     return render_template(
@@ -38,6 +39,7 @@ def home(page: int) -> str:
         pages_left=pages_left,
         carousel=carousel,
         page=page,
+        genre_list=genres,
         kwargs=kwargs
     )
 

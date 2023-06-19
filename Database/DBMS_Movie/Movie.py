@@ -333,3 +333,17 @@ def get_genre_pages(genre: str, limit: int = 30) -> dict[str, int]:
     cursor.execute(stmt, (limit, limit, limit, genre))
     total_pages, pages_left = cursor.fetchone()
     return {"total_pages": total_pages, "pages_left": pages_left}
+
+
+def get_all_genres() -> list[tuple]:
+    """
+    Returns a list of genres
+    :return: List of genres (genre_id, name)
+    :rtype: list[tuple]
+    """
+    stmt = "SELECT genre_id, name " \
+           "FROM Genre;"
+
+    cursor.execute(stmt)
+
+    return cursor.fetchall()

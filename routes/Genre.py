@@ -30,6 +30,8 @@ def genre_page(genre: str, page: int) -> str:
         raise Exception('Page not found')
 
     movie_list = DBMS_Movie.Genre(genre=genre, page=page, limit=limit)
+    carousel = DBMS_Movie.carousel()
+    genres = DBMS_Movie.get_all_genres()
     kwargs = {'genre': genre}  # Additional keyword arguments for the URL
 
     return render_template(
@@ -39,6 +41,9 @@ def genre_page(genre: str, page: int) -> str:
         total_pages=total_pages,
         pages_left=pages_left,
         page=page,
+        carousel=carousel,
+        genre=genre,
+        genre_list=genres,
         kwargs=kwargs
     )
 
