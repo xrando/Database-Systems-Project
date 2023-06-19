@@ -1,4 +1,4 @@
-from flask import render_template
+from flask import render_template, request, redirect
 
 import Database.DBMS_Movie as DBMS_Movie
 import Database.Mongo as Mongo
@@ -41,3 +41,8 @@ def genre_page(genre: str, page: int) -> str:
         page=page,
         kwargs=kwargs
     )
+
+@routes.route('/filter', methods=['POST'])
+def filterGenre():
+    genre = request.form['genre']
+    return redirect('/genre/' + genre + '/1')
