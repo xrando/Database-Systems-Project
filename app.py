@@ -20,7 +20,6 @@ app.register_blueprint(routes)
 class User(UserMixin):
     def __init__(self, id):
         user_data = dbUser.get_user_by_id(id)
-        print(user_data)
         self.id = user_data[0]
         self.username = user_data[1]
         self.password = user_data[2]
@@ -111,10 +110,8 @@ def profile(success=None):
     handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
     # Get user's username and data
-    print(current_user.id)
     userData = User(dbUser.get_user_by_id(current_user.id)[0])
     # Update user's data
-    print(success)
     if request.method == 'POST':
         username = request.form['username']
         password = userData.password
