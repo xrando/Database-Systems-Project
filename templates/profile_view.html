@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="row text-center">
+            <h1>User Profile</h1>
+            <div class="linespace-medium"></div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-6">
+                <div class="row linespace-small">
+                    <div class="row linespace-small">
+                        {% if followed == True %}
+                            <div class="col-sm-6">
+                                <form action="/profile/{{ userData[0] }}" method="post">
+                                    <input type="hidden" name="followed" value="{{ userData[0] }}">
+                                    <button type="submit" class="btn btn-primary">Unfollow</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="col-sm-6">
+                                <form action="/profile/{{ userData[0] }}" method="post">
+                                    <input type="hidden" name="followed" value="{{ userData[0] }}">
+                                    <button type="submit" class="btn btn-primary">Follow</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">User ID:</div>
+                        <div class="col-sm">{{ userData[0] }}</div>
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">Profile Name:</div>
+                        <div class="col-sm">{{ userData[3] }}</div>
+                    </div>
+                    <div class="row linespace-small">
+                        <div class="col-sm">Date of Birth</div>
+                        <div class="col-sm">{{ userData[5] }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+
+    <div class="linespace-medium"></div>
+    <div class="row text-center">
+        <h1>User Watchlist</h1>
+        <div class="linespace-medium"></div>
+    </div>
+
+
+    <div class="linespace-medium"></div>
+    <div class="row text-center">
+        <h1>Following</h1>
+        <div class="linespace-small"></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div class="container testimonial-group border">
+                <div class="row linespace-small">
+                    {% for follow in userFollows %}
+                        <div class="col text-center">
+                            <a href="{{ url_for('other_profile', id=follow[0]) }}">
+                                <img src="{{ url_for('static', filename='images/profile.png') }}" class="profile-icon"
+                                     alt="">
+                                <span><p>{{ follow[3] }}</p></span>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
+    <div class="linespace-medium"></div>
+
+    </div>
+{% endblock %}

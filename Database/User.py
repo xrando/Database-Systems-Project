@@ -98,6 +98,7 @@ class Database:
             print(f"[-] Error retrieving user from database\n {e}")
         return self.cursor.fetchone()
 
+
     def get_password_by_username(self, username: str) -> tuple:
         try:
             self.cursor.execute("SELECT id, password FROM User WHERE username = ?", (username,))

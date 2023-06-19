@@ -71,9 +71,11 @@
                 <div class="row linespace-small">
                     {% for follow in userFollows %}
                         <div class="col text-center">
-                            <img src="{{ url_for('static', filename='images/profile.png') }}" class="profile-icon"
-                                 alt="">
-                            <span><p>{{ follow }}</p></span>
+                            <a href="{{ url_for('other_profile', id=follow[0]) }}">
+                                <img src="{{ url_for('static', filename='images/profile.png') }}" class="profile-icon"
+                                     alt="">
+                                <span><p>{{ follow[3] }}</p></span>
+                            </a>
                         </div>
                     {% endfor %}
                 </div>

@@ -124,15 +124,59 @@ def profile(success=None):
         success = 'Profile Updated'
         return redirect(url_for('profile', success=success))
 
-    userFollows = dbHandler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
+    userFollows = dbHandler.find_documents('user_follows', {'user_id': current_user.id})
     userFollowsName = []
-    for user in userFollows:
-        userFollowsName.append(dbUser.get_user_by_id(user)[3])
-    print(userFollows)
+    if userFollows:
+        userFollows = userFollows[0]['following_arr']
+        for user in userFollows:
+            userFollowsName.append(dbUser.get_user_by_id(user))
+
     return render_template(
         'profile.html',
         userData=userData,
         success=success,
+        userFollows=userFollowsName,
+    )
+
+
+# Other user profile page
+@app.route('/profile/<id>', methods=['GET', 'POST'])
+def other_profile(id):
+    # Mongodb handler
+    dbHandler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+
+    # Get user's username and data
+    userData = dbUser.get_user_by_id(id)
+
+    # Check if user is followed
+    userFollows = dbHandler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
+    if userData[0] in userFollows:
+        followed = True
+    else:
+        followed = False
+
+    # Follow user
+    if request.method == 'POST':
+        print("Is user followed: " + str(followed))
+        if not followed:
+            dbHandler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
+                                      '$push')
+        else:
+            dbHandler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
+                                      '$pull')
+        return redirect(url_for('other_profile', id=id))
+
+    userFollows = dbHandler.find_documents('user_follows', {'user_id': userData[0]})
+    userFollowsName = []
+    if userFollows:
+        userFollows = userFollows[0]['following_arr']
+        for user in userFollows:
+            userFollowsName.append(dbUser.get_user_by_id(user))
+
+    return render_template(
+        'profile_view.html',
+        userData=userData,
+        followed=followed,
         userFollows=userFollowsName,
     )
 
