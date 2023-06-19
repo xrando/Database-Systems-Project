@@ -95,3 +95,10 @@ def movie_page(movie_name: str = None) -> str:
         actors=movie_actors,
         reviews=reviews
     )
+
+#display movies via genre, ratings etc
+@routes.route('/movie', methods=['GET'])
+def movie():
+    return render_template(
+        'Movie/movies_display.html'
+    )
