@@ -129,7 +129,17 @@ class Database:
         except mariadb.DataError as e:
             print(f"[-] Error updating user in database\n {e}")
         self.connection.commit()
-
+        
+    def search_user(self, name: str) -> tuple:
+        try:
+            self.cursor.execute("SELECT * "
+                           "FROM User "
+                           "WHERE username "
+                           "LIKE %s"
+                           "LIMIT 30", ('%' + name + '%',))
+        except mariadb.DataError as e:
+            print(f"[-] Error searching for users from database\n {e}")
+        return self.cursor.fetchall()
 
 if __name__ == "__main__":
     db = Database()

@@ -2,8 +2,10 @@ from flask import render_template, request
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
+import Database.User as DBUser
 
 DBMS_Movie = DBMS_Movie
+dbUser = DBUser.Database()
 config_manager = ConfigManager()
 config = config_manager.get_config()
 
@@ -22,6 +24,9 @@ def search():
     elif choice == 'movie':
         # search for movie
         results = DBMS_Movie.search_movies(query)
+    elif choice == 'profile':
+        # search for user profile
+        results = dbUser.search_user(query)
     else:
         # Handle invalid choice
         results = []
