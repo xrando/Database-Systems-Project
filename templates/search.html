@@ -1,24 +1,65 @@
-{% extends 'base.html' %} {% block content %} {#display search results#}
+{% extends 'base.html' %} {% block content %}
 <div class="container-fluid">
   <table class="table table-striped">
     <thead>
       <tr>
-        <th>{{ choice }} results</th>
+        <th>Movies</th>
       </tr>
     </thead>
     <tbody>
-      {% for result in results %}
+      {% for movie in movies %}
       <tr>
-        {% if choice == 'movie' %}
-        <td><a href="/{{ choice }}/{{ result[1] }}">{{ result[1] }}</a></td>
-        {% elif choice == 'director' %}
-        <td><a href="/{{ choice }}/{{ result[2] }}">{{ result[1] }}</a></td>
-        {% elif choice == 'actor' %}
-        <td><a href="/{{ choice }}/{{ result[2] }}">{{ result[1] }}</a></td>
-        {% elif choice == 'profile' %}
-        <td><a href="/{{ choice }}/{{ result[0] }}">{{ result[3] }}</a></td>
+        <td><a href="/movie/{{ movie[1] }}">{{ movie[1] }}</a></td>
       </tr>
-      {% endif %} {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="container-fluid">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Directors</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for director in directors %}
+      <tr>
+        <td><a href="/director/{{ director[2] }}">{{ director[1] }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="container-fluid">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Actors</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for actor in actors %}
+      <tr>
+        <td><a href="/actor/{{ actor[2] }}">{{ actor[1] }}</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="container-fluid">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Profiles</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for profile in profiles %}
+      <tr>
+        <td><a href="/profile/{{ profile[0] }}">{{ profile[3] }}</a></td>
+      </tr>
+      {% endfor %}
     </tbody>
   </table>
 </div>
