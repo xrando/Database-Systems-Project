@@ -163,6 +163,7 @@ def get_movie_by_title(title: str) -> dict:
         cursor.execute(genre_stmt, (title,))
         genres = cursor.fetchall()
         result["genres"] = [genre[0] for genre in genres]
+        result["tmdb_link"] = config.get("MOVIE", "TMDB_MOVIE_URL") + str(movie_id)
     except mariadb.Error as e:
         print(f"Error executing statement: {e}")
 
@@ -332,3 +333,17 @@ def get_genre_pages(genre: str, limit: int = 30) -> dict[str, int]:
     cursor.execute(stmt, (limit, limit, limit, genre))
     total_pages, pages_left = cursor.fetchone()
     return {"total_pages": total_pages, "pages_left": pages_left}
+
+
+def get_all_genres() -> list[tuple]:
+    """
+    Returns a list of genres
+    :return: List of genres (genre_id, name)
+    :rtype: list[tuple]
+    """
+    stmt = "SELECT genre_id, name " \
+           "FROM Genre;"
+
+    cursor.execute(stmt)
+
+    return cursor.fetchall()

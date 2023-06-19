@@ -28,6 +28,7 @@ def home(page: int) -> str:
 
     carousel = DBMS_Movie.carousel()
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
+    genres = DBMS_Movie.get_all_genres()
     kwargs = {}
 
     return render_template(
@@ -38,6 +39,7 @@ def home(page: int) -> str:
         pages_left=pages_left,
         carousel=carousel,
         page=page,
+        genre_list=genres,
         kwargs=kwargs
     )
 
@@ -57,6 +59,7 @@ def movie_page(movie_name: str = None) -> str:
     movie_genres = movie['genres']
     movie_director = movie['director']
     movie_actors = movie['actors']
+    movie_link = movie['tmdb_link']
 
     # get movie reviews
     movieID = DBMS_Movie.get_movieID(movie_name)
@@ -72,9 +75,11 @@ def movie_page(movie_name: str = None) -> str:
     # reviews = [(5, 'This is a test review'), (4, 'This is another test review')]
     return render_template(
         'Movie/Movie_details.html',
+        movie_name=movie_name,
         movie=movie_details,
         genres=movie_genres,
         director=movie_director,
         actors=movie_actors,
+        link=movie_link,
         reviews=reviews
     )

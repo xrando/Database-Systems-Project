@@ -5,91 +5,108 @@
             <h1>The Database Movies</h1>
         </div>
     </div>
+
     {#    filter panel#}
-    {% if endpoint=='routes.genre_page' %}
-        <div class="container-fluid">
-            <form action="/filter" method="POST">
-                <label>
-                    <input type="radio" name="genre" value="Action">
-                    Action
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Adventure">
-                    Adventure
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Animation">
-                    Animation
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Comedy">
-                    Comedy
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Crime">
-                    Crime
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Documentary">
-                    Documentary
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Drama">
-                    Drama
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Family">
-                    Family
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Fantasy">
-                    Fantasy
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="History">
-                    History
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Horror">
-                    Horror
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Music">
-                    Music
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Mystery">
-                    Mystery
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Romance">
-                    Romance
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Science Fiction">
-                    Science Fiction
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Thriller">
-                    Thriller
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="TV Movie">
-                    TV Movie
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="War">
-                    War
-                </label>
-                <label>
-                    <input type="radio" name="genre" value="Western">
-                    Western
-                </label>
-                <button type="submit">Submit</button>
-            </form>
-        </div>
-    {% endif %}
+    {#    {% if endpoint=='routes.genre_page' %}#}
+    {#        <div class="container-fluid">#}
+    {#            <form action="/filter" method="POST">#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Action">#}
+    {#                    Action#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Adventure">#}
+    {#                    Adventure#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Animation">#}
+    {#                    Animation#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Comedy">#}
+    {#                    Comedy#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Crime">#}
+    {#                    Crime#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Documentary">#}
+    {#                    Documentary#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Drama">#}
+    {#                    Drama#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Family">#}
+    {#                    Family#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Fantasy">#}
+    {#                    Fantasy#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="History">#}
+    {#                    History#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Horror">#}
+    {#                    Horror#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Music">#}
+    {#                    Music#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Mystery">#}
+    {#                    Mystery#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Romance">#}
+    {#                    Romance#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Science Fiction">#}
+    {#                    Science Fiction#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Thriller">#}
+    {#                    Thriller#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="TV Movie">#}
+    {#                    TV Movie#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="War">#}
+    {#                    War#}
+    {#                </label>#}
+    {#                <label>#}
+    {#                    <input type="radio" name="genre" value="Western">#}
+    {#                    Western#}
+    {#                </label>#}
+    {#                <button type="submit">Submit</button>#}
+    {#            </form>#}
+    {#        </div>#}
+    {#    {% endif %}#}
     {% include 'Movie/carousel.html' %}
-    {% include 'Movie/movie_home.html' %}
+
+    <!-- Genres Dropdown -->
+    <div class="container-fluid mt-3">
+    <label for="genre">Genre:</label>
+        <div class="btn-group">
+            <button type="button" id="genre" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                {% if not genre %}Genres{% else %}{{ genre }}{% endif %}
+            </button>
+            <ul class="dropdown-menu">
+                {% for genre in genre_list %}
+                    <li><a class="dropdown-item" href="{{ url_for('routes.genre_page', genre=genre[1]) }} ">{{ genre[1] }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% include 'Movie/movie_home.html' %}
 
 {% endblock %}
