@@ -75,31 +75,36 @@ def movie_page(movie_name: str = None) -> str:
 
     # reviews = [(5, 'This is a test review'), (4, 'This is another test review')]
 
-    # Check if movie in watchlist
-    userWatchList = handler.find_documents('watchlist', {'user_id': current_user.id})
-    userWatchListId = []
-    if userWatchList:
-        userWatchList = userWatchList[0]['watchlist_arr']
-        for movie in userWatchList:
-            userWatchListId.append(movie)
-    else:
-        handler.insert_document('watchlist', {'user_id': current_user.id, 'watchlist_arr': []})
-
-    if movieID in userWatchListId:
-        inWatchList = True
-    else:
-        inWatchList = False
-
-    # Add to watchlist
-    if request.method == 'POST':
-        if inWatchList:
-            handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
-                                    '$pull')
-            inWatchList = False
+    inWatchList = False
+    # Error handling just cuz
+    if current_user.is_authenticated:
+        # Check if movie in watchlist
+        userWatchList = handler.find_documents('watchlist', {'user_id': current_user.id})
+        userWatchListId = []
+        if userWatchList:
+            userWatchList = userWatchList[0]['watchlist_arr']
+            for movie in userWatchList:
+                userWatchListId.append(movie)
         else:
-            handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
-                                    '$push')
+            handler.insert_document('watchlist', {'user_id': current_user.id, 'watchlist_arr': []})
+
+        if movieID in userWatchListId:
             inWatchList = True
+        else:
+            inWatchList = False
+
+        # Add to watchlist
+        if request.method == 'POST':
+            if inWatchList:
+                handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
+                                        '$pull')
+                inWatchList = False
+            else:
+                handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
+                                        '$push')
+                inWatchList = True
+        else:
+            pass
 
     return render_template(
         'Movie/Movie_details.html',
