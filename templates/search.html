@@ -1,66 +1,103 @@
-{% extends 'base.html' %} {% block content %}
-<div class="container-fluid">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Movies</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for movie in movies %}
-      <tr>
-        <td><a href="/movie/{{ movie[1] }}">{{ movie[1] }}</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div class="container-fluid">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Directors</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for director in directors %}
-      <tr>
-        <td><a href="/director/{{ director[2] }}">{{ director[1] }}</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div class="container-fluid">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Actors</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for actor in actors %}
-      <tr>
-        <td><a href="/actor/{{ actor[2] }}">{{ actor[1] }}</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div class="container-fluid">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Profiles</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for profile in profiles %}
-      <tr>
-        <td><a href="/profile/{{ profile[0] }}">{{ profile[3] }}</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="accordion" id="moviesAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="moviesHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#moviesCollapse">
+                        Movies
+                    </button>
+                </h2>
+                <div id="moviesCollapse" class="accordion-collapse collapse show" aria-labelledby="moviesHeading" data-bs-parent="#moviesAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-striped">
+                            <tbody>
+                            {% for movie in movies %}
+                                <tr>
+                                    <td><a href="/movie/{{ movie[1] }}">{{ movie[1] }}</a></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="accordion" id="directorsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="directorsHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#directorsCollapse">
+                        Directors
+                    </button>
+                </h2>
+                <div id="directorsCollapse" class="accordion-collapse collapse" aria-labelledby="directorsHeading" data-bs-parent="#directorsAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-striped">
+                            <tbody>
+                            {% for director in directors %}
+                                <tr>
+                                    <td><a href="/director/{{ director[2] }}">{{ director[1] }}</a></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="accordion" id="actorsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="actorsHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#actorsCollapse">
+                        Actors
+                    </button>
+                </h2>
+                <div id="actorsCollapse" class="accordion-collapse collapse" aria-labelledby="actorsHeading" data-bs-parent="#actorsAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-striped">
+                            <tbody>
+                            {% for actor in actors %}
+                                <tr>
+                                    <td><a href="/actor/{{ actor[2] }}">{{ actor[1] }}</a></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="accordion" id="profilesAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="profilesHeading">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#profilesCollapse">
+                        Profiles
+                    </button>
+                </h2>
+                <div id="profilesCollapse" class="accordion-collapse collapse" aria-labelledby="profilesHeading" data-bs-parent="#profilesAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-striped">
+                            <tbody>
+                            {% for profile in profiles %}
+                                <tr>
+                                    <td><a href="/profile/{{ profile[0] }}">{{ profile[3] }}</a></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
