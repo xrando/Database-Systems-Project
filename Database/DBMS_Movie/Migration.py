@@ -1,13 +1,19 @@
 from Config.ConfigManager import ConfigManager
+import argparse
+import os
+import subprocess
 
 config_manager = ConfigManager()
-
 # Get the configuration
 config = config_manager.get_config()
 
-database = config.get('DBMS_MOVIE', 'DATABASE')
-user = config.get('DBMS_MOVIE', 'USERNAME')
-password = config.get('DBMS_MOVIE', 'PASSWORD')
+database, user, password, host, port = (
+    config.get('DBMS_MOVIE', 'DATABASE'),
+    config.get('DBMS_MOVIE', 'USERNAME'),
+    config.get('DBMS_MOVIE', 'PASSWORD'),
+    config.get('DBMS_MOVIE', 'HOST'),
+    config.get('DBMS_MOVIE', 'PORT')
+)
 
 
 def seed(seed_file: str = None) -> None:
@@ -18,8 +24,6 @@ def seed(seed_file: str = None) -> None:
     :type seed_file: str
     :return: None
     """
-    import os
-    import subprocess
 
     if seed_file is None:
         seed_file = "Seed.sql"
@@ -38,10 +42,77 @@ def seed(seed_file: str = None) -> None:
         return
 
     try:
-        command = f"mysql --database {database} -u {user} -p{password} < '{seed_file}'"
+        command = f"mysql --database {database} -u {user} -p{password} -h {host} -P {port} < '{seed_file}'"
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"[-] Error seeding database\n {e}")
         return
 
     print("[+] Database seeded successfully")
+
+
+def migration() -> None:
+    """
+    Create tables in database
+    :return: None
+    """
+
+    file = "tables.sql"
+    if not os.path.exists(file):
+        print(f"[-] Error: {file} does not exist")
+        return
+
+    file_path = os.path.abspath(file)
+
+    try:
+        command = f"mysql --database {database} -u {user} -p{password} --host {host} --port {port} < '{file_path}'"
+        subprocess.run(command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"[-] Error creating tables\n {e}")
+        return
+
+    print("[+] Tables created successfully")
+
+
+def parse_args() -> None:
+    """
+    Parse command line arguments
+    -t, --table-create: Create tables in database (this uses the tables.sql file)
+    -s, --seed: Seed database with data with SQL script
+    :return: None
+    """
+    parser = argparse.ArgumentParser(
+        description="Database Management System for Movie Database. "
+                    "Ensure that you have a Config.ini file in the Config folder. "
+                    "Refer to config.ini for an example.",
+        prog="python3 Migration.py"
+    )
+
+    parser.add_argument(
+        "-m",
+        "--migration",
+        action="store_true",
+        help="Run migration script (tables.sql)"
+    )
+
+    parser.add_argument(
+        "-s",
+        "--seed",
+        action="store_true",
+        help="Seed database with data (seed.sql) This will create tables if they do not exist"
+    )
+
+    args = parser.parse_args()
+
+    action_map = {"migration": migration, "seed": seed}
+
+    for action, func in action_map.items():
+        if getattr(args, action):
+            func()
+            return
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    parse_args()

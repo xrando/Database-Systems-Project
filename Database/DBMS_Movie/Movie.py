@@ -25,7 +25,7 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     :type page: int
     :param limit: Number of movies per page
     :type limit: int
-    :return: List of movies (title, release_date)
+    :return: List of movies (title, release_date, synopsis, poster_link, banner_link)
     :rtype: list[tuple]
     """
 
@@ -238,3 +238,97 @@ def carousel() -> list[tuple]:
         result += [(movie[0], movie_date, banner)]
 
     return result
+
+
+def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
+    """
+    Returns a list of genres
+    :return: List of genres (genre_id, name)
+    :return: List of movies (title, release_date, poster)
+    :rtype: list[tuple]
+    """
+    if genre is None:
+        stmt = "SELECT genre_id, name " \
+               "FROM Genre;"
+
+        cursor.execute(stmt)
+        result = cursor.fetchall()
+
+    else:
+        stmt = "SELECT * " \
+               "FROM Movie " \
+               "INNER JOIN Movie_Genre " \
+               "ON Movie.movie_id = Movie_Genre.movie_id " \
+               "INNER JOIN Genre " \
+               "ON Movie_Genre.genre_id = Genre.genre_id " \
+               "WHERE Genre.name = ? " \
+               "AND release_date <> '2045-05-31' " \
+               "ORDER BY Movie.release_date DESC, " \
+               "Movie.title " \
+               "LIMIT ? " \
+               "OFFSET ?;"
+
+        cursor.execute(stmt, (genre, limit, (page - 1) * limit))
+        movies = cursor.fetchall()
+
+        poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
+        default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
+        default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
+        result = []
+
+        # Convert date to string
+        for movie in movies:
+            # Use tmdb api to get the image link
+            try:
+                movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
+                movie_info = tmdb.Movies(movie_id).info()
+
+                if movie_info is not None:
+                    if movie_info['poster_path'] is not None:
+                        poster = poster_link + movie_info['poster_path']
+                    else:
+                        poster = default_poster_link
+                    if movie_info['backdrop_path'] is not None:
+                        banner = poster_link + movie_info['backdrop_path']
+                    else:
+                        banner = default_banner_link
+                else:
+                    poster = default_poster_link
+                    banner = default_banner_link
+            except IndexError:
+                # Not all movies we have in the database are in the tmdb database
+                continue
+
+            # Movie title + (year)
+            movie_title = movie[1] + " (" + movie[2].strftime("%Y") + ")"
+            # Convert date to string
+            movie_date = movie[2].strftime("%d %B %Y")
+            # Shorten synopsis
+            synopsis = movie[3][:100] + "..."
+            result += [(movie_title, movie_date, synopsis, poster, banner)]
+
+    return result
+
+
+def get_genre_pages(genre: str, limit: int = 30) -> dict[str, int]:
+    """
+    Get the number of pages
+    :param genre: Genre name
+    :type genre: str
+    :param limit: Number of movies per page
+    :type limit: int
+    :return: total_pages, pages_left
+    :rtype: dict[str, int]
+    """
+    stmt = "SELECT ceil(count(*) / ?), ceil(count(*) / ?) - ? " \
+           "FROM Movie " \
+           "INNER JOIN Movie_Genre " \
+           "ON Movie.movie_id = Movie_Genre.movie_id " \
+           "INNER JOIN Genre " \
+           "ON Movie_Genre.genre_id = Genre.genre_id " \
+           "WHERE Genre.name = ? " \
+           "AND release_date <> '2045-05-31';"
+
+    cursor.execute(stmt, (limit, limit, limit, genre))
+    total_pages, pages_left = cursor.fetchone()
+    return {"total_pages": total_pages, "pages_left": pages_left}

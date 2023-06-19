@@ -12,28 +12,9 @@ config = config_manager.get_config()
 handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
 
 
-@routes.route('/home', methods=['GET'])
-def home():
-    page = 1
-    limit = int(config.get("MOVIE", "LIMIT"))
-    movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
-    pages = DBMS_Movie.get_pages(pages=page, limit=limit)
-    pages_left = pages["pages_left"]
-    total_pages = pages["total_pages"]
-    carousel = DBMS_Movie.carousel()
-
-    return render_template(
-        'index.html',
-        movie_list=movie_list,
-        total_pages=total_pages,
-        pages_left=pages_left,
-        carousel=carousel,
-        page=page
-    )
-
-
 @routes.route('/home/page/<int:page>', methods=['GET'])
-def home_page(page):
+@routes.route('/home', defaults={'page': 1}, methods=['GET'])
+def home(page: int) -> str:
     limit = int(config.get("MOVIE", "LIMIT"))
     pages = DBMS_Movie.get_pages(pages=page, limit=limit)
     pages_left = pages["pages_left"]
@@ -45,17 +26,19 @@ def home_page(page):
     elif page > total_pages:
         raise Exception('Page not found')
 
-    movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
     carousel = DBMS_Movie.carousel()
+    movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
+    kwargs = {}
 
-    # Reload Movies block in index.html
     return render_template(
         'index.html',
+        endpoint='routes.home',
         movie_list=movie_list,
         total_pages=total_pages,
         pages_left=pages_left,
         carousel=carousel,
-        page=page
+        page=page,
+        kwargs=kwargs
     )
 
 

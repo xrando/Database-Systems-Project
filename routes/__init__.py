@@ -7,5 +7,6 @@ from .Actor import *
 from .Director import *
 from .Search import *
 from .Review import *
+from .Genre import *
 
 #TODO: User routes
