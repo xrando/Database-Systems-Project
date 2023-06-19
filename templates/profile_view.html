@@ -10,20 +10,22 @@
             <div class="col-sm-6">
                 <div class="row linespace-small">
                     <div class="row linespace-small">
-                        {% if followed == True %}
-                            <div class="col-sm-6">
-                                <form action="/profile/{{ userData[0] }}" method="post">
-                                    <input type="hidden" name="followed" value="{{ userData[0] }}">
-                                    <button type="submit" class="btn btn-primary">Unfollow</button>
-                                </form>
-                            </div>
-                        {% else %}
-                            <div class="col-sm-6">
-                                <form action="/profile/{{ userData[0] }}" method="post">
-                                    <input type="hidden" name="followed" value="{{ userData[0] }}">
-                                    <button type="submit" class="btn btn-primary">Follow</button>
-                                </form>
-                            </div>
+                        {% if current_user.is_authenticated %}
+                            {% if followed == True %}
+                                <div class="col-sm-6">
+                                    <form action="/profile/{{ userData[0] }}" method="post">
+                                        <input type="hidden" name="followed" value="{{ userData[0] }}">
+                                        <button type="submit" class="btn btn-primary">Unfollow</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <div class="col-sm-6">
+                                    <form action="/profile/{{ userData[0] }}" method="post">
+                                        <input type="hidden" name="followed" value="{{ userData[0] }}">
+                                        <button type="submit" class="btn btn-primary">Follow</button>
+                                    </form>
+                                </div>
+                            {% endif %}
                         {% endif %}
                     </div>
                     <div class="row linespace-small">
@@ -48,6 +50,21 @@
     <div class="row text-center">
         <h1>User Watchlist</h1>
         <div class="linespace-medium"></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div class="container">
+                <div class="row linespace-small">
+                    {% for movie in movieWatchListName %}
+                        <div class="row text-left">
+                            <a href="{{ url_for('routes.movie_page', movie_name=movie) }}"><p>{{ movie }}</p></a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
     </div>
 
 

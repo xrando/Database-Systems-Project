@@ -1,4 +1,5 @@
-from flask import render_template
+from flask import render_template, request
+from flask_login import current_user
 
 import Database.DBMS_Movie as DBMS_Movie
 import Database.Mongo as Mongo
@@ -44,7 +45,7 @@ def home(page: int) -> str:
     )
 
 
-@routes.route('/movie/<string:movie_name>', methods=['GET'])
+@routes.route('/movie/<string:movie_name>', methods=['GET', 'POST'])
 def movie_page(movie_name: str = None) -> str:
     """
     Get all movie details and render movie page
@@ -73,6 +74,33 @@ def movie_page(movie_name: str = None) -> str:
         reviews.append((rating, comment))
 
     # reviews = [(5, 'This is a test review'), (4, 'This is another test review')]
+
+    # Check if movie in watchlist
+    userWatchList = handler.find_documents('watchlist', {'user_id': current_user.id})
+    userWatchListId = []
+    if userWatchList:
+        userWatchList = userWatchList[0]['watchlist_arr']
+        for movie in userWatchList:
+            userWatchListId.append(movie)
+    else:
+        handler.insert_document('watchlist', {'user_id': current_user.id, 'watchlist_arr': []})
+
+    if movieID in userWatchListId:
+        inWatchList = True
+    else:
+        inWatchList = False
+
+    # Add to watchlist
+    if request.method == 'POST':
+        if inWatchList:
+            handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
+                                    '$pull')
+            inWatchList = False
+        else:
+            handler.update_document('watchlist', {'user_id': current_user.id}, {'watchlist_arr': movieID},
+                                    '$push')
+            inWatchList = True
+
     return render_template(
         'Movie/Movie_details.html',
         movie_name=movie_name,
@@ -81,5 +109,6 @@ def movie_page(movie_name: str = None) -> str:
         director=movie_director,
         actors=movie_actors,
         link=movie_link,
-        reviews=reviews
+        reviews=reviews,
+        inWatchList=inWatchList
     )

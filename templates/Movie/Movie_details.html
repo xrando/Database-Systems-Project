@@ -21,11 +21,25 @@
         </div>
         <div class="col-md-8 text-light">
             <h1>{{ movie_name }}</h1>
+            <!-- Follow movie -->
+            {% if current_user.is_authenticated %}
+                {% if inWatchList == True %}
+                    <form action="/movie/{{ movie_name }}" method="POST">
+                        <input type="hidden" name="movie_name" value="{{ movie[0] }}">
+                        <button type="submit" class="btn btn-danger">Unfollow</button>
+                    </form>
+                {% else %}
+                    <form action="/movie/{{ movie_name }}" method="POST">
+                        <input type="hidden" name="movie_name" value="{{ movie[0] }}">
+                        <button type="submit" class="btn btn-primary">Follow</button>
+                    </form>
+                {% endif %}
+            {% endif %}
             <span>
                 {{ movie[1] }}
             </span>
-        <!-- Insert Separator -->
-        &nbsp;|&nbsp;
+            <!-- Insert Separator -->
+            &nbsp;|&nbsp;
             <span>
                 {% for genre in genres %}
                     <a href="{{ url_for('routes.genre_page', genre=genre) }}" class="link-light">{{ genre }}</a>
@@ -33,9 +47,9 @@
                 {% endfor %}
             </span>
             <p>{{ movie[2] }}</p>
-                <p>Director: <a href= "{{ url_for('routes.director_page', tmdb_id=director[1]) }}" class="link-light">
-                    {{ director[0] }}</a></p>
-        <p>View on <a href="{{ link }}" class="link-light">TMDB</a></p>
+            <p>Director: <a href="{{ url_for('routes.director_page', tmdb_id=director[1]) }}" class="link-light">
+                {{ director[0] }}</a></p>
+            <p>View on <a href="{{ link }}" class="link-light">TMDB</a></p>
         </div>
         <!-- Directed By at the bottom -->
     </div>

@@ -105,9 +105,10 @@ def logout():
 
 # Profile Page
 @app.route('/profile', methods=['GET', 'POST'])
+@login_required
 def profile(success=None):
     # Mongodb handler
-    dbHandler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+    handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
 
     # Get user's username and data
     print(current_user.id)
@@ -124,18 +125,31 @@ def profile(success=None):
         success = 'Profile Updated'
         return redirect(url_for('profile', success=success))
 
-    userFollows = dbHandler.find_documents('user_follows', {'user_id': current_user.id})
+    # Print our user follow list
+    userFollows = handler.find_documents('user_follows', {'user_id': current_user.id})
     userFollowsName = []
     if userFollows:
         userFollows = userFollows[0]['following_arr']
         for user in userFollows:
             userFollowsName.append(dbUser.get_user_by_id(user))
+    else:
+        handler.insert_document('user_follows', {'user_id': current_user.id, 'following_arr': []})
 
+    # Print Movie watch list
+    movieWatchList = handler.find_documents('watchlist', {'user_id': current_user.id})
+    movieWatchListName = []
+    if movieWatchList:
+        movieWatchList = movieWatchList[0]['watchlist_arr']
+        for movie in movieWatchList:
+            movieWatchListName.append(DBMS_Movie.get_movie_by_id(movie)[1])
+
+    print(movieWatchListName)
     return render_template(
         'profile.html',
         userData=userData,
         success=success,
         userFollows=userFollowsName,
+        movieWatchListName=movieWatchListName
     )
 
 
@@ -143,30 +157,34 @@ def profile(success=None):
 @app.route('/profile/<id>', methods=['GET', 'POST'])
 def other_profile(id):
     # Mongodb handler
-    dbHandler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+    handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
 
     # Get user's username and data
     userData = dbUser.get_user_by_id(id)
 
     # Check if user is followed
-    userFollows = dbHandler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
-    if userData[0] in userFollows:
-        followed = True
+    userFollows = handler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
+    if userFollows:
+        if userData[0] in userFollows:
+            followed = True
+        else:
+            followed = False
     else:
-        followed = False
+        handler.insert_document('user_follows', {'user_id': current_user.id, 'following_arr': []})
 
     # Follow user
     if request.method == 'POST':
         print("Is user followed: " + str(followed))
         if not followed:
-            dbHandler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
-                                      '$push')
+            handler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
+                                    '$push')
         else:
-            dbHandler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
-                                      '$pull')
+            handler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
+                                    '$pull')
         return redirect(url_for('other_profile', id=id))
 
-    userFollows = dbHandler.find_documents('user_follows', {'user_id': userData[0]})
+    # Print our user follow list
+    userFollows = handler.find_documents('user_follows', {'user_id': userData[0]})
     userFollowsName = []
     if userFollows:
         userFollows = userFollows[0]['following_arr']

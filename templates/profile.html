@@ -11,6 +11,7 @@
                 <div class="row linespace-small">
                     <form action="/profile" method="post">
                         <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
                         {% if error %}
                             <div class="row">
                                 <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
@@ -57,7 +58,21 @@
         <h1>User Watchlist</h1>
         <div class="linespace-medium"></div>
     </div>
-
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-6">
+            <div class="container">
+                <div class="row linespace-small">
+                    {% for movie in movieWatchListName %}
+                        <div class="row text-left">
+                            <a href="{{ url_for('routes.movie_page', movie_name=movie) }}"><p>{{ movie }}</p></a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3"></div>
+    </div>
 
     <div class="linespace-medium"></div>
     <div class="row text-center">

@@ -347,3 +347,8 @@ def get_all_genres() -> list[tuple]:
     cursor.execute(stmt)
 
     return cursor.fetchall()
+
+def get_movie_by_id(id):
+    stmt = "SELECT * FROM Movie WHERE movie_id = ?"
+    cursor.execute(stmt, (id,))
+    return cursor.fetchone()
