@@ -57,6 +57,7 @@ def movie_page(movie_name: str = None) -> str:
     movie_genres = movie['genres']
     movie_director = movie['director']
     movie_actors = movie['actors']
+    movie_link = movie['tmdb_link']
 
     # get movie reviews
     movieID = DBMS_Movie.get_movieID(movie_name)
@@ -72,9 +73,11 @@ def movie_page(movie_name: str = None) -> str:
     # reviews = [(5, 'This is a test review'), (4, 'This is another test review')]
     return render_template(
         'Movie/Movie_details.html',
+        movie_name=movie_name,
         movie=movie_details,
         genres=movie_genres,
         director=movie_director,
         actors=movie_actors,
+        link=movie_link,
         reviews=reviews
     )

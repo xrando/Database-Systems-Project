@@ -163,6 +163,7 @@ def get_movie_by_title(title: str) -> dict:
         cursor.execute(genre_stmt, (title,))
         genres = cursor.fetchall()
         result["genres"] = [genre[0] for genre in genres]
+        result["tmdb_link"] = config.get("MOVIE", "TMDB_MOVIE_URL") + str(movie_id)
     except mariadb.Error as e:
         print(f"Error executing statement: {e}")
 
