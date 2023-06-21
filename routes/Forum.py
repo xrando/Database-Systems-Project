@@ -26,7 +26,7 @@ def post():
         handler.insert_document(config.get('MONGODB', 'FORUM_COLLECTION'), {
             'subject': subject,
             'comment': comment,
-            'userid': userid,
+            'userid': int(userid),
         })
 
 
@@ -38,9 +38,9 @@ def post():
             userFollows = userFollows[0]['following_arr']
             for user in userFollows:
                 #userFollowsName.append(dbUser.get_user_by_id(user))
-                print(user)
+                print('following: '+str(user))
                 #get all posts for each following
-                userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
+                userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user})
                 if userFollowingPosts:
                     #append each post to allPostsToDisplay
                     for post in userFollowingPosts:
