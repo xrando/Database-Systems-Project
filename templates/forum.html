@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    {% if current_user.is_authenticated %}
     <div class="container-fluid">
         <div class="accordion" id="forumAccordion">
             <div class="accordion-item">
@@ -26,6 +27,7 @@
                                             <label for="comment" class="form-label">Comment</label>
                                             <textarea name="comment" id="comment" rows="5" class="form-control"></textarea>
                                         </div>
+                                        <input type="hidden" name="userid" value="{{ current_user.id }}">
                                         <button type="submit" class="btn btn-primary">Post</button>
                                     </form>
                                 </div>
@@ -36,6 +38,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     <div class="container-fluid">
         <div class="accordion" id="forumviewAccordion">
             <div class="accordion-item">
@@ -46,6 +49,9 @@
                 </h2>
                 <div id="forumviewCollapse" class="accordion-collapse collapse" aria-labelledby="forumviewHeading" data-bs-parent="#forumviewAccordion">
                     <div class="accordion-body">
+                        <!-- Loop through every post of another user the current user is following -->
+                        {% for post in posts %}
+{#                            {% print(post) %}#}
                         <div class="container-fluid">
                             <div class="card">
                                 <div class="card-header">
@@ -54,15 +60,19 @@
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <label for="forum" class="form-label">Subject</label>
-                                        <input type="text" name="subject" id="subject" class="form-control disabled">
+                                        <!-- display subject of post -->
+                                        <input type="text" name="subject" id="subject" class="form-control" value="{{ post['subject'] }}" disabled>
                                     </div>
                                     <div class="mb-3">
                                         <label for="comment" class="form-label">Comment</label>
-                                        <textarea name="comment" id="comment" rows="5" class="form-control disabled"></textarea>
+                                        <!-- display comment of post -->
+                                        <textarea name="comment" id="comment" rows="5" class="form-control" value="{{ post['comment'] }}" disabled>{{ post['comment'] }}</textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
+                        <!-- END FOR LOOP -->
                     </div>
                 </div>
             </div>
