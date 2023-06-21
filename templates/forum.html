@@ -55,18 +55,18 @@
                         <div class="container-fluid">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">Post by: GRAB USER NAME</h5>
+                                    <h5 class="card-title">Post by: {{ post[0]}}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <label for="forum" class="form-label">Subject</label>
                                         <!-- display subject of post -->
-                                        <input type="text" name="subject" id="subject" class="form-control" value="{{ post['subject'] }}" disabled>
+                                        <input type="text" name="subject" id="subject" class="form-control" value="{{ post[1]['subject'] }}" disabled>
                                     </div>
                                     <div class="mb-3">
                                         <label for="comment" class="form-label">Comment</label>
                                         <!-- display comment of post -->
-                                        <textarea name="comment" id="comment" rows="5" class="form-control" value="{{ post['comment'] }}" disabled>{{ post['comment'] }}</textarea>
+                                        <textarea name="comment" id="comment" rows="5" class="form-control" value="{{ post[1]['comment'] }}" disabled>{{ post[1]['comment'] }}</textarea>
                                     </div>
                                 </div>
                             </div>

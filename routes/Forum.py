@@ -15,6 +15,8 @@ handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), confi
 @routes.route('/post', methods=['POST', 'GET'])
 def post():
     allPostsToDisplay = []
+    allPostsUsernames = []
+    posts = []
     #if post, save post to mongodb
     if request.method == 'POST':
         #get post data
@@ -42,12 +44,22 @@ def post():
                 #get all posts for each following
                 userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user})
                 if userFollowingPosts:
+                    #user to allPostsUsernames
+                    # print(dbUser.get_user_by_id(user))
+                    #get username
+                    name = dbUser.get_user_by_id(user)[3]
+                    if name:
+                        allPostsUsernames.append(dbUser.get_user_by_id(user)[3])
                     #append each post to allPostsToDisplay
                     for post in userFollowingPosts:
                         allPostsToDisplay.append(post)
                         print(post)
+        for user, post in zip(allPostsUsernames, allPostsToDisplay):
+            print(user, post)
+            posts.append((user, post))
+        print(allPostsUsernames)
 
 
 
 
-    return render_template('forum.html', posts = allPostsToDisplay)
+    return render_template('forum.html', posts = posts, usernames = allPostsUsernames)
