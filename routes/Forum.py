@@ -40,12 +40,16 @@ def post():
         #get reply data
         reply = request.form['reply']
         postID = request.form['postid']
-        print(reply)
-        print(postID)
+        userid = request.form['userid']
+        print (userid)
+        user = dbUser.get_user_by_id(int(userid))
+        print(user)
+        # print(reply)
+        # print(postID)
         #save to mongodb
         if handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}):
             handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
-                'replies': reply,
+                'replies': (user[0], user[3], reply),
             }, '$push')
         else:
             print("not found")

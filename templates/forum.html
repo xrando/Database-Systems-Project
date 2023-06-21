@@ -71,7 +71,8 @@
                                             {% for reply in post[1]['replies'] %}
                                                 <div class="card border-success">
                                                     <div class="card-body">
-                                                        {{ reply }}
+                                                        <a href="/profile/{{ reply[0] }}">{{ reply[1] }}</a>
+                                                        {{ ": " + reply[2] }}
                                                     </div>
                                                 </div>
                                                 <br>
@@ -82,6 +83,7 @@
                                             <div class="input-group">
                                                 <input type="text" class="form-control" placeholder="Write Reply" name = "reply" aria-label="reply" aria-describedby="input-group-button-right">
                                                 <input type="hidden" name="postid" value="{{ post[1]['_id'] }}">
+                                                <input type="hidden" name="userid" value="{{ current_user.id }}">
                                                 <button type="submit" class="btn btn-outline-secondary" id="input-group-button-right">Reply</button>
                                             </div>
                                             </form>
