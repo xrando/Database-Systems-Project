@@ -47,30 +47,49 @@
                         View Posts
                     </button>
                 </h2>
-                <div id="forumviewCollapse" class="accordion-collapse collapse" aria-labelledby="forumviewHeading" data-bs-parent="#forumviewAccordion">
+                <div id="forumviewCollapse" class="accordion-collapse show" aria-labelledby="forumviewHeading" data-bs-parent="#forumviewAccordion">
                     <div class="accordion-body">
                         <!-- Loop through every post of another user the current user is following -->
                         {% for post in posts %}
-{#                            {% print(post) %}#}
-                        <div class="container-fluid">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="card-title">Post by: {{ post[0]}}</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label for="forum" class="form-label">Subject</label>
-                                        <!-- display subject of post -->
-                                        <input type="text" name="subject" id="subject" class="form-control" value="{{ post[1]['subject'] }}" disabled>
+                            {#{% print(post) %}#}
+                            <div class="container-fluid">
+                                <div class="card">
+                                    <div class="card-header bg-primary">
+                                        <h5 class="card-title">Post by: {{ post[0]}}</h5>
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="comment" class="form-label">Comment</label>
-                                        <!-- display comment of post -->
-                                        <textarea name="comment" id="comment" rows="5" class="form-control" value="{{ post[1]['comment'] }}" disabled>{{ post[1]['comment'] }}</textarea>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="forum" class="form-label">Subject</label>
+                                            <!-- display subject of post -->
+                                            <input type="text" name="subject" id="subject" class="form-control" value="{{ post[1]['subject'] }}" disabled>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="comment" class="form-label">Comment</label>
+                                            <!-- display comment of post -->
+                                            <textarea name="comment" id="comment" rows="5" class="form-control" value="{{ post[1]['comment'] }}" disabled>{{ post[1]['comment'] }}</textarea>
+                                            <label class="form-label">Replies</label>
+                                            {% for reply in post[1]['replies'] %}
+                                                <div class="card border-success">
+                                                    <div class="card-body">
+                                                        {{ reply }}
+                                                    </div>
+                                                </div>
+                                                <br>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="d-flex justify-content-start align-items-end">
+                                            <form method="POST" action="/comment" class="input-group">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" placeholder="Write Reply" name = "reply" aria-label="reply" aria-describedby="input-group-button-right">
+                                                <input type="hidden" name="postid" value="{{ post[1]['_id'] }}">
+                                                <button type="submit" class="btn btn-outline-secondary" id="input-group-button-right">Reply</button>
+                                            </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <br>
                         {% endfor %}
                         <!-- END FOR LOOP -->
                     </div>
@@ -78,4 +97,5 @@
             </div>
         </div>
     </div>
+
 {% endblock %}
