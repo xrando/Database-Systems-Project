@@ -52,6 +52,8 @@ def movie_page(movie_name: str = None) -> str:
     :param movie_name: Movie name
     :return: Render movie page
     """
+    # DBMS_Movie.new_movie(tmdb_id=76600)
+
     # Remove (year) from movie name
     movie_name = movie_name.split('(')[0]
     movie = DBMS_Movie.get_movie_by_title(movie_name)
@@ -88,10 +90,11 @@ def movie_page(movie_name: str = None) -> str:
         else:
             handler.insert_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id, 'watchlist_arr': []})
 
-        if movieID in userWatchListId:
-            inWatchList = True
-        else:
-            inWatchList = False
+        inWatchList = movieID in userWatchListId
+        # if movieID in userWatchListId:
+        #     inWatchList = True
+        # else:
+        #     inWatchList = False
 
         # Add to watchlist
         if request.method == 'POST':

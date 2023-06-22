@@ -348,7 +348,146 @@ def get_all_genres() -> list[tuple]:
 
     return cursor.fetchall()
 
+
 def get_movie_by_id(id):
     stmt = "SELECT * FROM Movie WHERE movie_id = ?"
     cursor.execute(stmt, (id,))
     return cursor.fetchone()
+
+
+def new_movie(title: str = None, tmdb_id: int = None) -> None:
+    """
+    Adds a new movie to the database
+
+    Search for movie on tmdb api, need to update Director, Actor, Genre tables and their Movie_ tables
+    :param title: Title of the movie
+    :type title: str
+    """
+
+    director = None
+
+    # Get movie info
+    if title is not None:
+        try:
+            movie_info = tmdb.Search().movie(query=title)['results'][0]
+            movie_tmdb_id = movie_info['id']
+            movie_title = movie_info['title']
+            movie_release_date = movie_info['release_date']
+            synopsis = movie_info['overview']
+        except IndexError:
+            print(f"Movie {title} not found on TMDB. Please try again.")
+            return None
+    elif tmdb_id is not None:
+        movie_info = tmdb.Movies(tmdb_id).info()
+        movie_tmdb_id = movie_info['id']
+        movie_title = movie_info['title']
+        movie_release_date = movie_info['release_date']
+        synopsis = movie_info['overview']
+
+    # Get Genres
+    movie_genres = []
+    movie = tmdb.Movies(movie_tmdb_id)
+    genres = movie.info()['genres']
+    for genre in genres:
+        movie_genres += [genre['name']]
+
+    # Get Actors and Directors
+    import requests
+
+    url = "https://api.themoviedb.org/3/movie/" + str(movie_tmdb_id) + "/credits?language=en-US"
+
+    headers = {
+        "accept": "application/json",
+        "Authorization": "Bearer " + config.get("TMDB", "ACCESS_TOKEN")
+    }
+
+    response = requests.get(url, headers=headers)
+
+    cast_dict = {}
+    for cast in response.json()['cast']:
+        cast_dict[cast['name']] = [cast['id'], cast['character']]
+    for crew in response.json()['crew']:
+        try:
+            if crew['job'] == 'Director':
+                director = crew['name']
+                director_id = crew['id']
+                break
+        except KeyError:
+            continue
+
+    # Insert to DB if not exists
+    movie = check_movie(movie_title)
+    if movie is None:
+        movie_stmt = "INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)"
+        cursor.execute(movie_stmt, (movie_title, movie_release_date, synopsis))
+        movie_id = cursor.lastrowid
+        movie_id = int(movie_id)
+        print(f"Movie {movie_title} added to database.")
+
+        for genre in movie_genres:
+            genre_id = check_genre(genre)
+            if genre_id is None:
+                genre_stmt = "INSERT INTO Genre (name) VALUES (?)"
+                cursor.execute(genre_stmt, (genre,))
+                genre_id = check_genre(genre)
+            movie_genre_stmt = "INSERT INTO Movie_Genre (movie_id, genre_id) VALUES (?, ?)"
+            cursor.execute(movie_genre_stmt, (movie_id, genre_id))
+        print(f"Genres added to database.")
+
+        if cast_dict is not None:
+            for actor in cast_dict:
+                actor_id = check_actor(actor)
+                if actor_id is None:
+                    actor_stmt = "INSERT INTO Actor (actor_name, tmdb_id) VALUES (?, ?)"
+                    cursor.execute(actor_stmt, (actor, cast_dict[actor][0]))
+                    actor_id = check_actor(actor)
+                movie_actor_stmt = "INSERT INTO Movie_Actor (movie_id, actor_id, movie_character) VALUES (?, ?, ?)"
+                cursor.execute(movie_actor_stmt, (movie_id, actor_id, str(cast_dict[actor][1])))
+        print(f"Actors added to database.")
+        if director is not None:
+            director_id = check_director(director)
+            if director_id is None:
+                director_stmt = "INSERT INTO Director (director_name,tmdb_id) VALUES (?, ?)"
+                cursor.execute(director_stmt, (director, director_id))
+                director_id = check_director(director)
+            movie_director_stmt = "INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)"
+            cursor.execute(movie_director_stmt, (movie_id, director_id))
+        print(f"Director added to database.")
+    else:
+        print(f"Movie {movie_title} already exists in database.")
+
+
+def check_genre(genre: str) -> int | None:
+    genre_stmt = "SELECT genre_id FROM Genre WHERE name LIKE ?"
+    cursor.execute(genre_stmt, (genre,))
+    id = cursor.fetchone()
+    if id is None:
+        return None
+    return id[0]
+
+
+def check_actor(actor: str) -> int | None:
+    actor_stmt = "SELECT actor_id FROM Actor WHERE actor_name LIKE ?"
+    cursor.execute(actor_stmt, (actor,))
+    id = cursor.fetchone()
+    if id is None:
+        return None
+    return id[0]
+
+
+def check_director(director: str) -> int | None:
+    director_stmt = "SELECT director_id FROM Director WHERE director_name LIKE ?"
+    cursor.execute(director_stmt, (director,))
+    id = cursor.fetchone()
+    if id is None:
+        return None
+    return id[0]
+
+
+def check_movie(movie: str) -> int | None:
+    movie_stmt = "SELECT movie_id FROM Movie WHERE title LIKE ?"
+    cursor.execute(movie_stmt, (movie,))
+    id = cursor.fetchone()
+    if id is None:
+        return None
+    return id[0]
