@@ -12,9 +12,11 @@ config = config_manager.get_config()
 
 @routes.route('/search', methods=['POST'])
 def search():
-    query = request.form['search']
-    director_results = DBMS_Movie.search_directors(query)
-    actor_results = DBMS_Movie.search_actors(query)
-    movie_results = DBMS_Movie.search_movies(query)
-    profile_results = dbUser.search_user(query)
-    return render_template('search.html', directors=director_results, actors=actor_results, movies=movie_results, profiles=profile_results)
+    query = request.form['search'].strip()
+    if query:
+        director_results = DBMS_Movie.search_directors(query)
+        actor_results = DBMS_Movie.search_actors(query)
+        movie_results = DBMS_Movie.search_movies(query)
+        profile_results = dbUser.search_user(query)
+        return render_template('search.html', directors=director_results, actors=actor_results, movies=movie_results, profiles=profile_results)
+    return render_template('search.html')
