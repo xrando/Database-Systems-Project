@@ -12,24 +12,7 @@ config = config_manager.get_config()
 
 @routes.route('/search', methods=['POST'])
 def search():
-    #choice = request.form['choice']
     query = request.form['search']
-    # if choice == 'director':
-    #     # search for directors
-    #     results = DBMS_Movie.search_directors(query)
-    #     print(results)
-    # elif choice == 'actor':
-    #     # search for actors
-    #     results = DBMS_Movie.search_actors(query)
-    # elif choice == 'movie':
-    #     # search for movie
-    #     results = DBMS_Movie.search_movies(query)
-    # elif choice == 'profile':
-    #     # search for user profile
-    #     results = dbUser.search_user(query)
-    # else:
-    #     # Handle invalid choice
-    #     results = []
     director_results = DBMS_Movie.search_directors(query)
     actor_results = DBMS_Movie.search_actors(query)
     movie_results = DBMS_Movie.search_movies(query)

@@ -16,11 +16,6 @@ cursor = connection.cursor()
 
 # search
 def search_directors(name: str) -> tuple | None:
-    # cursor.execute("SELECT * "
-    #                "FROM Director "
-    #                "WHERE director_name "
-    #                "LIKE %s"
-    #                "LIMIT 30", ('%' + name + '%',))
     search_stmt = "SELECT * " \
                   "FROM Director " \
                   "WHERE director_name " \
@@ -34,11 +29,6 @@ def search_directors(name: str) -> tuple | None:
 
 
 def search_movies(name: str) -> tuple | None:
-    # cursor.execute("SELECT * "
-    #                "FROM Movie "
-    #                "WHERE title "
-    #                "LIKE %s"
-    #                "LIMIT 30", ('%' + name + '%',))
     search_stmt = "SELECT * " \
                   "FROM Movie " \
                   "WHERE title " \
@@ -52,11 +42,6 @@ def search_movies(name: str) -> tuple | None:
 
 
 def search_actors(name: str) -> tuple | None:
-    # cursor.execute("SELECT * "
-    #                "FROM Actor "
-    #                "WHERE actor_name "
-    #                "LIKE %s"
-    #                "LIMIT 30", ('%' + name + '%',))
     search_stmt = "SELECT * " \
                   "FROM Actor " \
                   "WHERE actor_name " \
@@ -70,9 +55,6 @@ def search_actors(name: str) -> tuple | None:
 
 
 def get_movieID(title: str) -> int | None:
-    # cursor.execute("SELECT movie_id "
-    #                "FROM Movie "
-    #                "WHERE title = %s", (title,))
     stmt = "SELECT movie_id " \
            "FROM Movie " \
            "WHERE title = ?"

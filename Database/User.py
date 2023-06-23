@@ -134,7 +134,7 @@ class Database:
         try:
             self.cursor.execute("SELECT * "
                            "FROM User "
-                           "WHERE username "
+                           "WHERE profilename "
                            "LIKE ?"
                            "LIMIT 30", ('%' + name + '%',))
         except mariadb.DataError as e:
