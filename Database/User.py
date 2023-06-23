@@ -135,7 +135,7 @@ class Database:
             self.cursor.execute("SELECT * "
                            "FROM User "
                            "WHERE username "
-                           "LIKE %s"
+                           "LIKE ?"
                            "LIMIT 30", ('%' + name + '%',))
         except mariadb.DataError as e:
             print(f"[-] Error searching for users from database\n {e}")
