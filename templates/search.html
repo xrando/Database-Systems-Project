@@ -13,11 +13,37 @@
                     <div class="accordion-body">
                         <table class="table table-striped">
                             <tbody>
-                            {% for movie in movies %}
-                                <tr>
-                                    <td><a href="/movie/{{ movie[1] }}">{{ movie[1] }}</a></td>
-                                </tr>
-                            {% endfor %}
+                                <!-- Movie Table -->
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Release Date</th>
+                                        <th>Synopsis</th>
+{#                                        {% if current_user.username == 'admin' %}#}
+{#                                        <th>Action</th>#}
+{#                                        {% endif %}#}
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for movie in movies %}
+{#                                        {% print(movie) %}#}
+                                        <tr>
+                                            <td><a href="{{ url_for('routes.movie_page', movie_name=movie[1]) }}">{{ movie[1] }}</a></td>
+                                            <td>{{ movie[2] }}</td>
+                                            <td>{{ movie[3] }}</td>
+{#                                            {% if current_user.username == 'admin' %}#}
+{#                                            <td>#}
+{#                                                <div class="btn-group">#}
+                                                    {#                                                    <a href="{{ url_for('') }}" class="btn btn-success" >Edit</a>#}
+{#                                                    <a href="{{ url_for('routes.deleteMovie', movie_name=movie[1]) }}" class="btn btn-danger">Delete</a>#}
+{#                                                </div>#}
+{#                                            </td>#}
+{#                                            {% endif %}#}
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
                             </tbody>
                         </table>
                     </div>
@@ -40,7 +66,7 @@
                             <tbody>
                             {% for director in directors %}
                                 <tr>
-                                    <td><a href="/director/{{ director[2] }}">{{ director[1] }}</a></td>
+                                    <td><a href="{{ url_for('routes.director_page', tmdb_id=director[2]) }}">{{ director[1] }}</a></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -65,7 +91,7 @@
                             <tbody>
                             {% for actor in actors %}
                                 <tr>
-                                    <td><a href="/actor/{{ actor[2] }}">{{ actor[1] }}</a></td>
+                                    <td><a href="{{ url_for('routes.actor', tmdb_id=actor[2]) }}">{{ actor[1] }}</a></td>
                                 </tr>
                             {% endfor %}
                             </tbody>

@@ -32,7 +32,7 @@ class MongoDBHandler:
     def delete_documents(self, collection_name, query):
         try:
             collection = self.db[collection_name]
-            collection.delete_many(query)
+            collection.delete_one(query)
         except Exception as e:
             print(f"[-] Error deleting document in database\n {e}")
 

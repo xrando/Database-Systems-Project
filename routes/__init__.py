@@ -9,5 +9,6 @@ from .Search import *
 from .Review import *
 from .Genre import *
 from .Forum import *
+from .Admin import *
 
 #TODO: User routes
