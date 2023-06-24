@@ -68,6 +68,7 @@
                                     </thead>
                                     <tbody>
                                     {% for movie in movies %}
+{#                                        {% print(movie) %}#}
                                         <tr>
                                             <td><a href="{{ url_for('routes.movie_page', movie_name=movie[1]) }}">{{ movie[1] }}</a></td>
                                             <td>{{ movie[2] }}</td>
@@ -76,7 +77,7 @@
 {#                                                <a href="<?= base_url('emails/edit/'.$emails_item['id']) ?>" class="btn btn-success btn-sm">Edit</a>#}
                                                 <div class="btn-group">
 {#                                                    <a href="{{ url_for('') }}" class="btn btn-success" >Edit</a>#}
-                                                    <a href="{{ url_for('routes.deleteMovie', movie_name=movie[1]) }}" class="btn btn-danger">Delete</a>
+                                                    <a href="{{ url_for('routes.deleteMovie', movie_id=movie[0]) }}" class="btn btn-danger">Delete</a>
                                                 </div>
                                             </td>
                                         </tr>

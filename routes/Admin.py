@@ -21,23 +21,22 @@ def admin():
     #print(allPosts)
     return render_template('admin.html', posts = allPosts)
 
-#test data, title=aang, tmdb_id=172687
+#test data, title=Main Tulsi Tere Aangan Ki, tmdb_id=172687
 @routes.route('/addMovie', methods=['POST'])
 def addMovie():
     movie_name = request.form['movie_name']
     tmdb_id = request.form['tmdb_id']
     print(movie_name, tmdb_id)
     DBMS_Movie.new_movie(movie_name, tmdb_id)
-    return redirect(url_for('routes.movie_page', movie_name=movie_name))
-    #return redirect(url_for('routes.admin'))
+    return redirect(url_for('routes.admin'))
 
 
-@routes.route('/deleteMovie/<string:movie_name>', methods=['GET'])
-def deleteMovie(movie_name: str = None):
-    print(movie_name)
+@routes.route('/deleteMovie/<string:movie_id>', methods=['GET'])
+def deleteMovie(movie_id: str = None):
+    print(movie_id)
     #dependancy issues when deleting
-    if movie_name:
-        DBMS_Movie.deleteMovie(movie_name)
+    if movie_id:
+        DBMS_Movie.deleteMovie(movie_id)
     return redirect(url_for('routes.admin'))
 
 @routes.route('/deletePost/<string:postID>', methods=['GET'])

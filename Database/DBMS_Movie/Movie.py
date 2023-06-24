@@ -417,6 +417,15 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
                 break
         except KeyError:
             continue
+    if director is not None and director_id is not None:
+        try:
+            #insert director into db
+            director_stmt = "INSERT INTO Director (director_name,tmdb_id) VALUES (?, ?)"
+            cursor.execute(director_stmt, (director, director_id))
+            director_id = check_director(director)
+            print('director id after insert: '+str(director_id))
+        except:
+            print("Error inserting director into db")
 
     # Insert to DB if not exists
     movie = check_movie(movie_title)
@@ -448,7 +457,7 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
                 cursor.execute(movie_actor_stmt, (movie_id, actor_id, str(cast_dict[actor][1])))
         print(f"Actors added to database.")
         if director is not None:
-            # director_id = check_director(director)
+            director_id = check_director(director)
             print('director id is not none: '+str(director_id))
             if director_id is None:
                 director_stmt = "INSERT INTO Director (director_name,tmdb_id) VALUES (?, ?)"
@@ -456,6 +465,7 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
                 print('director id: '+str(director_id))
                 cursor.execute(director_stmt, (director, director_id))
                 director_id = check_director(director)
+                print('director id after insert: '+str(director_id))
             #problem here
             movie_director_stmt = "INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)"
             cursor.execute(movie_director_stmt, (movie_id, director_id))
