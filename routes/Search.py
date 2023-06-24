@@ -3,12 +3,13 @@ from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
 import Database.User as DBUser
+from Database import Mongo
 
 DBMS_Movie = DBMS_Movie
 dbUser = DBUser.Database()
 config_manager = ConfigManager()
 config = config_manager.get_config()
-
+handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
 @routes.route('/search', methods=['POST'])
 def search():
@@ -25,4 +26,6 @@ def search():
 def search_query():
     query = request.form['search'].strip()
     movies = DBMS_Movie.search_movies(query)
-    return render_template('admin.html', movies=movies)
+    #grab all updated posts
+    allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
+    return render_template('admin.html', movies=movies, posts = allPosts)

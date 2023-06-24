@@ -13,21 +13,22 @@ config_manager = ConfigManager()
 config = config_manager.get_config()
 handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
+
 @routes.route('/comment', methods=['POST'])
 @routes.route('/post', methods=['POST', 'GET'])
 def post():
-    #init
+    # init
     posts = []
-    #if new post, save to mongodb
+    # if new post, save to mongodb
     if request.path == '/post':
-        #if post, save post to mongodb
+        # if post, save post to mongodb
         if request.method == 'POST':
-            #get post data
+            # get post data
             subject = request.form['subject']
             comment = request.form['comment']
             userid = request.form['userid']
             print(subject, comment, userid)
-            #save to mongodb
+            # save to mongodb
             handler.insert_document(config.get('MONGODB', 'FORUM_COLLECTION'), {
                 'subject': subject,
                 'comment': comment,
@@ -35,17 +36,17 @@ def post():
                 'replies': [],
             })
     else:
-        #if new reply, save to mongodb
-        #get reply data
+        # if new reply, save to mongodb
+        # get reply data
         reply = request.form['reply']
         postID = request.form['postid']
         userid = request.form['userid']
-        print (userid)
+        print(userid)
         user = dbUser.get_user_by_id(int(userid))
         print(user)
         # print(reply)
         # print(postID)
-        #save to mongodb
+        # save to mongodb
         if handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}):
             handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
                 'replies': (user[0], user[3], reply),
@@ -53,21 +54,19 @@ def post():
         else:
             print("not found")
 
-    #grab all posts from mongodb and respective user for display
-    #get user following
+    # grab all posts from mongodb and respective user for display
+    # get user following
     userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
     if userFollows:
         userFollows = userFollows[0]['following_arr']
         for user in userFollows:
-            print('following: '+str(user))
-            #get all posts for each following
+            print('following: ' + str(user))
+            # get all posts for each following
             userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user})
             if userFollowingPosts:
-                #get username
+                # get username
                 name = dbUser.get_user_by_id(user)[3]
                 for post in userFollowingPosts:
                     posts.append((name, post))
     print(posts)
-    return render_template('forum.html', posts = posts)
-
-
+    return render_template('forum.html', posts=posts)

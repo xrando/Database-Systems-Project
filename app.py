@@ -55,7 +55,10 @@ def login_page():
                 print("Matched, logging in...")
                 user = User(dbUser.get_user_by_id(db_password[0])[0])
                 login_user(user, remember=True, duration=timedelta(minutes=5))
-                return redirect(url_for('routes.home'))
+                if current_user.username == 'admin':
+                    return redirect(url_for('routes.admin'))
+                else:
+                    return redirect(url_for('routes.home'))
             else:
                 print('Username or Password is incorrect')
                 error = 'Username or Password is incorrect'
@@ -70,7 +73,10 @@ def login_page():
 @app.route('/sign-up', methods=['GET', 'POST'])
 def signup_page():
     if current_user.is_authenticated:
-        return redirect(url_for('routes.home'))
+        if current_user.username == 'admin':
+            return redirect(url_for('routes.admin'))
+        else:
+            return redirect(url_for('routes.home'))
     error = None
     if request.method == 'POST':
         username = request.form['username']

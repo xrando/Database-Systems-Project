@@ -14,3 +14,4 @@ from .Movie import Movie_list, get_movie_by_title, get_pages, carousel, Genre, g
 from .Actor import Actor
 from .Director import Director
 from .Search import search_movies, search_directors, search_actors, get_movieID
+from .Admin import updateMovie, deleteMovie
