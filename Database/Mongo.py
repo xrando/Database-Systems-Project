@@ -20,7 +20,7 @@ class MongoDBHandler:
 
     def delete_documents(self, collection_name, query):
         collection = self.db[collection_name]
-        collection.delete_many(query)
+        collection.delete_one(query)
 
 
 # Example usage:

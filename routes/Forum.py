@@ -17,9 +17,8 @@ handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), confi
 @routes.route('/post', methods=['POST', 'GET'])
 def post():
     #init
-    allPostsToDisplay = []
-    allPostsUsernames = []
     posts = []
+    #if new post, save to mongodb
     if request.path == '/post':
         #if post, save post to mongodb
         if request.method == 'POST':
@@ -36,7 +35,7 @@ def post():
                 'replies': [],
             })
     else:
-        #post reply to comment
+        #if new reply, save to mongodb
         #get reply data
         reply = request.form['reply']
         postID = request.form['postid']
@@ -69,7 +68,6 @@ def post():
                 for post in userFollowingPosts:
                     posts.append((name, post))
     print(posts)
-    #print(allPostsUsernames)
     return render_template('forum.html', posts = posts)
 
 
