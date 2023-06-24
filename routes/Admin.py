@@ -7,7 +7,6 @@ import Database.User as DBUser
 from Database import Mongo
 
 DBMS_Movie = DBMS_Movie
-dbUser = DBUser.Database()
 config_manager = ConfigManager()
 config = config_manager.get_config()
 handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
