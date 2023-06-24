@@ -15,7 +15,7 @@
                             <tbody>
                             {% for movie in movies %}
                                 <tr>
-                                    <td><a href="/movie/{{ movie[1] }}">{{ movie[1] }}</a></td>
+                                    <td><a href="{{ url_for('routes.movie_page', movie_name=movie[1]) }}">{{ movie[1] }}</a></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -40,7 +40,7 @@
                             <tbody>
                             {% for director in directors %}
                                 <tr>
-                                    <td><a href="/director/{{ director[2] }}">{{ director[1] }}</a></td>
+                                    <td><a href="{{ url_for('routes.director_page', tmdb_id=director[2]) }}">{{ director[1] }}</a></td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -65,7 +65,7 @@
                             <tbody>
                             {% for actor in actors %}
                                 <tr>
-                                    <td><a href="/actor/{{ actor[2] }}">{{ actor[1] }}</a></td>
+                                    <td><a href="{{ url_for('routes.actor', tmdb_id=actor[2]) }}">{{ actor[1] }}</a></td>
                                 </tr>
                             {% endfor %}
                             </tbody>

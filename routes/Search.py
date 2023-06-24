@@ -20,3 +20,9 @@ def search():
         profile_results = dbUser.search_user(query)
         return render_template('search.html', directors=director_results, actors=actor_results, movies=movie_results, profiles=profile_results)
     return render_template('search.html')
+
+@routes.route('/searchMovie', methods=['POST'])
+def search_query():
+    query = request.form['search'].strip()
+    movies = DBMS_Movie.search_movies(query)
+    return render_template('admin.html', movies=movies)
