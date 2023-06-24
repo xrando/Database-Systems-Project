@@ -370,6 +370,7 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
     if title is not None:
         try:
             movie_info = tmdb.Search().movie(query=title)['results'][0]
+            print(movie_info)
             movie_tmdb_id = movie_info['id']
             movie_title = movie_info['title']
             movie_release_date = movie_info['release_date']
@@ -379,7 +380,9 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
             return None
     elif tmdb_id is not None:
         movie_info = tmdb.Movies(tmdb_id).info()
+        print('movie info: '+movie_info)
         movie_tmdb_id = movie_info['id']
+        print('movie id: '+movie_tmdb_id)
         movie_title = movie_info['title']
         movie_release_date = movie_info['release_date']
         synopsis = movie_info['overview']
@@ -445,13 +448,20 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
                 cursor.execute(movie_actor_stmt, (movie_id, actor_id, str(cast_dict[actor][1])))
         print(f"Actors added to database.")
         if director is not None:
-            director_id = check_director(director)
+            # director_id = check_director(director)
+            print('director id is not none: '+str(director_id))
             if director_id is None:
                 director_stmt = "INSERT INTO Director (director_name,tmdb_id) VALUES (?, ?)"
+                print('director: ' + director)
+                print('director id: '+str(director_id))
                 cursor.execute(director_stmt, (director, director_id))
                 director_id = check_director(director)
+            #problem here
             movie_director_stmt = "INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)"
             cursor.execute(movie_director_stmt, (movie_id, director_id))
+        else:
+            #add blank to directors
+            pass
         print(f"Director added to database.")
     else:
         print(f"Movie {movie_title} already exists in database.")

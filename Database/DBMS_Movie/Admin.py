@@ -35,6 +35,6 @@ def deleteMovie(movie_name: str = None) -> bool:
         cursor.execute(delete_stmt, (movie_name,))
     except mariadb.DataError as e:
         print(f"[-] Error deleting movie from database\n {e}")
-    movies = cursor.fetchall()
-    print(movies)
+    # movies = cursor.fetchall()
+    # print(movies)
     return True
