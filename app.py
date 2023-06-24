@@ -1,3 +1,4 @@
+import mariadb
 from flask import Flask, render_template, request, url_for, redirect, flash, app
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user, current_user
 from datetime import timedelta
@@ -113,24 +114,43 @@ def profile(success=None):
     userData = User(dbUser.get_user_by_id(current_user.id)[0])
     # Update user's data
     if request.method == 'POST':
-        username = request.form['username']
-        password = userData.password
-        profilename = request.form['profilename']
-        email = request.form['email']
-        dob = request.form['dob']
-        dbUser.update_user(current_user.id, username, password, profilename, email, dob)
-        success = 'Profile Updated'
-        return redirect(url_for('profile', success=success))
+        if request.form['formtype'] == "updateprofile":
+            print("Updating profile...")
+            username = request.form['username']
+            password = userData.password
+            profilename = request.form['profilename']
+            email = request.form['email']
+            dob = request.form['dob']
+            dbUser.update_user(current_user.id, username, password, profilename, email, dob)
+            success = 'Profile Updated'
+            return redirect(url_for('profile', success=success))
+        elif request.form['formtype'] == "deleteaccount":
+            print("Deleting account...")
+            try:
+                dbUser.delete_user(current_user.id)
+                handler.delete_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
+                handler.delete_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id})
+                dbUser.manual_commit()
+                return redirect(url_for('login_page'))
+            except (Exception, mariadb.DataError) as e:
+                print(e)
+                print("Rolling back...")
+                dbUser.manual_rollback()
+                return redirect(url_for('profile'))
 
     # Print our user follow list
     userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
     userFollowsName = []
     if userFollows:
-        userFollows = userFollows[0]['following_arr']
-        for user in userFollows:
-            userFollowsName.append(dbUser.get_user_by_id(user))
+        for user in userFollows[0]['following_arr']:
+            if dbUser.get_user_by_id(user):
+                userFollowsName.append(dbUser.get_user_by_id(user))
+            else:
+                handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id},
+                                        {'following_arr': user}, '$pull')
     else:
-        handler.insert_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id, 'following_arr': []})
+        handler.insert_document(config.get('MONGODB', 'FOLLOW_COLLECTION'),
+                                {'user_id': current_user.id, 'following_arr': []})
 
     # Print Movie watch list
     movieWatchList = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id})
@@ -160,14 +180,15 @@ def other_profile(id):
     userData = dbUser.get_user_by_id(id)
 
     # Check if user is followed
-    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})[0]['following_arr']
+    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
     if userFollows:
-        if userData[0] in userFollows:
+        if userData[0] in userFollows[0]['following_arr']:
             followed = True
         else:
             followed = False
     else:
-        handler.insert_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id, 'following_arr': []})
+        handler.insert_document(config.get('MONGODB', 'FOLLOW_COLLECTION'),
+                                {'user_id': current_user.id, 'following_arr': []})
     # Default follow value
     followed = False
 
@@ -183,16 +204,15 @@ def other_profile(id):
     movieWatchList = handler.find_documents('watchlist', {'user_id': userData[0]})
     movieWatchListName = []
     if movieWatchList:
-        movieWatchList = movieWatchList[0]['watchlist_arr']
-        for movie in movieWatchList:
+        for movie in movieWatchList[0]['watchlist_arr']:
             movieWatchListName.append(DBMS_Movie.get_movie_by_id(movie)[1])
 
     # Functions that require user to be authenticated
     if current_user.is_authenticated:
         # Check if user is followed
-        userFollows = handler.find_documents('user_follows', {'user_id': current_user.id})[0]['following_arr']
+        userFollows = handler.find_documents('user_follows', {'user_id': current_user.id})
         if userFollows:
-            if userData[0] in userFollows:
+            if userData[0] in userFollows[0]['following_arr']:
                 followed = True
             else:
                 followed = False
@@ -203,10 +223,12 @@ def other_profile(id):
     if request.method == 'POST':
         print("Is user followed: " + str(followed))
         if not followed:
-            handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id}, {'following_arr': userData[0]},
+            handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id},
+                                    {'following_arr': userData[0]},
                                     '$push')
         else:
-            handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id}, {'following_arr': userData[0]},
+            handler.update_document(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id},
+                                    {'following_arr': userData[0]},
                                     '$pull')
         return redirect(url_for('other_profile', id=id))
         # Follow user

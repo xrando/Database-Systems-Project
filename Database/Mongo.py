@@ -1,27 +1,40 @@
 from pymongo import MongoClient
 
+
 class MongoDBHandler:
     def __init__(self, connection_string, database_name):
         self.client = MongoClient(connection_string)
         self.db = self.client[database_name]
 
     def insert_document(self, collection_name, document):
-        collection = self.db[collection_name]
-        result = collection.insert_one(document)
-        print('Inserted ID:', result.inserted_id)
+        try:
+            collection = self.db[collection_name]
+            result = collection.insert_one(document)
+            print('Inserted ID:', result.inserted_id)
+        except Exception as e:
+            print(f"[-] Error inserting document into database\n {e}")
 
     def find_documents(self, collection_name, query={}):
-        collection = self.db[collection_name]
-        return list(collection.find(query))
-    #options = '$set'/'$push'
+        try:
+            collection = self.db[collection_name]
+            return list(collection.find(query))
+        except Exception as e:
+            print(f"[-] Error retrieving documents from database\n {e}")
+            # options = '$set'/'$push'
+
     def update_document(self, collection_name, query, update_data, option):
-        collection = self.db[collection_name]
-        collection.update_one(query, {option: update_data})
+        try:
+            collection = self.db[collection_name]
+            collection.update_one(query, {option: update_data})
+        except Exception as e:
+            print(f"[-] Error updating document in database\n {e}")
 
     def delete_documents(self, collection_name, query):
-        collection = self.db[collection_name]
-        collection.delete_many(query)
-
+        try:
+            collection = self.db[collection_name]
+            collection.delete_many(query)
+        except Exception as e:
+            print(f"[-] Error deleting document in database\n {e}")
 
 # Example usage:
 # handler = MongoDBHandler('mongodb://localhost:27017/', 'movie_db')

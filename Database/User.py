@@ -141,6 +141,20 @@ class Database:
             print(f"[-] Error searching for users from database\n {e}")
         return self.cursor.fetchall()
 
+    def delete_user(self, id: int) -> None:
+        try:
+            self.cursor.execute("DELETE FROM User WHERE id = ?", (id,))
+        except mariadb.DataError as e:
+            print(f"[-] Error deleting user from database\n {e}")
+        # self.connection.commit()
+
+    def manual_commit(self) -> None:
+        self.connection.commit()
+
+    def manual_rollback(self) -> None:
+        self.connection.rollback()
+
+
 if __name__ == "__main__":
     db = Database()
 
