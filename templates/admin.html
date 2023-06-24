@@ -19,7 +19,7 @@
             </div>
             <div class="row">
                 <!-- Left Panel - Movie Management Functions -->
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title">Movie Management</h5>
@@ -68,15 +68,12 @@
                                     </thead>
                                     <tbody>
                                     {% for movie in movies %}
-{#                                        {% print(movie) %}#}
                                         <tr>
                                             <td><a href="{{ url_for('routes.movie_page', movie_name=movie[1]) }}">{{ movie[1] }}</a></td>
                                             <td>{{ movie[2] }}</td>
                                             <td>{{ movie[3] }}</td>
                                             <td>
-{#                                                <a href="<?= base_url('emails/edit/'.$emails_item['id']) ?>" class="btn btn-success btn-sm">Edit</a>#}
                                                 <div class="btn-group">
-{#                                                    <a href="{{ url_for('') }}" class="btn btn-success" >Edit</a>#}
                                                     <a href="{{ url_for('routes.deleteMovie', movie_id=movie[0]) }}" class="btn btn-danger">Delete</a>
                                                 </div>
                                             </td>
@@ -91,44 +88,85 @@
                     </div>
                 </div>
 
-                <!-- Right Panel - Review Management Functions -->
-                <div class="col-lg-3">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">Review Management</h5>
+                <!-- Right Panel - Review Management and Other Card -->
+                <div class="col-lg-4">
+                    <div class="row">
+                        <!-- First Card -->
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Review Management</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Display review management functions -->
+                                    <!-- ... -->
+                                    <form class="d-flex" method="POST" action="/searchPosts">
+                                        <input type="text" class="form-control" name="search" placeholder="Enter Subject">
+                                        <button class="btn btn-primary" type="submit">Search</button>
+                                    </form>
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Author</th>
+                                            <th>Subject</th>
+                                            <th>Comment</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for post in posts %}
+                                            <tr>
+                                                <td>{{ post['userid'] }}</td>
+                                                <td>{{ post['subject'] }}</td>
+                                                <td>{{ post['comment'] }}</td>
+                                                <td>
+                                                    <!-- Action buttons here -->
+                                                    <a href="{{ url_for('routes.deletePost', postID=post['_id']) }}" class="btn btn-danger">Delete</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <!-- Display review management functions -->
-                            <!-- ... -->
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th>Author</th>
-                                    <th>Subject</th>
-                                    <th>Comment</th>
-                                    <th>Action</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for post in posts %}
-                                    <tr>
-                                        <td>{{ post['userid'] }}</td>
-                                        <td>{{ post['subject'] }}</td>
-                                        <td>{{ post['comment'] }}</td>
-                                        <td>
-                                            <!-- Action buttons here -->
-{#                                        {% print(post['_id'])%}#}
-                                            <a href="{{ url_for('routes.deletePost', postID=post['_id']) }}" class="btn btn-danger">Delete</a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                        <!-- View Movie Requests -->
+                        <div class="col-md-12 mt-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Movie Requests</h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Content for the second card -->
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Author</th>
+                                            <th>Movie Title</th>
+                                            <th>Message</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for request in requests %}
+                                            <tr>
+                                                <td>{{ request['userID'] }}</td>
+                                                <td>{{ request['movieTitle'] }}</td>
+                                                <td>{{ request['message'] }}</td>
+                                                <td>
+                                                    <!-- Action buttons here -->
+                                                    <a href="{{ url_for('routes.deleteRequest', requestID=request['_id']) }}" class="btn btn-danger">Delete</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     {% endif %}
-
 {% endblock %}

@@ -27,6 +27,7 @@ def post():
             subject = request.form['subject']
             comment = request.form['comment']
             userid = request.form['userid']
+            #name = dbUser.get_user_by_id(userid)[3]
             print(subject, comment, userid)
             # save to mongodb
             handler.insert_document(config.get('MONGODB', 'FORUM_COLLECTION'), {

@@ -1,129 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
 
     <!-- Bootstrap CSS -->
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
-      crossorigin="anonymous"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+            crossorigin="anonymous"
     />
     <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/styles.css') }}"
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/styles.css') }}"
     />
-  </head>
-  <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
         <a class="navbar-brand" href="{{ url_for('routes.home') }}">
-          <img
-            src="/static/images/home.png"
-            alt="Navbar"
-            class="img-thumbnail border-0"
-          />
+            <img
+                    src="/static/images/home.png"
+                    alt="Navbar"
+                    class="img-thumbnail border-0"
+            />
         </a>
         <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
         >
-          <span class="navbar-toggler-icon"></span>
+            <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('routes.home') }}">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
-            </li>
-              {% if current_user.is_authenticated and current_user.username == 'admin' %}
-              <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for('routes.admin') }}">Administration</a>
-              </li>
-                {% endif %}
-            {% if current_user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('routes.post') }}">Forum</a>
-            </li>
-            {% endif %}
-            <!-- Dropdown example
-                        <li class="nav-item dropdown">
-                          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Dropdown
-                          </a>
-                          <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">Action</a></li>
-                            <li><a class="dropdown-item" href="#">Another action</a></li>
-                            <li>
-                              <hr class="dropdown-divider">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('routes.home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
+                </li>
+                {% if current_user.is_authenticated %} {% if current_user.username == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.admin') }}"
+                        >Administration</a
+                        >
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.post') }}">Forum</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" type="button" data-bs-toggle="modal" data-bs-target="#myModal">Send Movie Request</a>
+                    </li>
+                {% endif %}{% endif %}
+                <!-- Dropdown example
+                            <li class="nav-item dropdown">
+                              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Dropdown
+                              </a>
+                              <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Action</a></li>
+                                <li><a class="dropdown-item" href="#">Another action</a></li>
+                                <li>
+                                  <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                              </ul>
                             </li>
-                            <li><a class="dropdown-item" href="#">Something else here</a></li>
-                          </ul>
-                        </li>
-                        -->
-            <!-- Disabled item
-                        <li class="nav-item">
-                          <a class="nav-link disabled">Disabled</a>
-                        </li>
-                        -->
-          </ul>
+                            -->
+                <!-- Disabled item
+                            <li class="nav-item">
+                              <a class="nav-link disabled">Disabled</a>
+                            </li>
+                            -->
+            </ul>
         </div>
-          {% if current_user.username != 'admin' %}
-        <div class="d-flex align-items-center">
-          <form class="d-flex" method="POST" action="/search">
-            <!-- Select dropdown example
-                        <label for="choice">Select an option:</label>
-                        <select class="form-select" name="choice" id="choice">
-                          <option value="director">Directors</option>
-                          <option value="actor">Actors</option>
-                          <option value="movie">Movie</option>
-                          <option value="profile">Profile</option>
-                        </select>
-                        -->
-            <input
-              class="form-control me-2"
-              type="text"
-              name="search"
-              id="search"
-              placeholder="Search"
-              required
-            />
-            <button class="btn btn-primary" type="submit">Search</button>
-          </form>
-        {% endif %}
-          {% if current_user.is_authenticated %}
-          <div class="ms-3">Hi {{ current_user.name }}!</div>
-          <a class="btn btn-link" href="{{ url_for('logout') }}">Logout</a>
-          {% else %}
-          <a class="btn btn-link" href="{{ url_for('login_page') }}">Login</a>
-          {% endif %}
+        {% if current_user.username != 'admin' %}
+            <div class="d-flex align-items-center">
+            <form class="d-flex" method="POST" action="/search">
+                <!-- Select dropdown example
+                            <label for="choice">Select an option:</label>
+                            <select class="form-select" name="choice" id="choice">
+                              <option value="director">Directors</option>
+                              <option value="actor">Actors</option>
+                              <option value="movie">Movie</option>
+                              <option value="profile">Profile</option>
+                            </select>
+                            -->
+                <input
+                        class="form-control me-2"
+                        type="text"
+                        name="search"
+                        id="search"
+                        placeholder="Search"
+                        required
+                />
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
+        {% endif %} {% if current_user.is_authenticated %}
+        <div class="ms-3">Hi {{ current_user.name }}!</div>
+        <a class="btn btn-link" href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+        <a class="btn btn-link" href="{{ url_for('login_page') }}">Login</a>
+    {% endif %}
         </div>
-      </div>
-    </nav>
-
-    {% block content %} {% endblock %}
-    <script
-      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
-      integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
-      crossorigin="anonymous"
-    ></script>
-  </body>
+    </div>
+</nav>
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Submit Movie Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form -->
+                <form method="POST" action="/requestMovie">
+                    <div class="mb-3">
+                        <label class="form-label">Movie Title</label>
+                        <input type="text" class="form-control" name="movieTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputMessage" class="form-label">Message</label>
+                        <textarea class="form-control" id="inputMessage" name="message" rows="4" required></textarea>
+                        <input type="hidden" name="userid" value="{{ current_user.id }}">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% block content %} {% endblock %}
+<script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"
+></script>
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"
+        integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS"
+        crossorigin="anonymous"
+></script>
+</body>
 </html>

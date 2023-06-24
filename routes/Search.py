@@ -28,4 +28,6 @@ def search_query():
     movies = DBMS_Movie.search_movies(query)
     #grab all updated posts
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
-    return render_template('admin.html', movies=movies, posts = allPosts)
+    #grab all movie requests
+    allRequests = handler.find_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {})
+    return render_template('admin.html', movies=movies, posts = allPosts, requests = allRequests)
