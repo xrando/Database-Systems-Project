@@ -21,11 +21,11 @@
                                     <form method="POST" action="/post">
                                         <div class="mb-3">
                                             <label for="forum" class="form-label">Subject</label>
-                                            <input type="text" name="subject" id="subject" class="form-control">
+                                            <input type="text" name="subject" id="subject" class="form-control" required>
                                         </div>
                                         <div class="mb-3">
                                             <label for="comment" class="form-label">Comment</label>
-                                            <textarea name="comment" id="comment" rows="5" class="form-control"></textarea>
+                                            <textarea name="comment" id="comment" rows="5" class="form-control" required></textarea>
                                         </div>
                                         <input type="hidden" name="userid" value="{{ current_user.id }}">
                                         <button type="submit" class="btn btn-primary">Post</button>

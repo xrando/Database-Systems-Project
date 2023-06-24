@@ -46,7 +46,7 @@ def post():
         print(user)
         # print(reply)
         # print(postID)
-        # save to mongodb
+        # if post exists, save reply to mongodb
         if handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}):
             handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
                 'replies': (user[0], user[3], reply),
@@ -54,15 +54,15 @@ def post():
         else:
             print("not found")
 
-    # grab all posts from mongodb and respective user for display
+    # grab all posts from mongodb and respective user for display, limit = 0 returns all results
     # get user following
-    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
+    userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id}, 0)
     if userFollows:
         userFollows = userFollows[0]['following_arr']
         for user in userFollows:
             print('following: ' + str(user))
-            # get all posts for each following
-            userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user})
+            # get all posts for each following, limit = 0 returns all results
+            userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user}, 0)
             if userFollowingPosts:
                 # get username
                 name = dbUser.get_user_by_id(user)[3]

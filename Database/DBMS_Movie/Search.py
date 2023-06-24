@@ -1,5 +1,4 @@
 import mariadb
-
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
 
