@@ -15,17 +15,17 @@ connection = DBConnection().connection
 cursor = connection.cursor()
 
 
-# def updateMovie(movie_name: str = None, release_date: str = None, synopsis: str = None) -> bool:
-#     update_stmt = "UPDATE Movie " \
-#                   "SET title = ?, release_date = ?, synopsis = ?" \
-#                   "WHERE title = ?"
-#     try:
-#         cursor.execute(update_stmt, (movie_name, release_date, synopsis))
-#     except mariadb.DataError as e:
-#         print(f"[-] Error updating movie details from database\n {e}")
-#     movies = cursor.fetchall()
-#     print(movies)
-#     return True
+def updateMovie(movie_name: str = None, release_date: str = None, synopsis: str = None, movie_id: int = None) -> bool:
+    update_stmt = "UPDATE Movie " \
+                  "SET title = ?, release_date = ?, synopsis = ? " \
+                  "WHERE movie_id = ?"
+    try:
+        cursor.execute(update_stmt, (movie_name, release_date, synopsis, movie_id))
+    except mariadb.DataError as e:
+        print(f"[-] Error updating movie details from database\n {e}")
+    # movies = cursor.fetchall()
+    # print(movies)
+    return True
 
 
 def deleteMovie(movie_id: str = None) -> bool:

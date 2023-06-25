@@ -44,7 +44,7 @@
                 </div>
 
                 <!-- Middle Panel - Display Information -->
-                <div class="col-lg-6">
+                <div class="col-lg-5">
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title">Movie Information</h5>
@@ -74,6 +74,7 @@
                                             <td>{{ movie[3] }}</td>
                                             <td>
                                                 <div class="btn-group">
+                                                    <a href="{{ url_for('routes.editMovie', movie_id=movie[0]) }}" class="btn btn-success">Edit</a>
                                                     <a href="{{ url_for('routes.deleteMovie', movie_id=movie[0]) }}" class="btn btn-danger">Delete</a>
                                                 </div>
                                             </td>
@@ -89,8 +90,8 @@
                 </div>
 
                 <!-- Right Panel - Review Management and Other Card -->
-                <div class="col-lg-4">
-                    <div class="row">
+                <div class="col-lg-5 d-flex">
+                    <div class="row d-flex">
                         <!-- First Card -->
                         <div class="col-md-12">
                             <div class="card">

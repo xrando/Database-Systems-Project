@@ -1,3 +1,5 @@
+import datetime
+
 from bson import ObjectId
 from flask import render_template, request, redirect, url_for
 from flask_login import current_user
@@ -38,9 +40,40 @@ def addMovie():
 @routes.route('/deleteMovie/<string:movie_id>', methods=['GET'])
 def deleteMovie(movie_id: str = None):
     print(movie_id)
-    #dependancy issues when deleting
     if movie_id:
         DBMS_Movie.deleteMovie(movie_id)
+    return redirect(url_for('routes.admin'))
+
+#edit movie in database
+@routes.route('/editMovie/<string:movie_id>', methods=['GET'])
+def editMovie(movie_id: str = None):
+    if request.method == 'POST':
+        movie_name = request.form['movie_name']
+        release_date = request.form['release_date']
+        synopsis = request.form['synopsis']
+        movie_id = request.form['movie_id']
+        print(movie_name, release_date, synopsis, movie_id)
+        DBMS_Movie.updateMovie(movie_name, release_date, synopsis, movie_id)
+        return redirect(url_for('routes.admin'))
+    else:
+        print(movie_id)
+        if movie_id:
+            #get movie data
+            movie = DBMS_Movie.get_movie_by_id(movie_id)
+            print(movie)
+            return render_template('movieEdit.html', movie = movie)
+
+#update movie in database
+@routes.route('/updateMovie', methods=['POST'])
+def updateMovie():
+    movie_name = request.form['title']
+    release_date = request.form['date']
+    synopsis = request.form['synopsis']
+    movie_id = request.form['movie_id']
+    print(movie_name, release_date, synopsis, movie_id)
+    #validate user input
+    if movie_name and release_date and synopsis and movie_id:
+        DBMS_Movie.updateMovie(movie_name, release_date, synopsis, movie_id)
     return redirect(url_for('routes.admin'))
 
 #delete post from mongodb
@@ -49,7 +82,7 @@ def deletePost(postID: str = None):
     print(postID)
     #delete from mongodb
     handler.delete_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
-    if current_user.name == 'admin':
+    if current_user.username == 'admin':
         return redirect(url_for('routes.admin'))
     else:
         return redirect(url_for('routes.post'))

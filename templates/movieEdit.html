@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+    {#    {% print(post) %}#}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header bg-primary d-flex justify-content-between">
+                <h5 class="card-title mb-0">Edit Movie</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/updateMovie">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" name="title" id="title" class="form-control" value="{{ movie[1] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Release Date</label>
+                        <input type="date" name="date" id="date" class="form-control" value="{{ movie[2] }}" required>
+                        <input type="hidden" name="movie_id" value="{{ movie[0] }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="synopsis" class="form-label">Synopsis</label>
+                        <textarea name="synopsis" id="synopsis" rows="5" class="form-control" value="{{ movie[3] }}" required>{{ movie[3] }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
