@@ -50,8 +50,16 @@
             <p>Director: <a href="{{ url_for('routes.director_page', tmdb_id=director[1]) }}" class="link-light">
                 {{ director[0] }}</a></p>
             <p>View on <a href="{{ link }}" class="link-light">TMDB</a></p>
+
+            <!-- Providers -->
+            <span>
+            Available on:
+                {% for provider in providers %}
+                <!-- display small logo (provider[0]) , alt is provider name (provider[1]) -->
+                    <img src="{{ provider[0] }}" alt="{{ provider[1] }}" class="img-fluid rounded" width="40px">
+                {% endfor %}
+            </span>
         </div>
-        <!-- Directed By at the bottom -->
     </div>
 </div>
 </div>
