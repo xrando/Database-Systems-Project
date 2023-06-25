@@ -67,22 +67,25 @@ def movie_page(movie_name: str = None) -> str:
     movie_tmdb_id = movie_link.split(config.get("MOVIE", "TMDB_MOVIE_URL"))[1]
 
     movie_providers = DBMS_Movie.movie_providers(movie_tmdb_id)
-    from pprint import pprint
-    pprint(movie_providers)
+    # from pprint import pprint
+    # pprint(movie_providers)
 
     providers = []
-    for key, value in movie_providers.items():
-        # If key is not a link
-        if key != 'link':
-            for provider in value:
-                print(provider)
-                # save as [[logo_path, provider_name, display_priority], ...]
-                providers.append([config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'], provider['provider_name'], provider['display_priority']])
+    if movie_providers is not None:
+        for key, value in movie_providers.items():
+            # If key is not a link
+            if key != 'link':
+                for provider in value:
+                    print(provider)
+                    # save as [[logo_path, provider_name, display_priority], ...]
+                    providers.append([config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'], provider['provider_name'], provider['display_priority']])
 
     # sort providers based on 'display_priority', Casting display_priority to int and removing duplicates
-    providers = sorted(providers, key=lambda x: int(x[2]))
-    providers = [providers[i] for i in range(len(providers)) if i == 0 or providers[i] != providers[i-1]]
+        providers = sorted(providers, key=lambda x: int(x[2]))
+        providers = [providers[i] for i in range(len(providers)) if i == 0 or providers[i] != providers[i-1]]
 
+    else:
+        providers = None
 
     # get movie reviews
     movieID = DBMS_Movie.get_movieID(movie_name)

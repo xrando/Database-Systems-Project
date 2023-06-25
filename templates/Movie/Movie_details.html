@@ -53,11 +53,15 @@
 
             <!-- Providers -->
             <span>
-            Available on:
+            {% if providers %}
+                Available on:
                 {% for provider in providers %}
                 <!-- display small logo (provider[0]) , alt is provider name (provider[1]) -->
                     <img src="{{ provider[0] }}" alt="{{ provider[1] }}" class="img-fluid rounded" width="40px">
                 {% endfor %}
+            {% else %}
+                Not available on any streaming service
+            {% endif %}
             </span>
         </div>
     </div>
