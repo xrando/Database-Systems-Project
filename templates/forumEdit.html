@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+{#    {% print(post) %}#}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header bg-primary d-flex justify-content-between">
+                <h5 class="card-title mb-0">Post by: {{ current_user.name }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/editPost">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" name="subject" id="subject" class="form-control" value="{{ post[0]['subject'] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Comment</label>
+                        <textarea name="comment" id="comment" rows="5" class="form-control" value="{{ post[0]['comment'] }}" required>{{ post[0]['comment'] }}</textarea>
+                        <input type="hidden" name="postid" value="{{ post[0]['_id'] }}">
+                    </div>
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

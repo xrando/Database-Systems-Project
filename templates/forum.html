@@ -3,41 +3,105 @@
 {% block content %}
     {% if current_user.is_authenticated %}
     <div class="container-fluid">
-        <div class="accordion" id="forumAccordion">
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="forumHeading">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#forumCollapse">
-                        Create a new post
-                    </button>
-                </h2>
-                <div id="forumCollapse" class="accordion-collapse collapse" aria-labelledby="forumHeading" data-bs-parent="#forumAccordion">
-                    <div class="accordion-body">
-                        <div class="container-fluid">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="card-title">Enter Details</h5>
-                                </div>
-                                <div class="card-body">
-                                    <form method="POST" action="/post">
-                                        <div class="mb-3">
-                                            <label for="forum" class="form-label">Subject</label>
-                                            <input type="text" name="subject" id="subject" class="form-control" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="comment" class="form-label">Comment</label>
-                                            <textarea name="comment" id="comment" rows="5" class="form-control" required></textarea>
-                                        </div>
-                                        <input type="hidden" name="userid" value="{{ current_user.id }}">
-                                        <button type="submit" class="btn btn-primary">Post</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+{#        <div class="accordion" id="forumAccordion">#}
+{#            <div class="accordion-item">#}
+{#                <h2 class="accordion-header" id="forumHeading">#}
+{#                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#forumCollapse">#}
+{#                        Create a new post#}
+{#                    </button>#}
+{#                </h2>#}
+{#                <div id="forumCollapse" class="accordion-collapse collapse" aria-labelledby="forumHeading" data-bs-parent="#forumAccordion">#}
+{#                    <div class="accordion-body">#}
+{#                        <div class="container-fluid">#}
+{#                            <div class="card">#}
+{#                                <div class="card-header">#}
+{#                                    <h5 class="card-title">Enter Details</h5>#}
+{#                                </div>#}
+{#                                <div class="card-body">#}
+{#                                    <form method="POST" action="/post">#}
+{#                                        <div class="mb-3">#}
+{#                                            <label for="forum" class="form-label">Subject</label>#}
+{#                                            <input type="text" name="subject" id="subject" class="form-control" required>#}
+{#                                        </div>#}
+{#                                        <div class="mb-3">#}
+{#                                            <label for="comment" class="form-label">Comment</label>#}
+{#                                            <textarea name="comment" id="comment" rows="5" class="form-control" required></textarea>#}
+{#                                        </div>#}
+{#                                        <input type="hidden" name="userid" value="{{ current_user.id }}">#}
+{#                                        <button type="submit" class="btn btn-primary">Post</button>#}
+{#                                    </form>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+        <div class="d-flex">
+            <div class="col-lg-3">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPostModal">New Post</button>
                 </div>
             </div>
         </div>
     </div>
+        <!-- Modal -->
+        <!-- Modal for Creating a New Post -->
+        <div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createPostModalLabel">Create New Post</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Form -->
+                        <form method="POST" action="/post">
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <input type="text" name="subject" id="subject" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Comment</label>
+                                <textarea name="comment" id="comment" rows="5" class="form-control" required></textarea>
+                                <input type="hidden" name="userid" value="{{ current_user.id }}">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Post</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Edit Post</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="/editPost">
+                            <div class="mb-3">
+                                <label for="editSubject" class="form-label">Subject</label>
+                                <input type="text" class="form-control" id="editSubject" name="subject" placeholder="Enter subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editComment" class="form-label">Comment</label>
+                                <textarea class="form-control" id="editComment" name="comment" rows="5" placeholder="Enter comment" required></textarea>
+                            </div>
+                            <!--postid from jquery-->
+                            <input type="hidden" name="postid" value="">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     {% endif %}
     <div class="container-fluid">
         <div class="accordion" id="forumviewAccordion">
@@ -51,11 +115,25 @@
                     <div class="accordion-body">
                         <!-- Loop through every post of another user the current user is following -->
                         {% for post in posts %}
-                            {#{% print(post) %}#}
+{#                            {% print(post[1]['_id']) %}#}
+{#                            {% print(current_user.name) %}#}
                             <div class="container-fluid">
                                 <div class="card">
-                                    <div class="card-header bg-primary">
-                                        <h5 class="card-title">Post by: {{ post[0]}}</h5>
+                                    <div class="card-header bg-primary d-flex justify-content-between">
+                                        <h5 class="card-title mb-0">Post by: {{ post[0] }}</h5>
+                                        <!--allow user to edit & delete own post-->
+                                        {% if current_user.name == post[0] %}
+                                            <div class="card-header bg-primary d-flex ">
+                                                <input type="hidden" name="postid" value="{{ post[1]['_id'] }}">
+                                                <a href="{{ url_for('routes.editPost', postID=post[1]['_id']) }}" class="btn btn-primary btn-sm" >
+                                                    <span class="fas fa-edit me-1"></span>
+                                                    Edit
+                                                </a>
+                                                <a href="{{ url_for('routes.deletePost', postID=post[1]['_id']) }}" class="close text-white" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
@@ -99,5 +177,4 @@
             </div>
         </div>
     </div>
-
 {% endblock %}

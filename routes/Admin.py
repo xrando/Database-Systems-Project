@@ -1,5 +1,7 @@
 from bson import ObjectId
 from flask import render_template, request, redirect, url_for
+from flask_login import current_user
+
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
@@ -47,8 +49,36 @@ def deletePost(postID: str = None):
     print(postID)
     #delete from mongodb
     handler.delete_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
-    return redirect(url_for('routes.admin'))
+    if current_user.name == 'admin':
+        return redirect(url_for('routes.admin'))
+    else:
+        return redirect(url_for('routes.post'))
 
+#edit post in mongodb
+@routes.route('/editPost', methods=['POST'])
+@routes.route('/editPost/<string:postID>', methods=['GET'])
+def editPost(postID: str = None):
+    if request.method == 'POST':
+        subject = request.form['subject']
+        comment = request.form['comment']
+        postID = request.form['postid']
+        print(subject, comment, postID)
+        #grab post
+        post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
+        print(post)
+        if post:
+            #update post
+            handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
+                'subject': subject,
+                'comment': comment,
+            }, '$set')
+            return redirect(url_for('routes.post'))
+    else:
+        print(postID)
+        #grab post
+        post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
+        print(post)
+        return render_template('forumEdit.html', post=post)
 
 #search posts by subject
 @routes.route('/searchPosts', methods=['POST'])

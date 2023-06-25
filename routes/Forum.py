@@ -69,5 +69,12 @@ def post():
                 name = dbUser.get_user_by_id(user)[3]
                 for post in userFollowingPosts:
                     posts.append((name, post))
+    #get user posts
+    userPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': current_user.id}, 0)
+    #append user posts
+    if userPosts:
+        print(userPosts)
+        for post in userPosts:
+            posts.append((current_user.name, post))
     print(posts)
     return render_template('forum.html', posts=posts)
