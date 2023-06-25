@@ -78,7 +78,7 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     return result
 
 
-def get_movie_by_title(title: str) -> dict:
+def movie_page(title: str) -> dict:
     """
     Get a movie by title as a dictionary of the following format:
 
@@ -97,6 +97,7 @@ def get_movie_by_title(title: str) -> dict:
     :rtype: dict
     """
     result = {}
+    rating = None
     poster_link = config.get('MOVIE', 'TMDB_IMAGE_URL')
 
     movie_stmt = "Select Movie.title as movie_title, Movie.release_date, Movie.synopsis, Movie.movie_id " \
@@ -127,6 +128,8 @@ def get_movie_by_title(title: str) -> dict:
         try:
             movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
             movie_info = tmdb.Movies(movie_id).info()
+            # from pprint import pprint
+            # pprint(movie_info)
 
             if movie_info is not None:
                 if movie_info['poster_path'] is not None:
@@ -137,6 +140,10 @@ def get_movie_by_title(title: str) -> dict:
                     banner = poster_link + movie_info['backdrop_path']
                 else:
                     banner = None
+                try:
+                    rating = [movie_info['vote_average'], movie_info['vote_count']]
+                except KeyError:
+                    rating = None
             else:
                 poster = None
                 banner = None
@@ -148,6 +155,7 @@ def get_movie_by_title(title: str) -> dict:
         movie_date = movie[1].strftime("%d %B %Y")
 
         result["movie"] = (movie[0], movie_date, movie[2], poster, banner, movie[3])
+        result["rating"] = rating
 
         cursor.execute(director_stmt, (title,))
         director = cursor.fetchone()
@@ -203,8 +211,8 @@ def carousel() -> list[tuple]:
     stmt = "SELECT title, release_date " \
            "FROM Movie " \
            "WHERE release_date " \
-           "BETWEEN CURRENT_DATE() - INTERVAL 1 MONTH " \
-           "AND CURRENT_DATE() + INTERVAL 1 MONTH " \
+           "BETWEEN CURRENT_DATE() - INTERVAL 5 MONTH " \
+           "AND CURRENT_DATE() + INTERVAL 5 MONTH " \
            "ORDER BY release_date ASC " \
            "LIMIT 1 " \
            "OFFSET ?;"
@@ -212,6 +220,7 @@ def carousel() -> list[tuple]:
     while len(result) < 5:
         cursor.execute(stmt, (len(result) + current_offset,))
         movie = cursor.fetchone()
+        print(movie)
         # Check if movie is in result (duplicate)
         if movie[0] in [x[0] for x in result]:
             current_offset += 1

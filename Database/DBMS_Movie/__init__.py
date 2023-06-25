@@ -11,7 +11,7 @@ if config.get('TMDB', 'API_KEY') == "":
     raise ValueError("Please enter your TMDB API key in the config.ini file")
 
 from .Movie import Movie_list, \
-    get_movie_by_title, \
+    movie_page, \
     get_pages, \
     carousel, \
     Genre, \

@@ -55,20 +55,19 @@ def movie_page(movie_name: str = None) -> str:
 
     # Remove (year) from movie name
     movie_name = movie_name.split('(')[0]
-    movie = DBMS_Movie.get_movie_by_title(movie_name)
+    movie = DBMS_Movie.movie_page(movie_name)
 
     movie_details = movie['movie']
     movie_genres = movie['genres']
     movie_director = movie['director']
     movie_actors = movie['actors']
     movie_link = movie['tmdb_link']
+    movie_tmdb_rating = round(movie['rating'][0] * 10) if movie['rating'] else 0
 
     # Delete left side of link
     movie_tmdb_id = movie_link.split(config.get("MOVIE", "TMDB_MOVIE_URL"))[1]
 
     movie_providers = DBMS_Movie.movie_providers(movie_tmdb_id)
-    # from pprint import pprint
-    # pprint(movie_providers)
 
     providers = []
     if movie_providers is not None:
@@ -78,7 +77,11 @@ def movie_page(movie_name: str = None) -> str:
                 for provider in value:
                     print(provider)
                     # save as [[logo_path, provider_name, display_priority], ...]
-                    providers.append([config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'], provider['provider_name'], provider['display_priority']])
+                    providers.append([
+                        config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'],
+                                      provider['provider_name'],
+                                      provider['display_priority']
+                    ])
 
     # sort providers based on 'display_priority', Casting display_priority to int and removing duplicates
         providers = sorted(providers, key=lambda x: int(x[2]))
@@ -95,10 +98,14 @@ def movie_page(movie_name: str = None) -> str:
     # print(data[0]['ratings'])
     # print(data[0]['comments'])
     reviews = []
+    rating = 0
     for rating, comment in zip(data[0]['ratings'], data[0]['comments']) if data != [] else []:
         reviews.append((rating, comment))
 
-    # reviews = [(5, 'This is a test review'), (4, 'This is another test review')]
+    # calculate average rating
+    numRating = len(data[0]['ratings']) if data != [] else 0
+    rating = sum(int(rating) for rating in data[0]['ratings']) / numRating if data != [] else 0
+    rating = round(rating / 5 * 100)
 
     inWatchList = False
     # Error handling just cuz
@@ -141,6 +148,8 @@ def movie_page(movie_name: str = None) -> str:
         actors=movie_actors,
         providers=providers,
         link=movie_link,
+        rating=rating,
+        tmdb_rating=movie_tmdb_rating,
         reviews=reviews,
         inWatchList=inWatchList
     )
