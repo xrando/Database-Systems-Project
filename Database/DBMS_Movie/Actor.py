@@ -2,6 +2,7 @@ import mariadb
 import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
+import Database.Mongo as Mongo
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -9,8 +10,15 @@ config_manager = ConfigManager()
 # Get the configuration
 config = config_manager.get_config()
 
+# DBMS_Movie DB Connection
 connection = DBConnection().connection
 cursor = connection.cursor()
+
+# MongoDB Connection
+handler = Mongo.MongoDBHandler(
+    config.get('MONGODB', 'CONNECTION_STRING'),
+    config.get('MONGODB', 'DATABASE')
+)
 
 tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
@@ -31,6 +39,8 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
     :rtype: dict
     """
     movies = []
+    actor_info = {}
+
     if order_by is None:
         order_by = ["release_date", "DESC"]
     orders = {"release_date": "release_date", "title": "title", "movie_id": "movie_id"}
@@ -74,10 +84,8 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
         except mariadb.Error as e:
             print(f"Error getting actor's name: {e}")
 
-        try:
-            actor_info = tmdb.People(actor_tmdb_id).info()
-        except IndexError:
-            actor_info = None
+        actor_info = get_actor_info(int(actor_tmdb_id))
+
     elif actor_name:
         stmt = "SELECT tmdb_id " \
                "FROM Actor " \
@@ -89,11 +97,35 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
             print(f"Error getting actor's tmdb_id: {e}")
 
         if actor_tmdb_id is not None:
-            try:
-                actor_info = tmdb.People(actor_tmdb_id).info()
-            except IndexError:
-                actor_info = None
+            actor_info = get_actor_info(int(actor_tmdb_id))
     else:
         actor_info = None
 
     return {"movies": movie_result, "actor": actor_info}
+
+
+def get_actor_info(actor_tmdb_id: int) -> dict:
+    """
+    Get actor's info from MongoDB or tmdb
+
+    :param actor_tmdb_id: Actor's tmdb id
+    :type actor_tmdb_id: int
+    :return: Actor's info
+    :rtype: dict
+    """
+    data = handler.find_documents(
+        config.get('MONGODB', 'ACTOR_INFO_COLLECTION'),
+        {"_id": actor_tmdb_id}
+    )
+    if data is None or data == []:
+        try:
+            data = tmdb.People(actor_tmdb_id).info()
+            handler.insert_document(
+                config.get('MONGODB', 'ACTOR_INFO_COLLECTION'),
+                {"_id": actor_tmdb_id, "data": data}
+            )
+        except IndexError:
+            data = None
+    else:
+        data = data[0]["data"]
+    return data

@@ -2,6 +2,7 @@ import mariadb
 import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
+import Database.Mongo as Mongo
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -12,7 +13,14 @@ config = config_manager.get_config()
 connection = DBConnection().connection
 cursor = connection.cursor()
 
+# MongoDB Connection
+handler = Mongo.MongoDBHandler(
+    config.get('MONGODB', 'CONNECTION_STRING'),
+    config.get('MONGODB', 'DATABASE')
+)
+
 tmdb.API_KEY = config.get('TMDB', 'API_KEY')
+
 
 def Director(
         director_name: str = None,
@@ -66,10 +74,8 @@ def Director(
 
     director_info = None
     if director_tmdb_id:
-        try:
-            director_info = tmdb.People(director_tmdb_id).info()
-        except IndexError:
-            director_info = None
+        director_info = get_director_info(int(director_tmdb_id))
+
     elif director_name:
         stmt = "SELECT tmdb_id " \
                "FROM Director " \
@@ -81,11 +87,35 @@ def Director(
             print(f"Error getting director's tmdb_id: {e}")
 
         if director_tmdb_id is not None:
-            try:
-                director_info = tmdb.People(director_tmdb_id).info()
-            except IndexError:
-                director_info = None
+            director_info = get_director_info(int(director_tmdb_id))
     else:
         raise ValueError("Either ONE director_name or director_tmdb_id must be specified")
 
     return {"movies": result, "director": director_info}
+
+
+def get_director_info(director_tmdb_id: int) -> dict:
+    """
+    Get director's info from mongodb or tmdb
+    :param director_tmdb_id: Director's tmdb_id
+    :type director_tmdb_id: int
+    :return: Director's info
+    :rtype: dict
+    """
+    data = handler.find_documents(
+        config.get('MONGODB', 'DIRECTOR_INFO_COLLECTION'),
+        {"_id": director_tmdb_id}
+    )
+    if data is None or data == []:
+        try:
+            data = tmdb.People(director_tmdb_id).info()
+            handler.insert_document(
+                config.get('MONGODB', 'DIRECTOR_INFO_COLLECTION'),
+                {"_id": director_tmdb_id, "data": data}
+            )
+        except IndexError:
+            data = None
+    else:
+        data = data[0]["data"]
+
+    return data
