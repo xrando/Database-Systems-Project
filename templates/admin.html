@@ -75,7 +75,19 @@
                                             <td>
                                                 <div class="btn-group">
                                                     <a href="{{ url_for('routes.editMovie', movie_id=movie[0]) }}" class="btn btn-success">Edit</a>
-                                                    <a href="{{ url_for('routes.deleteMovie', movie_id=movie[0]) }}" class="btn btn-danger">Delete</a>
+{#                                                    <a href="{{ url_for('routes.deleteMovie', movie_id=movie[0]) }}" class="btn btn-danger">Delete</a>#}
+
+                                                    <!-- POST request to routes.deleteMovie -->
+                                                    <form method="POST" action="{{ url_for('routes.deleteMovie') }}">
+                                                        <input type="hidden" name="movie_id" value="{{ movie[0] }}">
+                                                        <button type="submit" class="btn btn-danger">Delete Movie</button>
+                                                    </form>
+
+                                                    <!-- POST request to routes.update_movie_info -->
+                                                    <form method="POST" action="{{ url_for('routes.update_movie_info') }}">
+                                                        <input type="hidden" name="title" value="{{ movie[1] }}">
+                                                        <button type="submit" class="btn btn-warning">Update Info</button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>

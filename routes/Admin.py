@@ -39,15 +39,22 @@ def addMovie():
     DBMS_Movie.new_movie(movie_name, tmdb_id)
     return redirect(url_for('routes.admin'))
 
-#delete movie from database
-@routes.route('/deleteMovie/<string:movie_id>', methods=['GET'])
-def deleteMovie(movie_id: str = None):
-    print(movie_id)
-    if movie_id:
+
+# delete movie from database
+@routes.route('/deleteMovie', methods=['POST'])
+def deleteMovie():
+    if request.method == 'POST':
+        movie_id = request.form['movie_id']
+        # delete from mongodb
         DBMS_Movie.deleteMovie(movie_id)
     return redirect(url_for('routes.admin'))
+    # print(movie_id)
+    # if movie_id:
+    #     DBMS_Movie.deleteMovie(movie_id)
+    # return redirect(url_for('routes.admin'))
 
-#edit movie in database
+
+# edit movie in database
 @routes.route('/editMovie/<string:movie_id>', methods=['GET'])
 def editMovie(movie_id: str = None):
     if request.method == 'POST':
@@ -61,12 +68,13 @@ def editMovie(movie_id: str = None):
     else:
         print(movie_id)
         if movie_id:
-            #get movie data
+            # get movie data
             movie = DBMS_Movie.get_movie_by_id(movie_id)
             print(movie)
-            return render_template('movieEdit.html', movie = movie)
+            return render_template('movieEdit.html', movie=movie)
 
-#update movie in database
+
+# update movie in database
 @routes.route('/updateMovie', methods=['POST'])
 def updateMovie():
     movie_name = request.form['title']
@@ -74,23 +82,25 @@ def updateMovie():
     synopsis = request.form['synopsis']
     movie_id = request.form['movie_id']
     print(movie_name, release_date, synopsis, movie_id)
-    #validate user input
+    # validate user input
     if movie_name and release_date and synopsis and movie_id:
         DBMS_Movie.updateMovie(movie_name, release_date, synopsis, movie_id)
     return redirect(url_for('routes.admin'))
 
-#delete post from mongodb
+
+# delete post from mongodb
 @routes.route('/deletePost/<string:postID>', methods=['GET'])
 def deletePost(postID: str = None):
     print(postID)
-    #delete from mongodb
+    # delete from mongodb
     handler.delete_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
     if current_user.username == 'admin':
         return redirect(url_for('routes.admin'))
     else:
         return redirect(url_for('routes.post'))
 
-#edit post in mongodb
+
+# edit post in mongodb
 @routes.route('/editPost', methods=['POST'])
 @routes.route('/editPost/<string:postID>', methods=['GET'])
 def editPost(postID: str = None):
@@ -99,11 +109,11 @@ def editPost(postID: str = None):
         comment = request.form['comment']
         postID = request.form['postid']
         print(subject, comment, postID)
-        #grab post
+        # grab post
         post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
         print(post)
         if post:
-            #update post
+            # update post
             handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
                 'subject': subject,
                 'comment': comment,
@@ -111,28 +121,30 @@ def editPost(postID: str = None):
             return redirect(url_for('routes.post'))
     else:
         print(postID)
-        #grab post
+        # grab post
         post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
         print(post)
         return render_template('forumEdit.html', post=post)
 
-#search posts by subject
+
+# search posts by subject
 @routes.route('/searchPosts', methods=['POST'])
 def searchPost():
     subject = request.form['search']
     print(subject)
-    #grab all posts with subject
+    # grab all posts with subject
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'subject': subject})
-    return render_template('admin.html', posts = allPosts)
+    return render_template('admin.html', posts=allPosts)
 
-#submit movie request
+
+# submit movie request
 @routes.route('/requestMovie', methods=['POST'])
 def requestMovie():
     movieTitle = request.form['movieTitle']
     message = request.form['message']
     userID = request.form['userid']
     print(movieTitle, message, userID)
-    #insert into mongodb
+    # insert into mongodb
     handler.insert_document(config.get('MONGODB', 'REQUEST_COLLECTION'), {
         'userID': userID,
         'movieTitle': movieTitle,
@@ -141,10 +153,24 @@ def requestMovie():
     return redirect(url_for('routes.home'))
 
 
-#delete movie request
-@routes.route('/deleteRequest/<string:requestID>', methods=['GET'])
-def deleteRequest(requestID: str = None):
-    print(requestID)
-    #delete from mongodb
-    handler.delete_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {'_id': ObjectId(requestID)})
+# delete movie request
+@routes.route('/deleteRequest', methods=['POST'])
+def deleteRequest():
+    # print(requestID)
+    if request.method == 'POST':
+        requestID = request.form['requestid']
+        # delete from mongodb
+        handler.delete_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {'_id': ObjectId(requestID)})
+    return redirect(url_for('routes.admin'))
+
+
+@routes.route('/update/movie/', methods=['POST'])
+def update_movie_info():
+    """
+    Movie Metadata Update
+    :return: redirect to admin page
+    """
+    if request.method == 'POST':
+        title = request.form['title'] or None
+        DBMS_Movie.update_movie_info(title=title)
     return redirect(url_for('routes.admin'))

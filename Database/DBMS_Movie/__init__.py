@@ -24,4 +24,4 @@ from .Movie import Movie_list, \
 from .Actor import Actor
 from .Director import Director
 from .Search import search_movies, search_directors, search_actors, get_movieID
-from .Admin import deleteMovie, updateMovie
+from .Admin import deleteMovie, updateMovie, update_movie_info
