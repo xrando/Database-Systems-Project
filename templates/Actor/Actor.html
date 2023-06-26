@@ -2,6 +2,15 @@
 
 {% block content %}
     {% block Actor %}
+        <style>
+        .tmdb-icon {
+          width: 100px;
+          height: 50px;
+          border-radius: 50%;
+          background-color: #ffffff;
+          box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
+        }
+        </style>
         <!-- Name Field -->
         <h1>{{ actor_name }}</h1>
 
@@ -10,13 +19,9 @@
             <div class="row">
                 <div class="col-md-2">
                     <div class="container-fluid">
-                        <img src="{{ actor_profile_path }}" alt="{{ actor_name }}" class="img-fluid">
-                        <!-- TMDB Page Link below picture -->
-                        <a href="{{ actor_tmdb_page }}" target="_blank" rel="noopener noreferrer"> <img
-                                src="{{ url_for('static', filename='images/TMDB_Short.png') }}" alt="TMDB"
-                                class="img-thumbnail"></a>
+                        <img src="{{ actor_profile_path }}" alt="{{ actor_name }}" class="img-fluid rounded pb-1">
                     </div>
-                    <div class="accordion" id="accordionExample">
+                    <div class="accordion pt-1" id="accordionExample">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingOne">
                                 <button class="accordion-button" type="button" data-bs-toggle="collapse"
@@ -90,6 +95,14 @@
                             </div>
                         {% endif %}
                     </div>
+
+                <div class="container-fluid pt-2">
+                    <h3>View on</h3>
+                    <!-- TMDB Page Link below picture -->
+                    <a href="{{ actor_tmdb_page }}" target="_blank" rel="noopener noreferrer">
+                        <img src="{{ url_for('static', filename='images/TMDB_Short.png') }}" alt="TMDB" class="img-fluid rounded tmdb-icon" />
+                    </a>
+                </div>
                 </div>
 
                 <div class="col-md-10">

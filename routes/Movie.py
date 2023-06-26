@@ -110,7 +110,6 @@ def movie_page(movie_name: str = None) -> str:
             # If key is not a link
             if key != 'link':
                 for provider in value:
-                    print(provider)
                     # save as [[logo_path, provider_name, display_priority], ...]
                     providers.append([
                         config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'],

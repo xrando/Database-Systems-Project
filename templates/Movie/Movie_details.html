@@ -1,8 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
     <style>
-    .checked {
-      color: orange;
+    @media (max-width: 576px) {
+      .actor-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center; /* Add this line to center the text horizontally */
+      }
+      .actor-info img {
+        margin-bottom: 5px;
+      }
     }
     </style>
     <!-- Banner image -->
@@ -27,21 +35,23 @@
         <div class="col-md-8 text-light">
             <h1>{{ movie_name }}</h1>
 
-        <div class="container-fluid pb-2">
-        <!-- Movie Rating -->
+            <div class="container-fluid pb-2">
+                <!-- Movie Rating -->
 
-        <!-- TMDB Rating -->
-            {% if tmdb_rating != 0 %}
-                <!-- TMDB image -->
-                <img src="/static/images/TMDB_Short.png" alt="tmdb" class="img-thumbnail border-0" style="width: 50px; height: 50px;" />
-                {{ tmdb_rating }} %
-            {% endif %}
+                <!-- TMDB Rating -->
+                {% if tmdb_rating != 0 %}
+                    <!-- TMDB image -->
+                    <img src="/static/images/TMDB_Short.png" alt="tmdb" class="img-thumbnail border-0"
+                         style="width: 50px; height: 50px;"/>
+                    {{ tmdb_rating }} %
+                {% endif %}
 
-        <!-- Our Rating -->
-            {% if rating != 0 %}
-                <img src="/static/images/home.png" alt="DBMS_Movie" class="img-thumbnail border-0" style="width: 50px; height: 50px;" />{{ rating }} %
-            {% endif %}
-        </div>
+                <!-- Our Rating -->
+                {% if rating != 0 %}
+                    <img src="/static/images/home.png" alt="DBMS_Movie" class="img-thumbnail border-0"
+                         style="width: 50px; height: 50px;"/>{{ rating }} %
+                {% endif %}
+            </div>
 
             <!-- Follow movie -->
             {% if current_user.is_authenticated %}
@@ -78,7 +88,7 @@
             {% if providers %}
                 Available on:
                 {% for provider in providers %}
-                <!-- display small logo (provider[0]) , alt is provider name (provider[1]) -->
+                    <!-- display small logo (provider[0]) , alt is provider name (provider[1]) -->
                     <img src="{{ provider[0] }}" alt="{{ provider[1] }}" class="img-fluid rounded" width="40px">
                 {% endfor %}
             {% else %}
@@ -108,19 +118,23 @@
             {% for actor in actors %}
                 <tr>
                     <td>
-                        <img src="{{ actor[3] }}" alt="" class="img-fluid rounded" width="40px">
-                        <a href="{{ url_for('routes.actor', tmdb_id=actor[1]) }}">{{ actor[0] }}</a></td>
+                        <div class="actor-info">
+                            <img src="{{ actor[3] }}" alt="" class="img-fluid rounded" width="40px">
+                            <a href="{{ url_for('routes.actor', tmdb_id=actor[1]) }}">{{ actor[0] }}</a>
+                        </div>
+                    </td>
                     <td>{{ actor[2] }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
 
-    <!-- View All Actors in movie_page/cast -->
-    <!-- If current page is /cast, don't display View All -->
-    {% if request.path != '/movie/' + movie_name + '(' + movie_year + '/cast' %}
-        <a href="{{ url_for('routes.movie_page', movie_name=movie_name + "(" + movie_year) }}/cast" class="btn btn-success">View All</a>
-    {% endif %}
+        <!-- View All Actors in movie_page/cast -->
+        <!-- If current page is /cast, don't display View All -->
+        {% if request.path != '/movie/' + movie_name + '(' + movie_year + '/cast' %}
+            <a href="{{ url_for('routes.movie_page', movie_name=movie_name + "(" + movie_year) }}/cast"
+               class="btn btn-success">View All</a>
+        {% endif %}
 
     </div>
 
@@ -146,33 +160,33 @@
     </div>
     <!-- Submit Reviews -->
     {% if current_user.is_authenticated %}
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Submit Review</h5>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="/review">
-                    <div class="mb-3">
-                        <label for="rating" class="form-label">Rating</label>
-                        <select name="rating" id="rating" class="form-select">
-                            <option value="1">1 Star</option>
-                            <option value="2">2 Star</option>
-                            <option value="3">3 Star</option>
-                            <option value="4">4 Star</option>
-                            <option value="5">5 Star</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="comment" class="form-label">Review</label>
-                        <textarea name="comment" id="comment" rows="5" class="form-control"></textarea>
-                    </div>
-                    <input type="hidden" name="movie_name" value="{{ movie[0] }}">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Submit Review</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/review">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Rating</label>
+                            <select name="rating" id="rating" class="form-select">
+                                <option value="1">1 Star</option>
+                                <option value="2">2 Star</option>
+                                <option value="3">3 Star</option>
+                                <option value="4">4 Star</option>
+                                <option value="5">5 Star</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Review</label>
+                            <textarea name="comment" id="comment" rows="5" class="form-control"></textarea>
+                        </div>
+                        <input type="hidden" name="movie_name" value="{{ movie[0] }}">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     {% endif %}
 
 {% endblock %}
