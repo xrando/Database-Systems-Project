@@ -298,33 +298,34 @@ def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
         cursor.execute(stmt, (genre, limit, (page - 1) * limit))
         movies = cursor.fetchall()
 
-        poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
-        default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
-        default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
+        # poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
+        # default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
+        # default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
         result = []
 
         # Convert date to string
         for movie in movies:
             # Use tmdb api to get the image link
-            try:
-                movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
-                movie_info = tmdb.Movies(movie_id).info()
-
-                if movie_info is not None:
-                    if movie_info['poster_path'] is not None:
-                        poster = poster_link + movie_info['poster_path']
-                    else:
-                        poster = default_poster_link
-                    if movie_info['backdrop_path'] is not None:
-                        banner = poster_link + movie_info['backdrop_path']
-                    else:
-                        banner = default_banner_link
-                else:
-                    poster = default_poster_link
-                    banner = default_banner_link
-            except IndexError:
-                # Not all movies we have in the database are in the tmdb database
-                continue
+            poster, banner, ratings = get_movie_info(movie[1])
+            # try:
+            #     movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
+            #     movie_info = tmdb.Movies(movie_id).info()
+            #
+            #     if movie_info is not None:
+            #         if movie_info['poster_path'] is not None:
+            #             poster = poster_link + movie_info['poster_path']
+            #         else:
+            #             poster = default_poster_link
+            #         if movie_info['backdrop_path'] is not None:
+            #             banner = poster_link + movie_info['backdrop_path']
+            #         else:
+            #             banner = default_banner_link
+            #     else:
+            #         poster = default_poster_link
+            #         banner = default_banner_link
+            # except IndexError:
+            #     # Not all movies we have in the database are in the tmdb database
+            #     continue
 
             # Movie title + (year)
             movie_title = movie[1] + " (" + movie[2].strftime("%Y") + ")"
