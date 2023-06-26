@@ -21,7 +21,7 @@ from .Movie import Movie_list, \
     new_movie, \
     movie_providers
 
-from .Actor import Actor
+from .Actor import Actor, get_actor_info
 from .Director import Director
 from .Search import search_movies, search_directors, search_actors, get_movieID
 from .Admin import deleteMovie, updateMovie, update_movie_info

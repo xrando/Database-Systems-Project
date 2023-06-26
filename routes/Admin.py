@@ -45,8 +45,11 @@ def addMovie():
 def deleteMovie():
     if request.method == 'POST':
         movie_id = request.form['movie_id']
-        # delete from mongodb
-        DBMS_Movie.deleteMovie(movie_id)
+        if movie_id:
+            # delete from mongodb
+            DBMS_Movie.deleteMovie(movie_id)
+        else:
+            print("No movie_id")
     return redirect(url_for('routes.admin'))
     # print(movie_id)
     # if movie_id:

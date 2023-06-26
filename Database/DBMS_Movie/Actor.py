@@ -105,7 +105,7 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
     return {"movies": movie_result, "actor": actor_info}
 
 
-def get_actor_info(actor_tmdb_id: int) -> dict:
+def get_actor_info(actor_tmdb_id: int, actor_name: str = None) -> dict:
     """
     Get actor's info from MongoDB or tmdb
 
@@ -119,13 +119,20 @@ def get_actor_info(actor_tmdb_id: int) -> dict:
         {"_id": actor_tmdb_id}
     )
     if data is None or data == []:
-        try:
-            data = tmdb.People(actor_tmdb_id).info()
-            handler.insert_document(
-                config.get('MONGODB', 'ACTOR_INFO_COLLECTION'),
-                {"_id": actor_tmdb_id, "data": data}
-            )
-        except IndexError:
+        if actor_tmdb_id:
+            try:
+                data = tmdb.People(actor_tmdb_id).info()
+            except Exception as e:
+                print(f"Error getting actor's info from tmdb: {e}")
+                data = None
+            if data:
+                handler.insert_document(
+                    config.get('MONGODB', 'ACTOR_INFO_COLLECTION'),
+                    {"_id": actor_tmdb_id, "data": data}
+                )
+        elif actor_name:
+            data = tmdb.Search().person(query=actor_name)["results"]
+        else:
             data = None
     else:
         data = data[0]["data"]

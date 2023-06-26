@@ -49,14 +49,13 @@ def home(page: int) -> str:
     )
 
 
-@routes.route('/movie/<string:movie_name>', methods=['GET', 'POST'])
+@routes.route('/movie/<string:movie_name>', methods=['GET'])
 def movie_page(movie_name: str = None) -> str:
     """
     Get all movie details and render movie page
     :param movie_name: Movie name
     :return: Render movie page
     """
-
     # Remove (year) from movie name
     movie_name = movie_name.split('(')[0]
     movie = DBMS_Movie.movie_page(movie_name)
@@ -64,8 +63,17 @@ def movie_page(movie_name: str = None) -> str:
     movie_details = movie['movie']
     movie_genres = movie['genres']
     movie_director = movie['director']
-    movie_actors = movie['actors']
     movie_link = movie['tmdb_link']
+    movie_actors = movie['actors']
+    # Get profile image from MongoDB
+    actors = []
+    for actor in movie_actors:
+        # print(actor)
+        actor_profile = DBMS_Movie.get_actor_info(actor_tmdb_id=actor[1])
+        if actor_profile is not None:
+            profile_path = config.get("MOVIE", "TMDB_IMAGE_URL") + actor_profile['profile_path'] if actor_profile['profile_path'] is not None else None
+            actors.append([actor[0], actor[1], actor[2], profile_path])
+
     movie_tmdb_rating = round(movie['rating'][0] * 10) if movie['rating'] else 0
 
     # Delete left side of link
@@ -149,7 +157,7 @@ def movie_page(movie_name: str = None) -> str:
         movie=movie_details,
         genres=movie_genres,
         director=movie_director,
-        actors=movie_actors,
+        actors=actors,
         providers=providers,
         link=movie_link,
         rating=rating,

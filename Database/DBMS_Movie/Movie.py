@@ -138,30 +138,6 @@ def movie_page(title: str) -> dict:
         movie = cursor.fetchone()
         movie_id, poster, banner, rating = get_movie_info(movie[0])
 
-        # try:
-        #     movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
-        #     movie_info = tmdb.Movies(movie_id).info()
-        #
-        #     if movie_info is not None:
-        #         if movie_info['poster_path'] is not None:
-        #             poster = poster_link + movie_info['poster_path']
-        #         else:
-        #             poster = None
-        #         if movie_info['backdrop_path'] is not None:
-        #             banner = poster_link + movie_info['backdrop_path']
-        #         else:
-        #             banner = None
-        #         try:
-        #             rating = [movie_info['vote_average'], movie_info['vote_count']]
-        #         except KeyError:
-        #             rating = None
-        #     else:
-        #         poster = None
-        #         banner = None
-        # except TypeError:
-        #     # Not all movies we have in the database are in the tmdb database
-        #     poster = None
-
         # Convert date to string
         movie_date = movie[1].strftime("%d %B %Y")
 
