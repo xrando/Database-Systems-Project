@@ -104,31 +104,31 @@ def deletePost(postID: str = None):
 
 
 # edit post in mongodb
-@routes.route('/editPost', methods=['POST'])
+
 @routes.route('/editPost/<string:postID>', methods=['GET'])
 def editPost(postID: str = None):
-    if request.method == 'POST':
-        subject = request.form['subject']
-        comment = request.form['comment']
-        postID = request.form['postid']
-        print(subject, comment, postID)
-        # grab post
-        post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
-        print(post)
-        if post:
-            # update post
-            handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
-                'subject': subject,
-                'comment': comment,
-            }, '$set')
-            return redirect(url_for('routes.post'))
-    else:
-        print(postID)
-        # grab post
-        post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
-        print(post)
-        return render_template('forumEdit.html', post=post)
+    print(postID)
+    # grab post
+    post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
+    print(post)
+    return render_template('forumEdit.html', post=post)
 
+@routes.route('/updatePost', methods=['POST'])
+def updatePost():
+    subject = request.form['subject']
+    comment = request.form['comment']
+    postID = request.form['postid']
+    print(subject, comment, postID)
+    # grab post
+    post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
+    print(post)
+    if post:
+        # update post
+        handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
+            'subject': subject,
+            'comment': comment,
+        }, '$set')
+    return redirect(url_for('routes.post'))
 
 # search posts by subject
 @routes.route('/searchPosts', methods=['POST'])

@@ -7,7 +7,7 @@
                 <h5 class="card-title mb-0">Post by: {{ current_user.name }}</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="/editPost">
+                <form method="POST" action="/updatePost">
                     <div class="mb-3">
                         <label for="subject" class="form-label">Subject</label>
                         <input type="text" name="subject" id="subject" class="form-control" value="{{ post[0]['subject'] }}" required>
