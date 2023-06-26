@@ -49,6 +49,7 @@ def home(page: int) -> str:
     )
 
 
+@routes.route('/movie/<string:movie_name>/cast', methods=['GET'])
 @routes.route('/movie/<string:movie_name>', methods=['GET'])
 def movie_page(movie_name: str = None) -> str:
     """
@@ -57,14 +58,36 @@ def movie_page(movie_name: str = None) -> str:
     :return: Render movie page
     """
     # Remove (year) from movie name
-    movie_name = movie_name.split('(')[0]
-    movie = DBMS_Movie.movie_page(movie_name)
+    if movie_name is not None:
+        try:
+            movie_name, movie_year = movie_name.split('(')
+        except ValueError:
+            movie_year = None
 
-    movie_details = movie['movie']
-    movie_genres = movie['genres']
-    movie_director = movie['director']
-    movie_link = movie['tmdb_link']
-    movie_actors = movie['actors']
+        movie = DBMS_Movie.movie_page(movie_name)
+
+        movie_details = movie['movie']
+        movie_genres = movie['genres']
+        movie_director = movie['director']
+        movie_link = movie['tmdb_link']
+        movie_actors = movie['actors']
+
+        # Movie year is none, get from movie details[1]
+        if movie_year is None:
+            movie_year = movie_details[1].split(' ')[-1] if movie_details is not None else None
+            movie_year = movie_year + ')'
+
+        # If no /cast
+        if request.path == '/movie/' + movie_name + "(" + movie_year + '/cast':
+            movie_actors = movie_actors
+        else:
+            movie_actors = movie_actors[:3]
+    else:
+        movie_details = None
+        movie_genres = None
+        movie_director = None
+        movie_link = None
+        movie_actors = None
     # Get profile image from MongoDB
     actors = []
     for actor in movie_actors:
@@ -154,6 +177,7 @@ def movie_page(movie_name: str = None) -> str:
     return render_template(
         'Movie/Movie_details.html',
         movie_name=movie_name,
+        movie_year=movie_year,
         movie=movie_details,
         genres=movie_genres,
         director=movie_director,

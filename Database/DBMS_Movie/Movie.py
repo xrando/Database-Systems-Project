@@ -91,7 +91,7 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     return result
 
 
-def movie_page(title: str) -> dict:
+def movie_page(title: str) -> dict | None:
     """
     Get a movie by title as a dictionary of the following format:
 
@@ -110,6 +110,7 @@ def movie_page(title: str) -> dict:
     :rtype: dict
     """
     result = {}
+    movie = None
 
     movie_stmt = "Select Movie.title as movie_title, Movie.release_date, Movie.synopsis, Movie.movie_id " \
                  "FROM Movie " \
@@ -134,9 +135,13 @@ def movie_page(title: str) -> dict:
                  "ON Movie.movie_id = Movie_Genre.movie_id " \
                  "WHERE Movie.title = ?"
     try:
-        cursor.execute(movie_stmt, (title,))
-        movie = cursor.fetchone()
-        movie_id, poster, banner, rating = get_movie_info(movie[0])
+        if title is not None:
+            cursor.execute(movie_stmt, (title,))
+            movie = cursor.fetchone()
+
+            movie_id, poster, banner, rating = get_movie_info(movie[0] or title)
+        else:
+            print("No title provided")
 
         # Convert date to string
         movie_date = movie[1].strftime("%d %B %Y")
