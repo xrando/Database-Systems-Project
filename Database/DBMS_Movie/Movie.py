@@ -5,6 +5,7 @@ import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
 import requests
+import random
 import Database.Mongo as Mongo
 
 # Initialize the config manager
@@ -50,6 +51,10 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     for movie in movies:
         # Use tmdb api to get the image link
         tmdb_id, poster, banner, rating = get_movie_info(movie[0])
+        if poster is None:
+            poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
+        if banner is None:
+            banner = config.get("MOVIE", "DEFAULT_BANNER_URL")
         # try:
         #     movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
         #     movie_info = tmdb.Movies(movie_id).info()
@@ -206,30 +211,28 @@ def carousel() -> list[tuple]:
     :return: List of movies (title, release_date, banner)
     :rtype: list[tuple]
     """
-    # poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
     result = []
-    current_offset = 0
+    # current_offset = 0
+    desired_length = random.randint(5, 7)  # Randomly choose the number of movies to select
 
     stmt = "SELECT title, release_date " \
            "FROM Movie " \
            "WHERE release_date " \
            "BETWEEN CURRENT_DATE() - INTERVAL 5 MONTH " \
            "AND CURRENT_DATE() + INTERVAL 5 MONTH " \
-           "ORDER BY release_date ASC " \
-           "LIMIT 1 " \
-           "OFFSET ?;"
+           "ORDER BY release_date ASC;"
 
-    while len(result) < 5:
-        cursor.execute(stmt, (len(result) + current_offset,))
-        movie = cursor.fetchone()
-        # print(movie)
+    cursor.execute(stmt)
+    movies = cursor.fetchall()
+
+    while len(result) < desired_length and movies:
+        movie = random.choice(movies)
+        movies.remove(movie)
         # Check if movie is in result (duplicate)
         if movie[0] in [x[0] for x in result]:
-            current_offset += 1
             continue
 
         # Get banner from MongoDB
-        banner = None
         banner = get_movie_info(movie[0])[2]
         if banner is not None:
             movie_date = movie[1].strftime("%d %B %Y")
@@ -237,32 +240,7 @@ def carousel() -> list[tuple]:
             continue
 
         else:
-            current_offset += 1
             continue
-
-
-        # # Get movie info from tmdb api
-        # try:
-        #     movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
-        #     movie_info = tmdb.Movies(movie_id).info()
-        # except IndexError:
-        #     # Not all movies we have in the database are in the tmdb database
-        #     current_offset += 1
-        #     continue
-        # except TypeError:  # Not all movies we have in the database are in the tmdb database
-        #     current_offset += 1
-        #     continue
-        #
-        # if movie_info is not None:
-        #     if movie_info['backdrop_path'] is not None:
-        #         banner = poster_link + movie_info['backdrop_path']
-        #     else:
-        #         current_offset += 1
-        #         continue
-        #
-        # # Convert date to string
-        # movie_date = movie[1].strftime("%d %B %Y")
-        # result += [(movie[0], movie_date, banner)]
 
     return result
 
@@ -297,35 +275,16 @@ def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
 
         cursor.execute(stmt, (genre, limit, (page - 1) * limit))
         movies = cursor.fetchall()
-
-        # poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
-        # default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
-        # default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
         result = []
 
         # Convert date to string
         for movie in movies:
             # Use tmdb api to get the image link
             movie_id, poster, banner, ratings = get_movie_info(movie[1])
-            # try:
-            #     movie_id = tmdb.Search().movie(query=movie[1])['results'][0]['id']
-            #     movie_info = tmdb.Movies(movie_id).info()
-            #
-            #     if movie_info is not None:
-            #         if movie_info['poster_path'] is not None:
-            #             poster = poster_link + movie_info['poster_path']
-            #         else:
-            #             poster = default_poster_link
-            #         if movie_info['backdrop_path'] is not None:
-            #             banner = poster_link + movie_info['backdrop_path']
-            #         else:
-            #             banner = default_banner_link
-            #     else:
-            #         poster = default_poster_link
-            #         banner = default_banner_link
-            # except IndexError:
-            #     # Not all movies we have in the database are in the tmdb database
-            #     continue
+            if poster is None:
+                poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
+            if banner is None:
+                banner = config.get("MOVIE", "DEFAULT_BANNER_URL")
 
             # Movie title + (year)
             movie_title = movie[1] + " (" + movie[2].strftime("%Y") + ")"
