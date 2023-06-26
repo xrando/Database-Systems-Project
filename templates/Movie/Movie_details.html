@@ -115,12 +115,17 @@
             {% endfor %}
             </tbody>
         </table>
+
     <!-- View All Actors in movie_page/cast -->
-        <a href="{{ url_for('routes.movie_page', movie_name=movie_name + "(" + movie_year) }}/cast" class="link-primary">View All</a>
+    <!-- If current page is /cast, don't display View All -->
+    {% if request.path != '/movie/' + movie_name + '(' + movie_year + '/cast' %}
+        <a href="{{ url_for('routes.movie_page', movie_name=movie_name + "(" + movie_year) }}/cast" class="btn btn-success">View All</a>
+    {% endif %}
+
     </div>
 
     <!-- View Reviews -->
-    <div class="container-fluid">
+    <div class="container-fluid pt-2">
         <h2>Reviews</h2>
         <table class="table table-striped">
             <thead>
