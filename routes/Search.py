@@ -9,7 +9,10 @@ DBMS_Movie = DBMS_Movie
 dbUser = DBUser.Database()
 config_manager = ConfigManager()
 config = config_manager.get_config()
-handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
+handler = Mongo.MongoDBHandler.get_instance(
+    config.get('MONGODB', 'CONNECTION_STRING'),
+    config.get('MONGODB', 'DATABASE')
+)
 
 @routes.route('/search', methods=['POST'])
 def search():

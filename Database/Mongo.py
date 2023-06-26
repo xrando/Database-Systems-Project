@@ -2,9 +2,22 @@ from pymongo import MongoClient
 
 
 class MongoDBHandler:
+    _instance = None
+
+    @staticmethod
+    def get_instance(connection_string, database_name):
+        if not MongoDBHandler._instance:
+            MongoDBHandler._instance = MongoDBHandler(connection_string, database_name)
+        return MongoDBHandler._instance
+
     def __init__(self, connection_string, database_name):
+        if MongoDBHandler._instance:
+            raise Exception("An instance of MongoDBHandler already exists. Use get_instance() to access it.")
         self.client = MongoClient(connection_string)
         self.db = self.client[database_name]
+    # def __init__(self, connection_string, database_name):
+    #     self.client = MongoClient(connection_string)
+    #     self.db = self.client[database_name]
 
     def insert_document(self, collection_name, document):
         try:

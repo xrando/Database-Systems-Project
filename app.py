@@ -17,6 +17,12 @@ login_manager.init_app(app)
 app.config.update(TESTING=True, SECRET_KEY='192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf')
 app.register_blueprint(routes)
 
+# Mongodb handler
+handler = Mongo.MongoDBHandler.get_instance(
+    config.get('MONGODB', 'CONNECTION_STRING'),
+    config.get('MONGODB', 'DATABASE')
+)
+
 
 class User(UserMixin):
     def __init__(self, id):
@@ -113,9 +119,6 @@ def logout():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile(success=None):
-    # Mongodb handler
-    handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
-
     # Get user's username and data
     userData = User(dbUser.get_user_by_id(current_user.id)[0])
     # Update user's data
@@ -179,8 +182,6 @@ def profile(success=None):
 # Other user profile page
 @app.route('/profile/<id>', methods=['GET', 'POST'])
 def other_profile(id):
-    # Mongodb handler
-    handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
 
     # Get user's username and data
     userData = dbUser.get_user_by_id(id)

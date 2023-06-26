@@ -14,7 +14,7 @@ connection = DBConnection().connection
 cursor = connection.cursor()
 
 # MongoDB Connection
-handler = Mongo.MongoDBHandler(
+handler = Mongo.MongoDBHandler.get_instance(
     config.get('MONGODB', 'CONNECTION_STRING'),
     config.get('MONGODB', 'DATABASE')
 )

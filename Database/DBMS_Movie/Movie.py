@@ -19,6 +19,10 @@ tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 connection = DBConnection().connection
 cursor = connection.cursor()
 
+handler = Mongo.MongoDBHandler.get_instance(
+    config.get('MONGODB', 'CONNECTION_STRING'),
+    config.get('MONGODB', 'DATABASE')
+)
 
 def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     """
@@ -509,7 +513,6 @@ def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list
     :return: None if movie not found, else returns movie info (Poster: str, Banner: str, Rating: list[float, int])
     """
     poster_link = config.get('MOVIE', 'TMDB_IMAGE_URL')
-    handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
     poster = None
     banner = None
     rating = None
@@ -578,10 +581,6 @@ def movie_providers(tmdb_id: int) -> dict:
     :param tmdb_id: TMDB ID of movie
     :return: Dictionary of providers
     """
-    handler = Mongo.MongoDBHandler(
-        config.get('MONGODB', 'CONNECTION_STRING'),
-        config.get('MONGODB', 'DATABASE')
-    )
 
     data = handler.find_documents(
         config.get('MONGODB', 'MOVIE_PROVIDER_COLLECTION'),

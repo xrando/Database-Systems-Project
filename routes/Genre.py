@@ -9,7 +9,10 @@ DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
 config = config_manager.get_config()
 
-handler = Mongo.MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
+handler = Mongo.MongoDBHandler.get_instance(
+    config.get('MONGODB', 'CONNECTION_STRING'),
+    config.get('MONGODB', 'DATABASE')
+)
 
 
 @routes.route('/genre/<genre>/<int:page>', methods=['GET'])

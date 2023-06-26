@@ -15,10 +15,11 @@ connection = DBConnection().connection
 cursor = connection.cursor()
 
 # MongoDB Connection
-handler = Mongo.MongoDBHandler(
+handler = Mongo.MongoDBHandler.get_instance(
     config.get('MONGODB', 'CONNECTION_STRING'),
     config.get('MONGODB', 'DATABASE')
 )
+
 
 tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
