@@ -1,8 +1,11 @@
+from typing import Tuple, Any, List
+
 import mariadb
 import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
 import requests
+import Database.Mongo as Mongo
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -30,9 +33,9 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     :rtype: list[tuple]
     """
 
-    poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
-    default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
-    default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
+    # poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
+    # default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
+    # default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
     result = []
     offset = (page - 1) * limit
 
@@ -46,25 +49,26 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     movies = cursor.fetchall()
     for movie in movies:
         # Use tmdb api to get the image link
-        try:
-            movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
-            movie_info = tmdb.Movies(movie_id).info()
-
-            if movie_info is not None:
-                if movie_info['poster_path'] is not None:
-                    poster = poster_link + movie_info['poster_path']
-                else:
-                    poster = default_poster_link
-                if movie_info['backdrop_path'] is not None:
-                    banner = poster_link + movie_info['backdrop_path']
-                else:
-                    banner = default_banner_link
-            else:
-                poster = default_poster_link
-                banner = default_banner_link
-        except IndexError:
-            # Not all movies we have in the database are in the tmdb database
-            continue
+        poster, banner, rating = get_movie_info(movie[0])
+        # try:
+        #     movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
+        #     movie_info = tmdb.Movies(movie_id).info()
+        #
+        #     if movie_info is not None:
+        #         if movie_info['poster_path'] is not None:
+        #             poster = poster_link + movie_info['poster_path']
+        #         else:
+        #             poster = default_poster_link
+        #         if movie_info['backdrop_path'] is not None:
+        #             banner = poster_link + movie_info['backdrop_path']
+        #         else:
+        #             banner = default_banner_link
+        #     else:
+        #         poster = default_poster_link
+        #         banner = default_banner_link
+        # except IndexError:
+        #     # Not all movies we have in the database are in the tmdb database
+        #     continue
 
         # Movie title + (year)
         movie_title = movie[0] + " (" + movie[1].strftime("%Y") + ")"
@@ -128,8 +132,6 @@ def movie_page(title: str) -> dict:
         try:
             movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
             movie_info = tmdb.Movies(movie_id).info()
-            # from pprint import pprint
-            # pprint(movie_info)
 
             if movie_info is not None:
                 if movie_info['poster_path'] is not None:
@@ -220,33 +222,47 @@ def carousel() -> list[tuple]:
     while len(result) < 5:
         cursor.execute(stmt, (len(result) + current_offset,))
         movie = cursor.fetchone()
-        print(movie)
+        # print(movie)
         # Check if movie is in result (duplicate)
         if movie[0] in [x[0] for x in result]:
             current_offset += 1
             continue
-        # Get movie info from tmdb api
-        try:
-            movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
-            movie_info = tmdb.Movies(movie_id).info()
-        except IndexError:
-            # Not all movies we have in the database are in the tmdb database
-            current_offset += 1
+
+        # Get banner from MongoDB
+        banner = None
+        banner = get_movie_info(movie[0])[1]
+        if banner is not None:
+            movie_date = movie[1].strftime("%d %B %Y")
+            result += [(movie[0], movie_date, banner)]
             continue
-        except TypeError:  # Not all movies we have in the database are in the tmdb database
+
+        else:
             current_offset += 1
             continue
 
-        if movie_info is not None:
-            if movie_info['backdrop_path'] is not None:
-                banner = poster_link + movie_info['backdrop_path']
-            else:
-                current_offset += 1
-                continue
 
-        # Convert date to string
-        movie_date = movie[1].strftime("%d %B %Y")
-        result += [(movie[0], movie_date, banner)]
+        # # Get movie info from tmdb api
+        # try:
+        #     movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
+        #     movie_info = tmdb.Movies(movie_id).info()
+        # except IndexError:
+        #     # Not all movies we have in the database are in the tmdb database
+        #     current_offset += 1
+        #     continue
+        # except TypeError:  # Not all movies we have in the database are in the tmdb database
+        #     current_offset += 1
+        #     continue
+        #
+        # if movie_info is not None:
+        #     if movie_info['backdrop_path'] is not None:
+        #         banner = poster_link + movie_info['backdrop_path']
+        #     else:
+        #         current_offset += 1
+        #         continue
+        #
+        # # Convert date to string
+        # movie_date = movie[1].strftime("%d %B %Y")
+        # result += [(movie[0], movie_date, banner)]
 
     return result
 
@@ -370,6 +386,7 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
     Adds a new movie to the database
 
     Search for movie on tmdb api, need to update Director, Actor, Genre tables and their Movie_ tables
+    :param tmdb_id: TMDB id of the movie
     :param title: Title of the movie
     :type title: str
     """
@@ -523,14 +540,101 @@ def check_movie(movie: str) -> int | None:
     return id[0]
 
 
+def get_movie_info(movie: str) -> tuple[Any | None, Any | None, list[Any] | None]:
+    """
+    Gets movie info from TMDB API, and returns movie info (Poster: str, Banner: str, Rating: list[float, int])
+
+    Data is cached in MongoDB, and will be retrieved from there if available.
+    :param movie: Movie Title to search for
+    :return: None if movie not found, else returns movie info (Poster: str, Banner: str, Rating: list[float, int])
+    """
+    poster_link = config.get('MOVIE', 'TMDB_IMAGE_URL')
+    handler = Mongo.MongoDBHandler(config.get('MONGODB', 'CONNECTION_STRING'), config.get('MONGODB', 'DATABASE'))
+    poster = None
+    banner = None
+    rating = None
+
+    # Check if movie is in MongoDB
+    data = handler.find_documents(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': movie})
+    if len(data) > 0:
+        movie_info = data[0]
+        if movie_info['poster'] is not None:
+            poster = movie_info['poster']
+        if movie_info['banner'] is not None:
+            banner = movie_info['banner']
+        if movie_info['rating'] is not None:
+            rating = movie_info['rating']
+    # If not in MongoDB, check TMDB
+    else:
+        try:
+            movie_id = tmdb.Search().movie(query=movie)['results'][0]['id']
+            movie_info = tmdb.Movies(movie_id).info()
+
+            if movie_info is not None:
+                if movie_info['poster_path'] is not None:
+                    poster = poster_link + movie_info['poster_path']
+                else:
+                    poster = None
+                if movie_info['backdrop_path'] is not None:
+                    banner = poster_link + movie_info['backdrop_path']
+                else:
+                    banner = None
+                try:
+                    rating = [movie_info['vote_average'], movie_info['vote_count']]
+                except KeyError:
+                    rating = None
+            else:
+                poster = None
+                banner = None
+        except TypeError:
+            # Not all movies we have in the database are in the tmdb database
+            poster = None
+            banner = None
+        except IndexError:
+            # Not all movies we have in the database are in the tmdb database
+            poster = None
+            banner = None
+
+        # Add movie info to MongoDB
+        handler.insert_document('movie_info', {'title': movie, 'poster': poster, 'banner': banner, 'rating': rating})
+
+    return poster, banner, rating
+
+
 def movie_providers(tmdb_id: int) -> dict:
-    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/watch/providers"
+    """
+    Get movie providers from TMDB API
 
-    headers = {
-        "accept": "application/json",
-        "Authorization": "Bearer " + config.get("TMDB", "ACCESS_TOKEN")
-    }
+    Data is cached in MongoDB
+    :param tmdb_id: TMDB ID of movie
+    :return: Dictionary of providers
+    """
+    handler = Mongo.MongoDBHandler(
+        config.get('MONGODB', 'CONNECTION_STRING'),
+        config.get('MONGODB', 'DATABASE')
+    )
 
-    response = requests.get(url, headers=headers)
+    data = handler.find_documents(
+        config.get('MONGODB', 'MOVIE_PROVIDER_COLLECTION'),
+        {'movie_tmdb_id': tmdb_id}
+    )
 
-    return response.json()['results']['US'] if 'US' in response.json()['results'] else None
+    if data is not None and len(data) > 0:
+        print(data)
+        return data[0]['providers']
+    else:
+        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/watch/providers"
+
+        headers = {
+            "accept": "application/json",
+            "Authorization": "Bearer " + config.get("TMDB", "ACCESS_TOKEN")
+        }
+
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            if 'US' in response.json()['results']:
+                providers = response.json()['results']['US']
+                handler.insert_document(config.get('MONGODB', 'MOVIE_PROVIDER_COLLECTION'),
+                                        {'movie_tmdb_id': tmdb_id, 'providers': providers})
+                # Return inserted data
+                return providers
