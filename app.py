@@ -2,6 +2,7 @@ import mariadb
 from flask import Flask, render_template, request, url_for, redirect, flash, app
 from flask_login import LoginManager, login_required, UserMixin, login_user, logout_user, current_user
 from datetime import timedelta
+import hashlib
 
 import Database.Mongo as Mongo
 from routes import *
@@ -58,7 +59,11 @@ def login_page():
         # Check if username and password are correct
         db_password = dbUser.get_password_by_username(username)
         if db_password:
-            if password == db_password[1]:
+            # hash input password
+            hashedpassword = hashlib.sha512(password.encode('UTF-8')).hexdigest()
+            print("Hashed:" + str(hashedpassword))
+            print("DB:" + str(db_password[1]))
+            if hashedpassword == db_password[1]:
                 print("Matched, logging in...")
                 user = User(dbUser.get_user_by_id(db_password[0])[0])
                 login_user(user, remember=True, duration=timedelta(minutes=5))
@@ -93,11 +98,13 @@ def signup_page():
         dob = request.form['dob']
         # Check if username and password are correct
         check = dbUser.check_username_exists(username)
+        # hash password
+        hashedpassword = hashlib.sha512(password.encode('UTF-8')).hexdigest()
         if check:
             print('Username already exists')
             error = 'Username already exists'
         else:
-            dbUser.create_user(username, password, profilename, email, dob)
+            dbUser.create_user(username, hashedpassword, profilename, email, dob)
             print('Account Created')
             return redirect(url_for('login_page'))
     return render_template('signup.html', error=error)
