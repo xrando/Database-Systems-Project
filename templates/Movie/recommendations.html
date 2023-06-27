@@ -1,23 +1,68 @@
 {% block recommendation %}
     {% if recommendations %}
+        <style>
+            /* Hide movie title in mobile view */
+            @media (max-width: 576px) {
+                .movie-title {
+                    display: none;
+                }
+
+                .scrollable-row {
+                    overflow-x: scroll;
+                    padding-bottom: 10px; /* Add some bottom padding for better scrolling experience */
+                }
+
+                .scrollable-row::-webkit-scrollbar {
+                    height: 5px; /* Set the height of the scrollbar */
+                }
+
+                .scrollable-row::-webkit-scrollbar-thumb {
+                    background-color: rgba(0, 0, 0, 0.3); /* Set the color of the scrollbar thumb */
+                    border-radius: 10px; /* Set the border radius of the scrollbar thumb */
+                }
+
+                .scrollable-row::-webkit-scrollbar-track {
+                    background-color: rgba(0, 0, 0, 0.1); /* Set the color of the scrollbar track */
+                    border-radius: 10px; /* Set the border radius of the scrollbar track */
+                }
+
+                /* Adjust the size of the movie posters for mobile view */
+                .col-2 {
+                    width: 30%; /* Adjust the width of each column to fit three posters in a row */
+                    margin: 0 auto; /* Center the column horizontally */
+                    padding: 5px; /* Add some spacing around each poster */
+                }
+
+                .movie-poster {
+                    width: 100%;
+                    height: auto;
+                }
+            }
+
+            /* Adjust the size of the movie posters for larger screens */
+            .movie-poster {
+                width: 100%;
+                height: auto;
+            }
+        </style>
+
+
         <div class="container-fluid pt-1 pb-1">
-            <h3 class="text-center">Recommendations</h3>
+            <h3 class="text-center">You may also like</h3>
             <!-- Movie recommendations in a scrollable row (image and title) -->
-            <div class="row">
-                {% for movie in recommendations %}
-                    <div class="col-2">
-
-                        <a href="{{ url_for('routes.movie_page', movie_name=movie[0]) }}">
-                            <!--  Scale movie poster to fit the column width -->
-                            <img src="{{ movie[1] }}" alt="{{ movie[0] }}" class="img-fluid rounded"
-                                 style="width: 100%;">
-                        </a>
-
-                        <!-- Center the movie title -->
-                        <p class="text-center">{{ movie[0] }}</p>
-
-                    </div>
-                {% endfor %}
+            <div class="scrollable-row">
+                <div class="row">
+                    {% for movie in recommendations %}
+                        <div class="col-2">
+                            <a href="{{ url_for('routes.movie_page', movie_name=movie[0]) }}">
+                                <!-- Scale movie poster to fit the column width -->
+                                <img src="{{ movie[1] }}" alt="{{ movie[0] }}" class="img-fluid rounded movie-poster">
+                            </a>
+                            <!-- Center the movie title -->
+                            <p class="text-center movie-title">{{ movie[0] }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     {% endif %}
