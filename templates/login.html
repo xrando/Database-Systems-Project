@@ -31,7 +31,7 @@
                 <br>
                 <div class="form-group text-center">
                     <button class="btn btn-primary" type="submit">Login</button>
-                    <p>Click <a href="{{ url_for('signup_page') }}">here</a> to sign up</p>
+                    <p>Click <a href="{{ url_for('routes.signup_page') }}">here</a> to sign up</p>
                     {% if error %}
                         <p class="error text-danger"><strong>Error:</strong> {{ error }}</p>
                     {% endif %}

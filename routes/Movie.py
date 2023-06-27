@@ -154,6 +154,8 @@ def movie_page(movie_name: str = None) -> str:
         else:
             handler.insert_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id, 'watchlist_arr': []})
 
+        inWatchList = movieID in userWatchListId
+
         # Add to watchlist
         if request.method == 'POST':
             if inWatchList:

@@ -47,7 +47,7 @@
                     <a class="nav-link" href="{{ url_for('routes.home') }}">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
+                    <a class="nav-link" href="{{ url_for('routes.profile') }}">Profile</a>
                 </li>
                 {% if current_user.is_authenticated %} {% if current_user.username == 'admin' %}
                     <li class="nav-item">
@@ -109,9 +109,9 @@
             </form>
         {% endif %} {% if current_user.is_authenticated %}
         <div class="ms-3">Hi {{ current_user.name }}!</div>
-        <a class="btn btn-link" href="{{ url_for('logout') }}">Logout</a>
+        <a class="btn btn-link" href="{{ url_for('routes.logout') }}">Logout</a>
     {% else %}
-        <a class="btn btn-link" href="{{ url_for('login_page') }}">Login</a>
+        <a class="btn btn-link" href="{{ url_for('routes.login_page') }}">Login</a>
     {% endif %}
         </div>
     </div>

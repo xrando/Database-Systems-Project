@@ -10,5 +10,7 @@ from .Review import *
 from .Genre import *
 from .Forum import *
 from .Admin import *
+from .Authentication import *
+from .Profile import *
 
 #TODO: User routes
