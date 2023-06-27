@@ -146,11 +146,13 @@ def requestMovie():
     movieTitle = request.form['movieTitle']
     message = request.form['message']
     userID = request.form['userid']
+    tmdbId = request.form['tmdbId']
     print(movieTitle, message, userID)
     # insert into mongodb
     handler.insert_document(config.get('MONGODB', 'REQUEST_COLLECTION'), {
         'userID': userID,
         'movieTitle': movieTitle,
+        'tmdbId': tmdbId,
         'message': message,
     })
     return redirect(url_for('routes.home'))

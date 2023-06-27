@@ -136,6 +136,7 @@ class Database:
                            "FROM User "
                            "WHERE profilename "
                            "LIKE ?"
+                           "AND username != 'admin' "     
                            "LIMIT 30", ('%' + name + '%',))
         except mariadb.DataError as e:
             print(f"[-] Error searching for users from database\n {e}")

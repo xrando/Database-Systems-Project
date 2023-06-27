@@ -1,4 +1,4 @@
-from flask import request, redirect
+from flask import request, redirect, url_for
 
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
@@ -40,4 +40,4 @@ def review():
             'comments': comments,
         }, '$push')
     # return to home page
-    return redirect('/')
+    return redirect(url_for('routes.movie_page', movie_name=movieName))

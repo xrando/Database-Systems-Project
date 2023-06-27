@@ -132,6 +132,10 @@
                         <input type="text" class="form-control" name="movieTitle" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">TMDB ID</label>
+                        <input type="text" class="form-control" name="tmdbId" required>
+                    </div>
+                    <div class="mb-3">
                         <label for="inputMessage" class="form-label">Message</label>
                         <textarea class="form-control" id="inputMessage" name="message" rows="4" required></textarea>
                         <input type="hidden" name="userid" value="{{ current_user.id }}">
