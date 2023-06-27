@@ -239,15 +239,6 @@ def other_profile(id):
                                     '$pull')
         return redirect(url_for('other_profile', id=id))
         # Follow user
-        if request.method == 'POST':
-            print("Is user followed: " + str(followed))
-            if not followed:
-                handler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
-                                        '$push')
-            else:
-                handler.update_document('user_follows', {'user_id': current_user.id}, {'following_arr': userData[0]},
-                                        '$pull')
-            return redirect(url_for('other_profile', id=id))
 
     # Print our user follow list
     userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': userData[0]})
