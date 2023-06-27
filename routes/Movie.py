@@ -19,6 +19,7 @@ handler = Mongo.MongoDBHandler.get_instance(
 
 @routes.route('/home/page/<int:page>', methods=['GET'])
 @routes.route('/home', defaults={'page': 1}, methods=['GET'])
+@routes.route('/', defaults={'page': 1}, methods=['GET'])
 def home(page: int) -> str:
     limit = int(config.get("MOVIE", "LIMIT"))
     pages = DBMS_Movie.get_pages(pages=page, limit=limit)
@@ -34,6 +35,7 @@ def home(page: int) -> str:
     carousel = DBMS_Movie.carousel()
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
     genres = DBMS_Movie.get_all_genres()
+    recommendations = DBMS_Movie.movie_recommendation(current_user.id) if current_user.is_authenticated else None
     kwargs = {}
 
     return render_template(
@@ -41,6 +43,7 @@ def home(page: int) -> str:
         endpoint='routes.home',
         movie_list=movie_list,
         total_pages=total_pages,
+        recommendations=recommendations,
         pages_left=pages_left,
         carousel=carousel,
         page=page,

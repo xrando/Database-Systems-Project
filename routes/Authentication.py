@@ -32,7 +32,7 @@ class User(UserMixin):
 
 
 # Site Landing Page
-@routes.route('/', methods=['GET', 'POST'])
+@routes.route('/login', methods=['GET', 'POST'])
 def login_page():
     if current_user.is_authenticated:
         return redirect(url_for('routes.home'))

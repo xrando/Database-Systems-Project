@@ -92,6 +92,8 @@
     {#    {% endif %}#}
     {% include 'Movie/carousel.html' %}
 
+    {% include 'Movie/recommendations.html' %}
+
     <!-- Genres Dropdown -->
     <div class="container-fluid mt-3">
     <label for="genre">Genre:</label>
@@ -106,6 +108,7 @@
                 {% endfor %}
             </ul>
         </div>
+    </div>
 
         {% include 'Movie/movie_home.html' %}
 

@@ -1,0 +1,24 @@
+{% block recommendation %}
+    {% if recommendations %}
+        <div class="container-fluid pt-1 pb-1">
+            <h3 class="text-center">Recommendations</h3>
+            <!-- Movie recommendations in a scrollable row (image and title) -->
+            <div class="row">
+                {% for movie in recommendations %}
+                    <div class="col-2">
+
+                        <a href="{{ url_for('routes.movie_page', movie_name=movie[0]) }}">
+                            <!--  Scale movie poster to fit the column width -->
+                            <img src="{{ movie[1] }}" alt="{{ movie[0] }}" class="img-fluid rounded"
+                                 style="width: 100%;">
+                        </a>
+
+                        <!-- Center the movie title -->
+                        <p class="text-center">{{ movie[0] }}</p>
+
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

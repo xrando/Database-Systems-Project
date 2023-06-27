@@ -24,6 +24,7 @@ handler = Mongo.MongoDBHandler.get_instance(
     config.get('MONGODB', 'DATABASE')
 )
 
+
 def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     """
     Get all movies in the database, for the home page (30 most recent)
@@ -586,3 +587,69 @@ def movie_providers(tmdb_id: int) -> dict:
                                         {'movie_tmdb_id': tmdb_id, 'providers': providers})
                 # Return inserted data
                 return providers
+
+
+def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
+    """
+    Get 5 random movies based on the movie genres the user has watched
+    :param limit: Number of movies to return
+    :param user_id: User ID
+    :return: List of movies (title, poster_link)
+    """
+
+    # Get user's watched movies from MongoDB "watchlist" collection
+    watched_movies_document = handler.find_documents(
+        config.get('MONGODB', 'WATCHLIST_COLLECTION'),
+        {'user_id': user_id}
+    )
+
+    watched_movies = watched_movies_document[0]['watchlist_arr']
+
+    # Get user's watched movie genres and find the most common genre
+    genres = {}
+    for movie in watched_movies:
+        # Get the movie's genre_id based on movie_id, from Movie_Genre table
+        current_movie_genre = get_genre(int(movie))
+        if current_movie_genre is not None:
+            if current_movie_genre in genres:
+                genres[current_movie_genre] += 1
+            else:
+                genres[current_movie_genre] = 1
+
+    # Get the most common genre
+    most_common_genre = max(genres, key=genres.get)
+
+    # Get 5 random movies from the most common genre and are within +-1 year of current date
+    stmt = "SELECT Movie.title " \
+           "FROM Movie " \
+           "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
+           "WHERE Movie_Genre.genre_id = ? " \
+           "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+           "ORDER BY RAND()" \
+           " LIMIT ?"
+
+    cursor.execute(stmt, (most_common_genre, limit))
+
+    movies = cursor.fetchall()
+
+    result = []
+    # Add poster links to movies
+    for movie in movies:
+        movie_id, poster, banner, rating = get_movie_info(movie[0])
+        result.append((movie[0], poster))
+
+    return result
+
+
+def get_genre(movie_id: int) -> int | None:
+    """
+    Get genre of movie from DB (Movie_Genre table)
+    :param movie_id: TMDB ID of movie
+    :return: Genre of movie
+    """
+    stmt = "SELECT genre_id FROM Movie_Genre WHERE movie_id = ?"
+    cursor.execute(stmt, (movie_id,))
+    genre = cursor.fetchone()
+    if genre is None:
+        return None
+    return genre[0]
