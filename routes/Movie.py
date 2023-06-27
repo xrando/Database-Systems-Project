@@ -50,7 +50,7 @@ def home(page: int) -> str:
 
 
 @routes.route('/movie/<string:movie_name>/cast', methods=['GET'])
-@routes.route('/movie/<string:movie_name>', methods=['GET'])
+@routes.route('/movie/<string:movie_name>', methods=['GET', 'POST'])
 def movie_page(movie_name: str = None) -> str:
     """
     Get all movie details and render movie page
@@ -153,12 +153,6 @@ def movie_page(movie_name: str = None) -> str:
                 userWatchListId.append(movie)
         else:
             handler.insert_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id, 'watchlist_arr': []})
-
-        inWatchList = movieID in userWatchListId
-        # if movieID in userWatchListId:
-        #     inWatchList = True
-        # else:
-        #     inWatchList = False
 
         # Add to watchlist
         if request.method == 'POST':
