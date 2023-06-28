@@ -33,15 +33,31 @@ class MongoDBHandler:
         except Exception as e:
             print(f"[-] Error inserting document into database\n {e}")
 
+    # def find_documents(self, collection_name, query={}, limit: int = None):
+    #     # if limit is None, default to 5
+    #     if limit is None:
+    #         limit = 5
+    #     try:
+    #         collection = self.db[collection_name]
+    #         return list(collection.find(query).limit(limit))
+    #     except Exception as e:
+    #         print(f"[-] Error retrieving documents from database\n {e}")
+
     def find_documents(self, collection_name, query={}, limit: int = None):
         # if limit is None, default to 5
         if limit is None:
             limit = 5
         try:
             collection = self.db[collection_name]
-            return list(collection.find(query).limit(limit))
+            pipeline = [
+                {'$match': query},
+                {'$limit': limit}
+                # Add additional stages as needed
+            ]
+            return list(collection.aggregate(pipeline))
         except Exception as e:
             print(f"[-] Error retrieving documents from database\n {e}")
+
 
     # options = '$set'/'$push'
     def update_document(self, collection_name, query, update_data, option):
