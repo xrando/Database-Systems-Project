@@ -602,43 +602,43 @@ def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
         config.get('MONGODB', 'WATCHLIST_COLLECTION'),
         {'user_id': user_id}
     )
+    if len(watched_movies_document) != 0:
+        watched_movies = watched_movies_document[0]['watchlist_arr']
 
-    watched_movies = watched_movies_document[0]['watchlist_arr']
+        # Get user's watched movie genres and find the most common genre
+        genres = {}
+        for movie in watched_movies:
+            # Get the movie's genre_id based on movie_id, from Movie_Genre table
+            current_movie_genre = get_genre(int(movie))
+            if current_movie_genre is not None:
+                if current_movie_genre in genres:
+                    genres[current_movie_genre] += 1
+                else:
+                    genres[current_movie_genre] = 1
 
-    # Get user's watched movie genres and find the most common genre
-    genres = {}
-    for movie in watched_movies:
-        # Get the movie's genre_id based on movie_id, from Movie_Genre table
-        current_movie_genre = get_genre(int(movie))
-        if current_movie_genre is not None:
-            if current_movie_genre in genres:
-                genres[current_movie_genre] += 1
-            else:
-                genres[current_movie_genre] = 1
+        # Get the most common genre
+        most_common_genre = max(genres, key=genres.get)
 
-    # Get the most common genre
-    most_common_genre = max(genres, key=genres.get)
+        # Get 5 random movies from the most common genre and are within +-1 year of current date
+        stmt = "SELECT Movie.title " \
+               "FROM Movie " \
+               "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
+               "WHERE Movie_Genre.genre_id = ? " \
+               "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+               "ORDER BY RAND()" \
+               " LIMIT ?"
 
-    # Get 5 random movies from the most common genre and are within +-1 year of current date
-    stmt = "SELECT Movie.title " \
-           "FROM Movie " \
-           "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
-           "WHERE Movie_Genre.genre_id = ? " \
-           "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
-           "ORDER BY RAND()" \
-           " LIMIT ?"
+        cursor.execute(stmt, (most_common_genre, limit))
 
-    cursor.execute(stmt, (most_common_genre, limit))
+        movies = cursor.fetchall()
 
-    movies = cursor.fetchall()
-
-    result = []
-    # Add poster links to movies
-    for movie in movies:
-        movie_id, poster, banner, rating = get_movie_info(movie[0])
-        result.append((movie[0], poster))
-
-    return result
+        result = []
+        # Add poster links to movies
+        for movie in movies:
+            movie_id, poster, banner, rating = get_movie_info(movie[0])
+            result.append((movie[0], poster))
+        return result
+    return None
 
 
 def get_genre(movie_id: int) -> int | None:
