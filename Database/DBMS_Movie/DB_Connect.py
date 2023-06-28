@@ -1,3 +1,8 @@
+####################################################################################################
+# This class is to create and maintain a connection to the database. It is a singleton class,      #
+# meaning that only one instance of this class can exist at a time. This is to prevent multiple    #
+# connections to the database being created.                                                       #
+####################################################################################################
 import configparser
 import sys
 import tmdbsimple as tmdb
@@ -5,16 +10,28 @@ import mariadb
 
 
 class DBConnection:
+    """
+    Singleton class to create a connection to the database
+    """
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls) -> object:
+        """
+        Create a new instance of the class if it doesn't exist, otherwise return the existing instance
+        """
         if not cls._instance:
             cls._instance = super().__new__(cls)
             cls._instance.connection = cls._instance._create_connection()
             cls._instance.cursor = cls._instance.connection.cursor()
         return cls._instance
 
-    def _create_connection(self):
+    def _create_connection(self) -> mariadb.Connection:
+        """
+        Create a connection to the database
+
+        :return: A connection to the database
+        :rtype: mariadb.Connection
+        """
         from Config.ConfigManager import ConfigManager
 
         config_manager = ConfigManager()
@@ -31,13 +48,14 @@ class DBConnection:
             print(f"Available Configurations: {config.sections()}")
             print(f"Error reading config file: {e}")
             sys.exit(1)
+
         try:
             connection = mariadb.connect(
-                user=config.get('DBMS_MOVIE', 'USERNAME'),
-                password=config.get('DBMS_MOVIE', 'PASSWORD'),
-                host=config.get('DBMS_MOVIE', 'HOST'),
-                port=int(config.get('DBMS_MOVIE', 'PORT')),
-                database=config.get('DBMS_MOVIE', 'DATABASE')
+                user=user,
+                password=password,
+                host=host,
+                port=port,
+                database=database
             )
             return connection
         except mariadb.ProgrammingError as e:
@@ -50,8 +68,8 @@ class DBConnection:
                     port=port
                 )
                 cursor = connection.cursor()
-                cursor.execute("CREATE DATABASE IF NOT EXISTS " + database)
-                cursor.execute("USE " + database)
+                cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database}")
+                cursor.execute(f"USE {database}")
 
                 from .Migration import seed
                 seed()
@@ -64,6 +82,10 @@ class DBConnection:
             print(f"Error connecting to MariaDB Platform: {e}")
             sys.exit(1)
 
-    def close_connection(self):
+    def close_connection(self) -> None:
+        """
+        Close the connection to the database
+        :return: None
+        """
         self.cursor.close()
         self.connection.close()

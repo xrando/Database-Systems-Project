@@ -1,6 +1,10 @@
 ####################################################################################################
 # DO NOT USE THIS CODE IN PRODUCTION                                                               #
 ####################################################################################################
+# This file contains functions that were used to populate the database with data from TMDB         #
+# These are codes used in the beginning of the project to populate the database with data from     #
+# TMDB. These functions are not used in the final product.                                         #
+####################################################################################################
 
 def get_genre_id(self, genre_name: str) -> int:
     try:

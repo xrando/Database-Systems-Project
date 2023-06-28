@@ -1,4 +1,8 @@
-from typing import Tuple, Any, List
+####################################################################################################
+# These are the functions for the all Movie-based pages.                                           #
+# Data collection is mostly multithreaded to improve performance.                                  #
+# The functions are organized by page.                                                             #
+####################################################################################################
 
 import mariadb
 import tmdbsimple as tmdb
@@ -77,13 +81,15 @@ def movie_page(title: str) -> dict | None:
     """
     Get a movie by title as a dictionary of the following format:
 
-    movie: (title, release_date, synopsis, poster_link, banner_link, movie_id)
-
-    genres: [genre_name]
-
-    director: (director_name, director tmdb link)
-
-    actors: (actor_name, actor tmdb link, character)
+    result: {
+            "title": str, "release_date": str, "synopsis": str, "movie_id": int,
+            "director": {"director_name": str, "tmdb_id": int},
+            "actors": [(name: str, tmdb_id: int, character: str), ...],
+            "genres": [genre: str, ...],
+            "movie": (title: str, release_date: str, synopsis: str, poster: str, banner: str, movie_id: int),
+            "rating": [rating: float, count: int],
+            "tmdb_link": str
+            }
 
     Used for the movie page to display all the information about a movie
 
@@ -198,7 +204,7 @@ def carousel() -> list[tuple]:
 
 def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
     """
-    Returns a list of genres
+    Returns a list of Movies based on the genre
     :return: List of genres (genre_id, name)
     :return: List of movies (title, release_date, poster)
     :rtype: list[tuple]
@@ -250,7 +256,7 @@ def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
 
 def get_genre_pages(genre: str, limit: int = 30) -> dict[str, int]:
     """
-    Get the number of pages
+    Get the number of pages for a genre
     :param genre: Genre name
     :type genre: str
     :param limit: Number of movies per page
@@ -414,6 +420,13 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
 
 
 def check_genre(genre: str) -> int | None:
+    """
+    Checks if genre exists in database
+    :param genre: genre to check
+    :type genre: str
+    :return: genre id if exists, None otherwise
+    """
+
     genre_stmt = "SELECT genre_id FROM Genre WHERE name LIKE ?"
     cursor.execute(genre_stmt, (genre,))
     id = cursor.fetchone()
@@ -423,6 +436,14 @@ def check_genre(genre: str) -> int | None:
 
 
 def check_actor(actor: str) -> int | None:
+    """
+    Checks if actor exists in database
+    :param actor: actor to check
+    :type actor: str
+    :return: actor id if exists, None otherwise
+    :rtype: int | None
+    """
+
     actor_stmt = "SELECT actor_id FROM Actor WHERE actor_name LIKE ?"
     cursor.execute(actor_stmt, (actor,))
     id = cursor.fetchone()
@@ -432,6 +453,13 @@ def check_actor(actor: str) -> int | None:
 
 
 def check_director(director: str) -> int | None:
+    """
+    Checks if director exists in database
+    :param director: director to check
+    :type director: str
+    :return: director id if exists, None otherwise
+    :rtype: int | None
+    """
     director_stmt = "SELECT director_id FROM Director WHERE director_name LIKE ?"
     cursor.execute(director_stmt, (director,))
     id = cursor.fetchone()
@@ -441,6 +469,13 @@ def check_director(director: str) -> int | None:
 
 
 def check_movie(movie: str) -> int | None:
+    """
+    Checks if movie exists in database
+    :param movie: movie to check
+    :type movie: str
+    :return: movie id if exists, None otherwise
+    :rtype: int | None
+    """
     movie_stmt = "SELECT movie_id FROM Movie WHERE title LIKE ?"
     cursor.execute(movie_stmt, (movie,))
     id = cursor.fetchone()
@@ -449,7 +484,7 @@ def check_movie(movie: str) -> int | None:
     return id[0]
 
 
-def get_movie_info(movie: str) -> Tuple[Any, Any, Any, List[Any]]:
+def get_movie_info(movie: str) -> tuple[str, str, list[float, int]] | None:
     """
     Gets movie info from TMDB API, and returns movie info (tmdb_id: int, Poster: str, Banner: str, Rating: list[float, int])
 
@@ -562,8 +597,8 @@ def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
 
     # Get user's watched movies from MongoDB "watchlist" collection
     watched_movies_document = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': user_id})
-    if len(watched_movies_document) != 0:
-        watched_movies = watched_movies_document[0]['watchlist_arr']
+    if watched_movies_document:
+        watched_movies = watched_movies_document[0].get('watchlist_arr', [])
 
         # Get user's watched movie genres and find the most common genre
         genres = {}
@@ -582,7 +617,8 @@ def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
                    "FROM Movie " \
                    "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
                    "WHERE Movie_Genre.genre_id = ? " \
-                   "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+                   "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) " \
+                   "AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
                    "ORDER BY RAND() " \
                    "LIMIT ?"
 
@@ -594,12 +630,10 @@ def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # Collect movie information concurrently
-                for movie in movies:
-                    movie_title = movie[0]
-                    future = executor.submit(get_movie_info, movie_title)
-                    movie_info_list.append((movie_title, future))
+                futures = [executor.submit(get_movie_info, movie[0]) for movie in movies]
 
-                for movie_title, future in movie_info_list:
+                for movie, future in zip(movies, futures):
+                    movie_title = movie[0]
                     try:
                         movie_id, poster, banner, rating = future.result()
                         if poster is None:

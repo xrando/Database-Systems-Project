@@ -1,3 +1,8 @@
+####################################################################################################
+# These are the functions for Database Migration, which is used to seed the database with data.    #
+# DBMS_Movie is automatically seeded upon running the application.(app.py)                         #
+####################################################################################################
+
 from Config.ConfigManager import ConfigManager
 import argparse
 import os

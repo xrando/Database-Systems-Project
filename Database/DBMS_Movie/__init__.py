@@ -1,3 +1,7 @@
+####################################################################################################
+# These are the imports for the DBMS_Movie package and the initialization of the package.          #
+####################################################################################################
+
 from Config.ConfigManager import ConfigManager
 
 # Initialize the config manager
@@ -11,16 +15,6 @@ if config.get('TMDB', 'API_KEY') == "":
     raise ValueError("Please enter your TMDB API key in the config.ini file")
 
 from .Movie import *
-    # movie_page, \
-    # get_pages, \
-    # carousel, \
-    # Genre, \
-    # get_genre_pages, \
-    # get_all_genres, \
-    # get_movie_by_id, \
-    # new_movie, \
-    # movie_providers
-
 from .Actor import *
 from .Director import *
 from .Search import *

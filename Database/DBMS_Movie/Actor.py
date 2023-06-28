@@ -1,3 +1,6 @@
+####################################################################################################
+# These are the functions for the Actor page.                                                      #
+####################################################################################################
 import mariadb
 import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
