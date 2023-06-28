@@ -46,7 +46,7 @@ def deleteMovie():
     if request.method == 'POST':
         movie_id = request.form['movie_id']
         if movie_id:
-            # delete from mongodb
+            # delete from mariadb
             DBMS_Movie.deleteMovie(movie_id)
         else:
             print("No movie_id")
