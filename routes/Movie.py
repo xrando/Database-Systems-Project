@@ -5,11 +5,11 @@ import Database.DBMS_Movie as DBMS_Movie
 import Database.Mongo as Mongo
 from Config.ConfigManager import ConfigManager
 from . import routes
+import concurrent.futures
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
 config = config_manager.get_config()
-
 
 handler = Mongo.MongoDBHandler.get_instance(
     config.get('MONGODB', 'CONNECTION_STRING'),
@@ -21,6 +21,13 @@ handler = Mongo.MongoDBHandler.get_instance(
 @routes.route('/home', defaults={'page': 1}, methods=['GET'])
 @routes.route('/', defaults={'page': 1}, methods=['GET'])
 def home(page: int) -> str:
+    """
+    Homepage of The project
+    :param page: Page Number
+    :type page: int
+    :return: Render of index.html
+    """
+
     limit = int(config.get("MOVIE", "LIMIT"))
     pages = DBMS_Movie.get_pages(pages=page, limit=limit)
     pages_left = pages["pages_left"]
@@ -60,117 +67,142 @@ def movie_page(movie_name: str = None) -> str:
     :param movie_name: Movie name
     :return: Render movie page
     """
-    # Remove (year) from movie name
-    if movie_name is not None:
-        try:
-            movie_name, movie_year = movie_name.split('(')
-        except ValueError:
-            movie_year = None
+    # Return Variables
+    movie = None
+    movie_details = None
+    movie_genres = None
+    movie_director = None
+    movie_link = None
+    movie_year = None
+    actors = None
+    providers = None
+    rating = None
+    movie_tmdb_rating = None
+    reviews = None
+    inWatchList = None
 
-        movie = DBMS_Movie.movie_page(movie_name)
+    try:
+        # Remove (year) from movie name
+        if movie_name is not None:
+            try:
+                movie_name, movie_year = movie_name.split('(')
+            except ValueError:
+                movie_year = None
 
-        movie_details = movie['movie']
-        movie_genres = movie['genres']
-        movie_director = movie['director']
-        movie_link = movie['tmdb_link']
-        movie_actors = movie['actors']
+            movie = DBMS_Movie.movie_page(movie_name)
 
-        # Movie year is none, get from movie details[1]
-        if movie_year is None:
-            movie_year = movie_details[1].split(' ')[-1] if movie_details is not None else None
-            movie_year = movie_year + ')'
+            movie_details = movie.get('movie')
+            movie_genres = movie.get('genres')
+            movie_director = movie.get('director')
+            movie_link = movie.get('tmdb_link')
+            movie_actors = movie.get('actors')
 
-        # If no /cast
-        if request.path == '/movie/' + movie_name + "(" + movie_year + '/cast':
-            movie_actors = movie_actors
-        else:
-            movie_actors = movie_actors[:3]
-    else:
-        movie_details = None
-        movie_genres = None
-        movie_director = None
-        movie_link = None
-        movie_actors = None
-    # Get profile image from MongoDB
-    actors = []
-    for actor in movie_actors:
-        # print(actor)
-        actor_profile = DBMS_Movie.get_actor_info(actor_tmdb_id=actor[1])
-        if actor_profile is not None:
-            profile_path = config.get("MOVIE", "TMDB_IMAGE_URL") + actor_profile['profile_path'] if actor_profile['profile_path'] is not None else None
-            actors.append([actor[0], actor[1], actor[2], profile_path])
+            # Movie year is none, get from movie details[1]
+            if movie_year is None:
+                if movie_details is not None and len(movie_details) > 1:
+                    movie_year = movie_details[1].split(' ')[-1]
+                else:
+                    movie_year = None
+                if movie_year:
+                    movie_year = movie_year + ')'
 
-    movie_tmdb_rating = round(movie['rating'][0] * 10) if movie['rating'] else 0
-
-    # Delete left side of link
-    movie_tmdb_id = movie_link.split(config.get("MOVIE", "TMDB_MOVIE_URL"))[1]
-
-    movie_providers = DBMS_Movie.movie_providers(movie_tmdb_id)
-
-    providers = []
-    if movie_providers is not None:
-        for key, value in movie_providers.items():
-            # If key is not a link
-            if key != 'link':
-                for provider in value:
-                    # save as [[logo_path, provider_name, display_priority], ...]
-                    providers.append([
-                        config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'],
-                                      provider['provider_name'],
-                                      provider['display_priority']
-                    ])
-
-    # sort providers based on 'display_priority', Casting display_priority to int and removing duplicates
-        providers = sorted(providers, key=lambda x: int(x[2]))
-        providers = [providers[i] for i in range(len(providers)) if i == 0 or providers[i] != providers[i-1]]
-
-    else:
-        providers = None
-
-    # get movie reviews
-    movieID = DBMS_Movie.get_movieID(movie_name)
-    # json object containing all reviews for a movie
-    data = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID})
-    # print(data[0]['movie_id'])
-    # print(data[0]['ratings'])
-    # print(data[0]['comments'])
-    reviews = []
-    rating = 0
-    for rating, comment in zip(data[0]['ratings'], data[0]['comments']) if data != [] else []:
-        reviews.append((rating, comment))
-
-    # calculate average rating
-    numRating = len(data[0]['ratings']) if data != [] else 0
-    rating = sum(int(rating) for rating in data[0]['ratings']) / numRating if data != [] else 0
-    rating = round(rating / 5 * 100)
-
-    inWatchList = False
-    # Error handling just cuz
-    if current_user.is_authenticated:
-        # Check if movie in watchlist
-        userWatchList = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id})
-        userWatchListId = []
-        if userWatchList:
-            userWatchList = userWatchList[0]['watchlist_arr']
-            for movie in userWatchList:
-                userWatchListId.append(movie)
-        else:
-            handler.insert_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id, 'watchlist_arr': []})
-
-        inWatchList = movieID in userWatchListId
-
-        # Add to watchlist
-        if request.method == 'POST':
-            if inWatchList:
-                handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id}, {'watchlist_arr': movieID},
-                                        '$pull')
-                inWatchList = False
+            # If no /cast
+            if request.path == f'/movie/{movie_name}({movie_year}/cast':
+                movie_actors = movie_actors
             else:
-                handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id}, {'watchlist_arr': movieID},
-                                        '$push')
-                inWatchList = True
+                movie_actors = movie_actors[:3]
         else:
-            pass
+            movie_details = None
+            movie_genres = None
+            movie_director = None
+            movie_link = None
+            movie_actors = None
+
+        # Get profile image from MongoDB
+        actors = []
+        if movie_actors:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                actor_profiles = executor.map(lambda actor: DBMS_Movie.get_actor_info(actor_tmdb_id=actor[1]),
+                                              movie_actors)
+
+            for actor, actor_profile in zip(movie_actors, actor_profiles):
+                if actor_profile is not None:
+                    profile_path = config.get("MOVIE", "TMDB_IMAGE_URL") + actor_profile.get('profile_path',
+                                                                                             '') if actor_profile.get(
+                        'profile_path') is not None else None
+                    actors.append([actor[0], actor[1], actor[2], profile_path])
+
+        movie_tmdb_rating = round(movie.get('rating')[0] * 10) if movie.get('rating') else 0
+
+        # Delete left side of link
+        movie_tmdb_id = movie_link.split(config.get("MOVIE", "TMDB_MOVIE_URL"))[1]
+
+        movie_providers = DBMS_Movie.movie_providers(movie_tmdb_id)
+
+        providers = []
+        if movie_providers is not None:
+            for key, value in movie_providers.items():
+                # If key is not a link
+                if key != 'link':
+                    for provider in value:
+                        # save as [[logo_path, provider_name, display_priority], ...]
+                        providers.append([
+                            config.get("MOVIE", "TMDB_IMAGE_URL") + provider['logo_path'],
+                            provider['provider_name'],
+                            provider['display_priority']
+                        ])
+
+            # sort providers based on 'display_priority', Casting display_priority to int and removing duplicates
+            providers = sorted(providers, key=lambda x: int(x[2]))
+            providers = [providers[i] for i in range(len(providers)) if i == 0 or providers[i] != providers[i - 1]]
+
+        else:
+            providers = None
+
+        # get movie reviews
+        movieID = DBMS_Movie.get_movieID(movie_name)
+        # json object containing all reviews for a movie
+        data = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID})
+        reviews = []
+        rating = 0
+        if data:
+            ratings = data[0].get('ratings', [])
+            comments = data[0].get('comments', [])
+            reviews = list(zip(ratings, comments))
+            numRating = len(ratings)
+            rating = sum(int(rating) for rating in ratings) / numRating if numRating != 0 else 0
+            rating = round(rating / 5 * 100)
+
+        inWatchList = False
+        # Error handling just in case
+        if current_user.is_authenticated:
+            # Check if movie in watchlist
+            userWatchList = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'),
+                                                   {'user_id': current_user.id})
+            userWatchListId = []
+            if userWatchList:
+                userWatchList = userWatchList[0].get('watchlist_arr', [])
+                for movie in userWatchList:
+                    userWatchListId.append(movie)
+            else:
+                handler.insert_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'),
+                                        {'user_id': current_user.id, 'watchlist_arr': []})
+
+            inWatchList = movieID in userWatchListId
+
+            # Add to watchlist
+            if request.method == 'POST':
+                if inWatchList:
+                    handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id},
+                                            {'watchlist_arr': movieID}, '$pull')
+                    inWatchList = False
+                else:
+                    handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id},
+                                            {'watchlist_arr': movieID}, '$push')
+                    inWatchList = True
+    except (ValueError, KeyError, TypeError) as e:
+        error_message = str(e)
+        print(f"Error: {error_message}")
 
     return render_template(
         'Movie/Movie_details.html',

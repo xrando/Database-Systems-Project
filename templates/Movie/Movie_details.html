@@ -1,17 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
     <style>
-    @media (max-width: 576px) {
-      .actor-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center; /* Add this line to center the text horizontally */
-      }
-      .actor-info img {
-        margin-bottom: 5px;
-      }
-    }
+        @media (max-width: 576px) {
+            .actor-info {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .actor-info img {
+                margin-bottom: 5px;
+            }
+        }
     </style>
     <!-- Banner image -->
     {% if movie[4] != None %}
@@ -73,15 +74,19 @@
             <!-- Insert Separator -->
             &nbsp;|&nbsp;
             <span>
+            {% if genres %}
                 {% for genre in genres %}
                     <a href="{{ url_for('routes.genre_page', genre=genre) }}" class="link-light">{{ genre }}</a>
                     {% if not loop.last %}, {% endif %}
                 {% endfor %}
+            {% endif %}
             </span>
             <p>{{ movie[2] }}</p>
-            <p>Director: <a href="{{ url_for('routes.director_page', tmdb_id=director[1]) }}" class="link-light">
-                {{ director[0] }}</a></p>
-            <p>View on <a href="{{ link }}" class="link-light">TMDB</a></p>
+            {% if director %}
+                <p>Director: <a href="{{ url_for('routes.director_page', tmdb_id=director[1]) }}" class="link-light">
+                    {{ director[0] }}</a></p>
+                <p>View on <a href="{{ link }}" class="link-light">TMDB</a></p>
+            {% endif %}
 
             <!-- Providers -->
             <span>
@@ -115,25 +120,33 @@
             </tr>
             </thead>
             <tbody>
-            {% for actor in actors %}
+            {% if not actors %}
                 <tr>
-                    <td>
-                        <div class="actor-info">
-                            <img src="{{ actor[3] }}" alt="" class="img-fluid rounded" width="40px">
-                            <a href="{{ url_for('routes.actor', tmdb_id=actor[1]) }}">{{ actor[0] }}</a>
-                        </div>
-                    </td>
-                    <td>{{ actor[2] }}</td>
+                    <td>No actors found</td>
                 </tr>
-            {% endfor %}
+            {% else %}
+                {% for actor in actors %}
+                    <tr>
+                        <td>
+                            <div class="actor-info">
+                                <img src="{{ actor[3] }}" alt="" class="img-fluid rounded" width="40px">
+                                <a href="{{ url_for('routes.actor', tmdb_id=actor[1]) }}">{{ actor[0] }}</a>
+                            </div>
+                        </td>
+                        <td>{{ actor[2] }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
             </tbody>
         </table>
 
         <!-- View All Actors in movie_page/cast -->
         <!-- If current page is /cast, don't display View All -->
-        {% if request.path != '/movie/' + movie_name + '(' + movie_year + '/cast' %}
-            <a href="{{ url_for('routes.movie_page', movie_name=movie_name + "(" + movie_year) }}/cast"
-               class="btn btn-success">View All</a>
+        {% if movie_name and movie_year %}
+            {% if request.path != '/movie/' + movie_name + '(' + movie_year + '/cast' %}
+                <a href="{{ url_for('routes.movie_page', movie_name=movie_name + "(" + movie_year) }}/cast"
+                   class="btn btn-success">View All</a>
+            {% endif %}
         {% endif %}
 
     </div>
@@ -149,12 +162,18 @@
             </tr>
             </thead>
             <tbody>
-            {% for review in reviews %}
+            {% if not reviews %}
                 <tr>
-                    <td>{{ review[0] }} stars</td>
-                    <td>{{ review[1] }}</td>
+                    <td>No reviews found</td>
                 </tr>
-            {% endfor %}
+            {% else %}
+                {% for review in reviews %}
+                    <tr>
+                        <td>{{ review[0] }} stars</td>
+                        <td>{{ review[1] }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
             </tbody>
         </table>
     </div>

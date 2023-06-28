@@ -8,7 +8,7 @@ import argparse
 import os
 
 config = configparser.ConfigParser()
-config_route = os.path.join(os.path.dirname(__file__), '..', '..', 'Config', 'config.ini')
+config_route = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'Config', 'config.ini')
 
 try:
     config.read(config_route)
@@ -545,7 +545,7 @@ class DBMS_Movie:
 
         return result
 
-    #search
+    # search
     def search_directors(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM director "
@@ -553,6 +553,7 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
+
     def search_movies(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM movie "
@@ -560,6 +561,7 @@ class DBMS_Movie:
                             "LIKE %s"
                             "LIMIT 30", ('%' + name + '%',))
         return self.cursor.fetchall()
+
     def search_actors(self, name: str) -> tuple:
         self.cursor.execute("SELECT * "
                             "FROM actor "
@@ -673,5 +675,113 @@ def parse_args() -> None:
         parser.print_help()
 
 
+def new_movie(title: str = None, tmdb_id: int = None) -> None:
+    """
+    Adds a new movie to the database
+
+    Search for movie on tmdb api, need to update Director, Actor, Genre tables and their Movie_ tables
+    :param title: Title of the movie
+    :type title: str
+    """
+
+    movie_info = tmdb.Search().movie(query=title)['results'][0]
+    movie_tmdb_id = movie_info['id']
+    movie_title = movie_info['title']
+    movie_release_date = movie_info['release_date']
+    synopsis = movie_info['overview']
+
+    # Get Genres
+    movie_genres = []
+    movie = tmdb.Movies(movie_tmdb_id)
+    genres = movie.info()['genres']
+    for genre in genres:
+        movie_genres += [genre['name']]
+
+    # Get Actors and Directors
+    import requests
+
+    url = "https://api.themoviedb.org/3/movie/" + str(movie_tmdb_id) + "/credits?language=en-US"
+
+    headers = {
+        "accept": "application/json",
+        "Authorization": "Bearer " + config.get("TMDB", "ACCESS_TOKEN")
+    }
+
+    response = requests.get(url, headers=headers)
+
+    from pprint import pprint
+
+    cast_dict = {}
+    for cast in response.json()['cast']:
+        cast_dict[cast['name']] = [cast['id'], cast['character']]
+    for crew in response.json()['crew']:
+        if crew['job'] == 'Director':
+            director = crew['name']
+            director_id = crew['id']
+            break
+
+    pprint(cast_dict)
+    print(director, director_id)
+
+    # Insert to DB if not exists
+    movie_stmt = "INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)" \
+    cursor.execute(movie_stmt, (movie_title, movie_release_date, synopsis))
+    movie_id = cursor.lastrowid
+
+    for genre in movie_genres:
+        genre_id = check_genre(genre)
+        if genre_id is None:
+            genre_stmt = "INSERT INTO Genre (name) VALUES (?)"
+            cursor.execute(genre_stmt, (genre,))
+            genre_id = check_genre(genre)
+        movie_genre_stmt = "INSERT INTO Movie_Genre (movie_id, genre_id) VALUES (?, ?)"
+        cursor.execute(movie_genre_stmt, (movie_id, genre_id))
+
+    for actor in cast_dict:
+        actor_id = check_actor(actor)
+        if actor_id is None:
+            actor_stmt = "INSERT INTO Actor (name) VALUES (?)"
+            cursor.execute(actor_stmt, (actor,))
+            actor_id = check_actor(actor)
+        movie_actor_stmt = "INSERT INTO Movie_Actor (movie_id, actor_id, character) VALUES (?, ?, ?)"
+        cursor.execute(movie_actor_stmt, (movie_id, actor_id, cast_dict[actor][1]))
+
+    director_id = check_director(director)
+    if director_id is None:
+        director_stmt = "INSERT INTO Director (name) VALUES (?)"
+        cursor.execute(director_stmt, (director,))
+        director_id = check_director(director)
+    movie_director_stmt = "INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)"
+    cursor.execute(movie_director_stmt, (movie_id, director_id))
+
+def check_genre(genre: str) -> int|None:
+    genre_stmt = "SELECT id FROM Genre WHERE name = ?"
+    genre_check = cursor.execute(genre_stmt, (genre,))
+
+    if genre_check is not None:
+        return genre_check
+    else:
+        return None
+
+def check_actor(actor: str) -> int|None:
+    actor_stmt = "SELECT id FROM Actor WHERE name = ?"
+    actor_check = cursor.execute(actor_stmt, (actor,))
+
+    if actor_check is not None:
+        return actor_check
+    else:
+        return None
+
+def check_director(director: str) -> int|None:
+    director_stmt = "SELECT id FROM Director WHERE name = ?"
+    director_check = cursor.execute(director_stmt, (director,))
+
+    if director_check is not None:
+        return director_check
+    else:
+        return None
+
+
+
 if __name__ == "__main__":
-    parse_args()
+    new_movie("Extraction 2")

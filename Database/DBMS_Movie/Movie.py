@@ -7,6 +7,7 @@ from Config.ConfigManager import ConfigManager
 import requests
 import random
 import Database.Mongo as Mongo
+import concurrent.futures
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -29,7 +30,7 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     """
     Get all movies in the database, for the home page (30 most recent)
 
-    Used to show movies in the home page.
+    Used to show movies on the home page.
 
     :param page: Page number (For Frontend)
     :type page: int
@@ -38,10 +39,6 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
     :return: List of movies (title, release_date, synopsis, poster_link, banner_link)
     :rtype: list[tuple]
     """
-
-    # poster_link = config.get("MOVIE", "TMDB_IMAGE_URL")
-    # default_poster_link = config.get("MOVIE", "DEFAULT_POSTER_URL")
-    # default_banner_link = config.get("MOVIE", "DEFAULT_BANNER_URL")
     result = []
     offset = (page - 1) * limit
 
@@ -53,41 +50,25 @@ def Movie_list(page: int = 1, limit: int = 30) -> list[tuple]:
            "OFFSET ?;"
     cursor.execute(stmt, (limit, offset))
     movies = cursor.fetchall()
-    for movie in movies:
-        # Use tmdb api to get the image link
+
+    # Helper function to get movie info concurrently
+    def get_movie_info_concurrent(movie):
         tmdb_id, poster, banner, rating = get_movie_info(movie[0])
         if poster is None:
             poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
         if banner is None:
             banner = config.get("MOVIE", "DEFAULT_BANNER_URL")
-        # try:
-        #     movie_id = tmdb.Search().movie(query=movie[0])['results'][0]['id']
-        #     movie_info = tmdb.Movies(movie_id).info()
-        #
-        #     if movie_info is not None:
-        #         if movie_info['poster_path'] is not None:
-        #             poster = poster_link + movie_info['poster_path']
-        #         else:
-        #             poster = default_poster_link
-        #         if movie_info['backdrop_path'] is not None:
-        #             banner = poster_link + movie_info['backdrop_path']
-        #         else:
-        #             banner = default_banner_link
-        #     else:
-        #         poster = default_poster_link
-        #         banner = default_banner_link
-        # except IndexError:
-        #     # Not all movies we have in the database are in the tmdb database
-        #     continue
-
-        # Movie title + (year)
         movie_title = movie[0] + " (" + movie[1].strftime("%Y") + ")"
-        # Convert date to string
         movie_date = movie[1].strftime("%d %B %Y")
-
-        # Shorten synopsis
         synopsis = movie[2][:100] + "..."
-        result += [(movie_title, movie_date, synopsis, poster, banner)]
+        return (movie_title, movie_date, synopsis, poster, banner)
+
+    # Execute get_movie_info concurrently
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        movie_info_results = executor.map(get_movie_info_concurrent, movies)
+
+    # Collect the results
+    result = list(movie_info_results)
 
     return result
 
@@ -111,61 +92,42 @@ def movie_page(title: str) -> dict | None:
     :rtype: dict
     """
     result = {}
-    movie = None
 
-    movie_stmt = "Select Movie.title as movie_title, Movie.release_date, Movie.synopsis, Movie.movie_id " \
-                 "FROM Movie " \
-                 "WHERE Movie.title = ?"
-    director_stmt = "SELECT Director.director_name as director_name, Director.tmdb_id as director_tmdb_id " \
-                    "FROM Director INNER JOIN Movie_Director " \
-                    "ON Director.director_id = Movie_Director.director_id " \
-                    "INNER JOIN Movie " \
-                    "ON Movie.movie_id = Movie_Director.movie_id " \
-                    "WHERE Movie.title = ?"
-    actor_stmt = "SELECT Actor.actor_name as actor_name, Actor.tmdb_id as actor_tmdb_id, " \
-                 "Movie_Actor.movie_character " \
-                 "FROM Actor INNER JOIN Movie_Actor " \
-                 "ON Actor.actor_id = Movie_Actor.actor_id " \
-                 "INNER JOIN Movie " \
-                 "ON Movie.movie_id = Movie_Actor.movie_id " \
-                 "WHERE Movie.title = ?"
-    genre_stmt = "SELECT Genre.name as genre_name " \
-                 "FROM Genre INNER JOIN Movie_Genre " \
-                 "ON Genre.genre_id = Movie_Genre.genre_id " \
-                 "INNER JOIN Movie " \
-                 "ON Movie.movie_id = Movie_Genre.movie_id " \
-                 "WHERE Movie.title = ?"
+    movie_query = "SELECT Movie.title, Movie.release_date, Movie.synopsis, Movie.movie_id, " \
+                  "Director.director_name, Director.tmdb_id, " \
+                  "Actor.actor_name, Actor.tmdb_id, Movie_Actor.movie_character, " \
+                  "Genre.name " \
+                  "FROM Movie " \
+                  "JOIN Movie_Director ON Movie.movie_id = Movie_Director.movie_id " \
+                  "JOIN Director ON Movie_Director.director_id = Director.director_id " \
+                  "JOIN Movie_Actor ON Movie.movie_id = Movie_Actor.movie_id " \
+                  "JOIN Actor ON Movie_Actor.actor_id = Actor.actor_id " \
+                  "JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
+                  "JOIN Genre ON Movie_Genre.genre_id = Genre.genre_id " \
+                  "WHERE Movie.title = ?"
+
     try:
-        if title is not None:
-            cursor.execute(movie_stmt, (title,))
-            movie = cursor.fetchone()
+        cursor.execute(movie_query, (title,))
+        rows = cursor.fetchall()
 
-            movie_id, poster, banner, rating = get_movie_info(movie[0] or title)
+        if rows:
+            movie = rows[0]
+            movie_date = movie[1].strftime("%d %B %Y")
+            movie_id, poster, banner, rating = get_movie_info(movie[0])
+
+            result["movie"] = (movie[0], movie_date, movie[2], poster, banner, movie[3])
+            result["rating"] = rating
+            result["director"] = (movie[4], movie[5])
+
+            genres = {row[9] for row in rows}
+            result["genres"] = list(genres)
+
+            actors = {(row[6], row[7], row[8]) for row in rows}
+            result["actors"] = list(actors)
+
+            result["tmdb_link"] = config.get("MOVIE", "TMDB_MOVIE_URL") + str(movie_id)
         else:
-            print("No title provided")
-
-        # Convert date to string
-        movie_date = movie[1].strftime("%d %B %Y")
-
-        result["movie"] = (movie[0], movie_date, movie[2], poster, banner, movie[3])
-        result["rating"] = rating
-
-        cursor.execute(director_stmt, (title,))
-        director = cursor.fetchone()
-
-        director_tmdb_id = director[1]
-        # director_name = director[0].replace(" ", "-")
-        # director_link = config.get("MOVIE", "TMDB_PERSON_URL") + director_tmdb_id + "-" + director_name
-        result["director"] = (director[0], director_tmdb_id)
-
-        cursor.execute(actor_stmt, (title,))
-        actors = cursor.fetchall()
-        result["actors"] = list(actors)
-
-        cursor.execute(genre_stmt, (title,))
-        genres = cursor.fetchall()
-        result["genres"] = [genre[0] for genre in genres]
-        result["tmdb_link"] = config.get("MOVIE", "TMDB_MOVIE_URL") + str(movie_id)
+            print("No movie found with the given title")
     except mariadb.Error as e:
         print(f"Error executing statement: {e}")
 
@@ -193,40 +155,43 @@ def get_pages(pages: int = 1, limit: int = 30) -> dict[str, int]:
 
 def carousel() -> list[tuple]:
     """
-    Returns a list of 5 movies that are within 1 month of current date and have a banner image
+    Returns a list of 5 movies that are within 1 month of the current date and have a banner image
     :return: List of movies (title, release_date, banner)
     :rtype: list[tuple]
     """
     result = []
-    # current_offset = 0
     desired_length = random.randint(5, 7)  # Randomly choose the number of movies to select
 
     stmt = "SELECT title, release_date " \
            "FROM Movie " \
            "WHERE release_date " \
-           "BETWEEN CURRENT_DATE() - INTERVAL 5 MONTH " \
-           "AND CURRENT_DATE() + INTERVAL 5 MONTH " \
-           "ORDER BY release_date ASC;"
+           "BETWEEN CURRENT_DATE() - INTERVAL 1 MONTH " \
+           "AND CURRENT_DATE() + INTERVAL 1 MONTH " \
+           "ORDER BY RAND() " \
+           "LIMIT ?;"
 
-    cursor.execute(stmt)
+    cursor.execute(stmt, (desired_length,))
     movies = cursor.fetchall()
 
-    while len(result) < desired_length and movies:
-        movie = random.choice(movies)
-        movies.remove(movie)
-        # Check if movie is in result (duplicate)
-        if movie[0] in [x[0] for x in result]:
-            continue
-
-        # Get banner from MongoDB
+    # Helper function to get banner image concurrently
+    def get_banner_concurrent(movie):
         banner = get_movie_info(movie[0])[2]
         if banner is not None:
             movie_date = movie[1].strftime("%d %B %Y")
-            result += [(movie[0], movie_date, banner)]
-            continue
-
+            return movie[0], movie_date, banner
         else:
-            continue
+            return None
+
+    # Execute get_banner_concurrent concurrently
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        banner_results = executor.map(get_banner_concurrent, movies)
+
+    # Collect the results
+    for banner_result in banner_results:
+        if banner_result is not None:
+            result.append(banner_result)
+        if len(result) == desired_length:
+            break
 
     return result
 
@@ -241,7 +206,6 @@ def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
     if genre is None:
         stmt = "SELECT genre_id, name " \
                "FROM Genre;"
-
         cursor.execute(stmt)
         result = cursor.fetchall()
 
@@ -258,27 +222,28 @@ def Genre(genre: str = None, page: int = 1, limit: int = 30) -> list[tuple]:
                "Movie.title " \
                "LIMIT ? " \
                "OFFSET ?;"
-
         cursor.execute(stmt, (genre, limit, (page - 1) * limit))
         movies = cursor.fetchall()
         result = []
 
-        # Convert date to string
-        for movie in movies:
-            # Use tmdb api to get the image link
+        # Helper function to get movie info concurrently
+        def get_movie_info_concurrent(movie):
             movie_id, poster, banner, ratings = get_movie_info(movie[1])
             if poster is None:
                 poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
             if banner is None:
                 banner = config.get("MOVIE", "DEFAULT_BANNER_URL")
-
-            # Movie title + (year)
             movie_title = movie[1] + " (" + movie[2].strftime("%Y") + ")"
-            # Convert date to string
             movie_date = movie[2].strftime("%d %B %Y")
-            # Shorten synopsis
             synopsis = movie[3][:100] + "..."
-            result += [(movie_title, movie_date, synopsis, poster, banner)]
+            return movie_title, movie_date, synopsis, poster, banner
+
+        # Execute get_movie_info concurrently
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            movie_info_results = executor.map(get_movie_info_concurrent, movies)
+
+        # Collect the results
+        result = list(movie_info_results)
 
     return result
 
@@ -368,8 +333,6 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
         movie_genres += [genre['name']]
 
     # Get Actors and Directors
-    import requests
-
     url = "https://api.themoviedb.org/3/movie/" + str(movie_tmdb_id) + "/credits?language=en-US"
 
     headers = {
@@ -486,7 +449,7 @@ def check_movie(movie: str) -> int | None:
     return id[0]
 
 
-def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list[Any] | None | Any]:
+def get_movie_info(movie: str) -> Tuple[Any, Any, Any, List[Any]]:
     """
     Gets movie info from TMDB API, and returns movie info (tmdb_id: int, Poster: str, Banner: str, Rating: list[float, int])
 
@@ -500,7 +463,7 @@ def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list
     rating = None
     movie_id = None
 
-    # Check if movie is in MongoDB
+    # Check if movie is in MongoDB cache
     data = handler.find_documents(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': movie})
     if len(data) > 0:
         movie_info = data[0]
@@ -512,7 +475,7 @@ def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list
             rating = movie_info['rating']
         if movie_info['tmdb_id'] is not None:
             movie_id = movie_info['tmdb_id']
-    # If not in MongoDB, check TMDB
+    # If not in MongoDB cache, check TMDB
     else:
         try:
             movie_id = tmdb.Search().movie(query=movie)['results'][0]['id']
@@ -543,8 +506,8 @@ def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list
             poster = None
             banner = None
 
-        # Add movie info to MongoDB
-        handler.insert_document('movie_info', {
+        # Add movie info to MongoDB cache
+        handler.insert_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {
             'tmdb_id': movie_id,
             'title': movie,
             'poster': poster,
@@ -591,17 +554,14 @@ def movie_providers(tmdb_id: int) -> dict:
 
 def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
     """
-    Get 5 random movies based on the movie genres the user has watched
+    Get random movies based on the movie genres the user has watched
     :param limit: Number of movies to return
     :param user_id: User ID
     :return: List of movies (title, poster_link)
     """
 
     # Get user's watched movies from MongoDB "watchlist" collection
-    watched_movies_document = handler.find_documents(
-        config.get('MONGODB', 'WATCHLIST_COLLECTION'),
-        {'user_id': user_id}
-    )
+    watched_movies_document = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': user_id})
     if len(watched_movies_document) != 0:
         watched_movies = watched_movies_document[0]['watchlist_arr']
 
@@ -611,34 +571,47 @@ def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
             # Get the movie's genre_id based on movie_id, from Movie_Genre table
             current_movie_genre = get_genre(int(movie))
             if current_movie_genre is not None:
-                if current_movie_genre in genres:
-                    genres[current_movie_genre] += 1
-                else:
-                    genres[current_movie_genre] = 1
+                genres[current_movie_genre] = genres.get(current_movie_genre, 0) + 1
 
-        # Get the most common genre
-        most_common_genre = max(genres, key=genres.get)
+        if genres:
+            # Get the most common genre
+            most_common_genre = max(genres, key=genres.get)
 
-        # Get 5 random movies from the most common genre and are within +-1 year of current date
-        stmt = "SELECT Movie.title " \
-               "FROM Movie " \
-               "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
-               "WHERE Movie_Genre.genre_id = ? " \
-               "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
-               "ORDER BY RAND()" \
-               " LIMIT ?"
+            # Get random movies from the most common genre within +-1 year of the current date
+            stmt = "SELECT Movie.title " \
+                   "FROM Movie " \
+                   "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
+                   "WHERE Movie_Genre.genre_id = ? " \
+                   "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+                   "ORDER BY RAND() " \
+                   "LIMIT ?"
 
-        cursor.execute(stmt, (most_common_genre, limit))
+            cursor.execute(stmt, (most_common_genre, limit))
+            movies = cursor.fetchall()
 
-        movies = cursor.fetchall()
+            result = []
+            movie_info_list = []
 
-        result = []
-        # Add poster links to movies
-        for movie in movies:
-            movie_id, poster, banner, rating = get_movie_info(movie[0])
-            result.append((movie[0], poster))
-        return result
-    return None
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                # Collect movie information concurrently
+                for movie in movies:
+                    movie_title = movie[0]
+                    future = executor.submit(get_movie_info, movie_title)
+                    movie_info_list.append((movie_title, future))
+
+                for movie_title, future in movie_info_list:
+                    try:
+                        movie_id, poster, banner, rating = future.result()
+                        if poster is None:
+                            poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
+                        result.append((movie_title, poster))
+                    except Exception as e:
+                        # Handle any exceptions that occurred during movie information retrieval
+                        print(f"Error occurred while fetching movie info for '{movie_title}': {str(e)}")
+
+            return result
+
+    return []
 
 
 def get_genre(movie_id: int) -> int | None:
