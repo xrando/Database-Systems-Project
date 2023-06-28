@@ -6,6 +6,7 @@ import Database.Mongo as Mongo
 from Config.ConfigManager import ConfigManager
 from . import routes
 import concurrent.futures
+import time
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
@@ -28,6 +29,9 @@ def home(page: int) -> str:
     :return: Render of index.html
     """
 
+    # Start time on page load
+    start_time = time.time()
+
     limit = int(config.get("MOVIE", "LIMIT"))
     pages = DBMS_Movie.get_pages(pages=page, limit=limit)
     pages_left = pages["pages_left"]
@@ -44,6 +48,12 @@ def home(page: int) -> str:
     genres = DBMS_Movie.get_all_genres()
     recommendations = DBMS_Movie.movie_recommendation(current_user.id) if current_user.is_authenticated else None
     kwargs = {}
+
+    # End time after all data is loaded
+    end_time = time.time()
+
+    # Calculate time taken to collect data
+    print(f"Time taken to load data (Movie_list): {end_time - start_time} seconds")
 
     return render_template(
         'index.html',
@@ -67,6 +77,10 @@ def movie_page(movie_name: str = None) -> str:
     :param movie_name: Movie name
     :return: Render movie page
     """
+
+    # Start time on page load
+    start_time = time.time()
+
     # Return Variables
     movie = None
     movie_details = None
@@ -203,6 +217,12 @@ def movie_page(movie_name: str = None) -> str:
     except (ValueError, KeyError, TypeError) as e:
         error_message = str(e)
         print(f"Error: {error_message}")
+
+    # End time after all data is loaded
+    end_time = time.time()
+
+    # Calculate time taken to collect data
+    print(f"Time taken to load data (Movie_info): {end_time - start_time} seconds")
 
     return render_template(
         'Movie/Movie_details.html',
