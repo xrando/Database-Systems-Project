@@ -19,10 +19,16 @@ class MongoDBHandler:
     #     self.client = MongoClient(connection_string)
     #     self.db = self.client[database_name]
 
-    def insert_document(self, collection_name, document):
+    def insert_document(self, collection_name, document, index: bool = False):
         try:
             collection = self.db[collection_name]
             result = collection.insert_one(document)
+            #index key fields
+            if index:
+                for key in document.keys():
+                    collection.create_index(key)
+                    print(f"Indexing {key} field")
+            print(collection.index_information())
             print('Inserted ID:', result.inserted_id)
         except Exception as e:
             print(f"[-] Error inserting document into database\n {e}")
