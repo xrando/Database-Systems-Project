@@ -32,7 +32,7 @@ def review():
             'movie_id': movieID,
             'ratings': [rating],
             'comments': [comments],
-        })
+        }, True)
     # if movieID is found, append ratings and comments
     else:
         handler.update_document(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID}, {

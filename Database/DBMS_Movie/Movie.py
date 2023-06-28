@@ -513,7 +513,7 @@ def get_movie_info(movie: str) -> Tuple[Any, Any, Any, List[Any]]:
             'poster': poster,
             'banner': banner,
             'rating': rating
-        })
+        }, True)
 
     return movie_id, poster, banner, rating
 
@@ -547,7 +547,7 @@ def movie_providers(tmdb_id: int) -> dict:
             if 'US' in response.json()['results']:
                 providers = response.json()['results']['US']
                 handler.insert_document(config.get('MONGODB', 'MOVIE_PROVIDER_COLLECTION'),
-                                        {'movie_tmdb_id': tmdb_id, 'providers': providers})
+                                        {'movie_tmdb_id': tmdb_id, 'providers': providers}, True)
                 # Return inserted data
                 return providers
 
