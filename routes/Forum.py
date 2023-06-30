@@ -1,3 +1,5 @@
+import logging
+
 from bson import ObjectId
 from flask import render_template, request
 from flask_login import current_user
@@ -31,7 +33,7 @@ def post():
             comment = request.form['comment']
             userid = request.form['userid']
             #name = dbUser.get_user_by_id(userid)[3]
-            print(subject, comment, userid)
+            #print(subject, comment, userid)
             # save to mongodb
             handler.insert_document(config.get('MONGODB', 'FORUM_COLLECTION'), {
                 'subject': subject,
@@ -45,9 +47,9 @@ def post():
         reply = request.form['reply']
         postID = request.form['postid']
         userid = request.form['userid']
-        print(userid)
+        #print(userid)
         user = dbUser.get_user_by_id(int(userid))
-        print(user)
+        #print(user)
         # print(reply)
         # print(postID)
         # if post exists, save reply to mongodb
@@ -56,7 +58,7 @@ def post():
                 'replies': (user[0], user[3], reply),
             }, '$push')
         else:
-            print("not found")
+            logging.error('forum not found')
 
     # grab all posts from mongodb and respective user for display, limit = 0 returns all results
     # get user following
@@ -64,7 +66,7 @@ def post():
     if userFollows:
         userFollows = userFollows[0]['following_arr']
         for user in userFollows:
-            print('following: ' + str(user))
+            # print('following: ' + str(user))
             # get all posts for each following, limit = 0 returns all results
             userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user}, 0)
             if userFollowingPosts:
