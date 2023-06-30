@@ -42,7 +42,11 @@ def home(page: int) -> str:
     carousel = DBMS_Movie.carousel()
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
     genres = DBMS_Movie.get_all_genres()
-    recommendations = DBMS_Movie.movie_recommendation(current_user.id) if current_user.is_authenticated else None
+    recommendations = []
+    if current_user.is_authenticated:
+        recommendations = DBMS_Movie.movie_recommendation(current_user.id)
+    else:
+        recommendations = DBMS_Movie.movie_recommendation()
     kwargs = {}
 
     return render_template(
@@ -67,20 +71,9 @@ def movie_page(movie_name: str = None) -> str:
     :param movie_name: Movie name
     :return: Render movie page
     """
-
-    # Return Variables
-    movie = None
-    movie_details = None
-    movie_genres = None
-    movie_director = None
-    movie_link = None
-    movie_year = None
-    actors = None
-    providers = None
-    rating = None
-    movie_tmdb_rating = None
-    reviews = None
-    inWatchList = None
+    if not movie_name:
+        # TODO: Convert to error page
+        return "Movie name not provided."
 
     try:
         # Remove (year) from movie name
@@ -205,22 +198,22 @@ def movie_page(movie_name: str = None) -> str:
                     handler.update_document(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': current_user.id},
                                             {'watchlist_arr': movieID}, '$push')
                     inWatchList = True
+
+        return render_template(
+            'Movie/Movie_details.html',
+            movie_name=movie_name,
+            movie_year=movie_year,
+            movie=movie_details,
+            genres=movie_genres,
+            director=movie_director,
+            actors=actors,
+            providers=providers,
+            link=movie_link,
+            rating=rating,
+            tmdb_rating=movie_tmdb_rating,
+            reviews=reviews,
+            inWatchList=inWatchList
+        )
     except (ValueError, KeyError, TypeError) as e:
         error_message = str(e)
         print(f"Error: {error_message}")
-
-    return render_template(
-        'Movie/Movie_details.html',
-        movie_name=movie_name,
-        movie_year=movie_year,
-        movie=movie_details,
-        genres=movie_genres,
-        director=movie_director,
-        actors=actors,
-        providers=providers,
-        link=movie_link,
-        rating=rating,
-        tmdb_rating=movie_tmdb_rating,
-        reviews=reviews,
-        inWatchList=inWatchList
-    )

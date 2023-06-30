@@ -12,6 +12,9 @@ import requests
 import random
 import Database.Mongo as Mongo
 import concurrent.futures
+from collections import Counter
+import logging
+from typing import Optional
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -133,9 +136,9 @@ def movie_page(title: str) -> dict | None:
 
             result["tmdb_link"] = config.get("MOVIE", "TMDB_MOVIE_URL") + str(movie_id)
         else:
-            print("No movie found with the given title")
+            logging.error(f"No movie found with the given title: {title}")
     except mariadb.Error as e:
-        print(f"Error executing statement: {e}")
+        logging.error(f"Error executing statement: {e}")
 
     return result
 
@@ -298,14 +301,14 @@ def get_movie_by_id(id):
     return cursor.fetchone()
 
 
-def new_movie(title: str = None, tmdb_id: int = None) -> None:
+def new_movie(title: Optional[str] = None, tmdb_id: Optional[int] = None) -> bool:
     """
     Adds a new movie to the database
 
-    Search for movie on tmdb api, need to update Director, Actor, Genre tables and their Movie_ tables
+    Search for movie on TMDB API, need to update Director, Actor, Genre tables and their Movie_ tables
     :param tmdb_id: TMDB id of the movie
     :param title: Title of the movie
-    :type title: str
+    :return: True if the movie was successfully added, False otherwise
     """
 
     director = None
@@ -314,109 +317,122 @@ def new_movie(title: str = None, tmdb_id: int = None) -> None:
     if title is not None:
         try:
             movie_info = tmdb.Search().movie(query=title)['results'][0]
-            print(movie_info)
             movie_tmdb_id = movie_info['id']
             movie_title = movie_info['title']
             movie_release_date = movie_info['release_date']
             synopsis = movie_info['overview']
+            logging.info(movie_info)
         except IndexError:
-            print(f"Movie {title} not found on TMDB. Please try again.")
-            return None
+            logging.error(f"Movie {title} not found on TMDB. Please try again.")
+            return False
     elif tmdb_id is not None:
-        movie_info = tmdb.Movies(tmdb_id).info()
-        print('movie info: ' + movie_info)
-        movie_tmdb_id = movie_info['id']
-        print('movie id: ' + movie_tmdb_id)
-        movie_title = movie_info['title']
-        movie_release_date = movie_info['release_date']
-        synopsis = movie_info['overview']
-
-    # Get Genres
-    movie_genres = []
-    movie = tmdb.Movies(movie_tmdb_id)
-    genres = movie.info()['genres']
-    for genre in genres:
-        movie_genres += [genre['name']]
-
-    # Get Actors and Directors
-    url = "https://api.themoviedb.org/3/movie/" + str(movie_tmdb_id) + "/credits?language=en-US"
-
-    headers = {
-        "accept": "application/json",
-        "Authorization": "Bearer " + config.get("TMDB", "ACCESS_TOKEN")
-    }
-
-    response = requests.get(url, headers=headers)
-
-    cast_dict = {}
-    for cast in response.json()['cast']:
-        cast_dict[cast['name']] = [cast['id'], cast['character']]
-    for crew in response.json()['crew']:
         try:
-            if crew['job'] == 'Director':
-                director = crew['name']
-                director_id = crew['id']
-                break
-        except KeyError:
-            continue
-    if director is not None and director_id is not None:
-        try:
-            # insert director into db
-            director_stmt = "INSERT INTO Director (director_name,tmdb_id) VALUES (?, ?)"
-            cursor.execute(director_stmt, (director, director_id))
-            director_id = check_director(director)
-            print('director id after insert: ' + str(director_id))
-        except:
-            print("Error inserting director into db")
+            movie_info = tmdb.Movies(tmdb_id).info()
+            movie_tmdb_id = movie_info['id']
+            movie_title = movie_info['title']
+            movie_release_date = movie_info['release_date']
+            synopsis = movie_info['overview']
+        except requests.exceptions.HTTPError:
+            logging.error(f"Movie with TMDB id {tmdb_id} not found on TMDB. Please try again.")
+    else:
+        logging.error("Invalid arguments. Please provide either 'title' or 'tmdb_id'.")
+        return False
 
-    # Insert to DB if not exists
-    movie = check_movie(movie_title)
-    if movie is None:
-        movie_stmt = "INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)"
-        cursor.execute(movie_stmt, (movie_title, movie_release_date, synopsis))
-        movie_id = cursor.lastrowid
-        movie_id = int(movie_id)
-        print(f"Movie {movie_title} added to database.")
+    try:
+        with connection.cursor() as cursor:
+            logging.info(f"Adding movie {movie_title} to database...")
+            # Begin the transaction
+            connection.begin()
 
-        for genre in movie_genres:
-            genre_id = check_genre(genre)
-            if genre_id is None:
-                genre_stmt = "INSERT INTO Genre (name) VALUES (?)"
-                cursor.execute(genre_stmt, (genre,))
-                genre_id = check_genre(genre)
-            movie_genre_stmt = "INSERT INTO Movie_Genre (movie_id, genre_id) VALUES (?, ?)"
-            cursor.execute(movie_genre_stmt, (movie_id, genre_id))
-        print(f"Genres added to database.")
+            # Get Genres
+            movie = tmdb.Movies(movie_tmdb_id)
+            genres = movie.info().get('genres', [])
+            movie_genres = [genre['name'] for genre in genres]
 
-        if cast_dict is not None:
-            for actor in cast_dict:
-                actor_id = check_actor(actor)
-                if actor_id is None:
-                    actor_stmt = "INSERT INTO Actor (actor_name, tmdb_id) VALUES (?, ?)"
-                    cursor.execute(actor_stmt, (actor, cast_dict[actor][0]))
-                    actor_id = check_actor(actor)
-                movie_actor_stmt = "INSERT INTO Movie_Actor (movie_id, actor_id, movie_character) VALUES (?, ?, ?)"
-                cursor.execute(movie_actor_stmt, (movie_id, actor_id, str(cast_dict[actor][1])))
-        print(f"Actors added to database.")
-        if director is not None:
-            director_id = check_director(director)
-            print('director id is not none: ' + str(director_id))
-            if director_id is None:
-                director_stmt = "INSERT INTO Director (director_name,tmdb_id) VALUES (?, ?)"
-                print('director: ' + director)
-                print('director id: ' + str(director_id))
+            # Get Actors and Directors
+            url = f"https://api.themoviedb.org/3/movie/{movie_tmdb_id}/credits?language=en-US"
+            headers = {
+                "accept": "application/json",
+                "Authorization": "Bearer " + config.get("TMDB", "ACCESS_TOKEN")
+            }
+            response = requests.get(url, headers=headers)
+            cast_dict = {}
+
+            for cast in response.json().get('cast', []):
+                cast_dict[cast['name']] = [cast['id'], cast['character']]
+
+            for crew in response.json().get('crew', []):
+                if crew.get('job') == 'Director':
+                    director = crew['name']
+                    director_id = crew['id']
+                    break
+
+            # Insert director into DB if not None
+            if director is not None and director_id is not None:
+                director_stmt = "INSERT INTO Director (director_name, tmdb_id) VALUES (?, ?)"
                 cursor.execute(director_stmt, (director, director_id))
                 director_id = check_director(director)
-                print('director id after insert: ' + str(director_id))
-            # problem here
-            movie_director_stmt = "INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)"
-            cursor.execute(movie_director_stmt, (movie_id, director_id))
-        else:
-            # add blank to directors
-            pass
-        print(f"Director added to database.")
-    else:
-        print(f"Movie {movie_title} already exists in database.")
+                logging.info(f"Director added to database. Director ID: {director_id}")
+
+            # Insert movie into DB if not exists
+            movie = check_movie(movie_title)
+            if movie is None:
+                movie_stmt = "INSERT INTO Movie (title, release_date, synopsis) VALUES (?, ?, ?)"
+                cursor.execute(movie_stmt, (movie_title, movie_release_date, synopsis))
+                movie_id = cursor.lastrowid
+                logging.info(f"Movie {movie_title} added to database. Movie ID: {movie_id}")
+
+                for genre in movie_genres:
+                    genre_id = check_genre(genre)
+                    if genre_id is None:
+                        genre_stmt = "INSERT INTO Genre (name) VALUES (?)"
+                        cursor.execute(genre_stmt, (genre,))
+                        genre_id = check_genre(genre)
+
+                    movie_genre_stmt = "INSERT INTO Movie_Genre (movie_id, genre_id) VALUES (?, ?)"
+                    cursor.execute(movie_genre_stmt, (movie_id, genre_id))
+
+                logging.info("Genres added to the database.")
+
+                for actor in cast_dict:
+                    actor_id = check_actor(actor)
+                    if actor_id is None:
+                        actor_stmt = "INSERT INTO Actor (actor_name, tmdb_id) VALUES (?, ?)"
+                        cursor.execute(actor_stmt, (actor, cast_dict[actor][0]))
+                        actor_id = check_actor(actor)
+
+                    movie_actor_stmt = "INSERT INTO Movie_Actor (movie_id, actor_id, movie_character) VALUES (?, ?, ?)"
+                    cursor.execute(movie_actor_stmt, (movie_id, actor_id, str(cast_dict[actor][1])))
+
+                logging.info("Actors added to the database.")
+
+                if director is not None:
+                    director_id = check_director(director)
+                    if director_id is None:
+                        director_stmt = "INSERT INTO Director (director_name, tmdb_id) VALUES (?, ?)"
+                        cursor.execute(director_stmt, (director, director_id))
+                        director_id = check_director(director)
+
+                    movie_director_stmt = "INSERT INTO Movie_Director (movie_id, director_id) VALUES (?, ?)"
+                    cursor.execute(movie_director_stmt, (movie_id, director_id))
+            else:
+                logging.info(f"Movie {movie_title} already exists in the database.")
+
+            # Commit the transaction
+            connection.commit()
+            logging.info("Transaction committed.")
+            return True
+    except requests.exceptions.HTTPError as e:
+        logging.error("HTTP error occurred while making TMDB API request:", e)
+        # Rollback the transaction in case of an error
+        connection.rollback()
+        return False
+    except Exception as e:
+        logging.error("Error occurred in new_movie function:", e)
+        # Rollback the transaction in case of an error
+        connection.rollback()
+        return False
+
 
 
 def check_genre(genre: str) -> int | None:
@@ -587,7 +603,7 @@ def movie_providers(tmdb_id: int) -> dict:
                 return providers
 
 
-def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
+def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str, str]]:
     """
     Get random movies based on the movie genres the user has watched
     :param limit: Number of movies to return
@@ -595,57 +611,55 @@ def movie_recommendation(user_id: int, limit: int = 6) -> list[tuple[str, str]]:
     :return: List of movies (title, poster_link)
     """
 
-    # Get user's watched movies from MongoDB "watchlist" collection
-    watched_movies_document = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'), {'user_id': user_id})
-    if watched_movies_document:
-        watched_movies = watched_movies_document[0].get('watchlist_arr', [])
+    def get_movie_info_concurrently(movies):
+        result = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(get_movie_info, movie[0]) for movie in movies]
 
-        # Get user's watched movie genres and find the most common genre
-        genres = {}
-        for movie in watched_movies:
-            # Get the movie's genre_id based on movie_id, from Movie_Genre table
-            current_movie_genre = get_genre(int(movie))
-            if current_movie_genre is not None:
-                genres[current_movie_genre] = genres.get(current_movie_genre, 0) + 1
+            for movie, future in zip(movies, futures):
+                movie_title = movie[0]
+                try:
+                    movie_id, poster, banner, rating = future.result()
+                    if poster is None:
+                        poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
+                    result.append((movie_title, poster))
+                except Exception as e:
+                    print(f"Error occurred while fetching movie info for '{movie_title}': {str(e)}")
+        return result
 
-        if genres:
-            # Get the most common genre
-            most_common_genre = max(genres, key=genres.get)
+    # Get user's watched movies and their genres from MongoDB "watchlist" collection
+    watched_movies_document = handler.find_documents(config.get('MONGODB', 'WATCHLIST_COLLECTION'),
+                                                     {'user_id': user_id})
+    watched_movies = watched_movies_document[0].get('watchlist_arr', []) if watched_movies_document else []
 
-            # Get random movies from the most common genre within +-1 year of the current date
-            stmt = "SELECT Movie.title " \
-                   "FROM Movie " \
-                   "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
-                   "WHERE Movie_Genre.genre_id = ? " \
-                   "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) " \
-                   "AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
-                   "ORDER BY RAND() " \
-                   "LIMIT ?"
+    genres = Counter(get_genre(int(movie)) for movie in watched_movies if get_genre(int(movie)))
 
-            cursor.execute(stmt, (most_common_genre, limit))
-            movies = cursor.fetchall()
+    if genres:
+        most_common_genre = genres.most_common(1)[0][0]
 
-            result = []
-            movie_info_list = []
+        # Get random movies from the most common genre within +-1 year of the current date
+        stmt = "SELECT Movie.title " \
+               "FROM Movie " \
+               "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
+               "WHERE Movie_Genre.genre_id = ? " \
+               "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) " \
+               "AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+               "ORDER BY RAND() " \
+               "LIMIT ?"
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Collect movie information concurrently
-                futures = [executor.submit(get_movie_info, movie[0]) for movie in movies]
+        cursor.execute(stmt, (most_common_genre, limit))
+        movies = cursor.fetchall()
 
-                for movie, future in zip(movies, futures):
-                    movie_title = movie[0]
-                    try:
-                        movie_id, poster, banner, rating = future.result()
-                        if poster is None:
-                            poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
-                        result.append((movie_title, poster))
-                    except Exception as e:
-                        # Handle any exceptions that occurred during movie information retrieval
-                        print(f"Error occurred while fetching movie info for '{movie_title}': {str(e)}")
+        result = get_movie_info_concurrently(movies)
+        return result
 
-            return result
+    # Return random movies if no genres are found or no movies match the criteria
+    stmt = "SELECT title FROM Movie ORDER BY RAND() LIMIT ?"
+    cursor.execute(stmt, (limit,))
+    movies = cursor.fetchall()
 
-    return []
+    result = get_movie_info_concurrently(movies)
+    return result
 
 
 def get_genre(movie_id: int) -> int | None:

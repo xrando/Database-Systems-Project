@@ -8,7 +8,7 @@ from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
 from Database import Mongo
-import Database.User as DBUser
+import logging
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
@@ -19,25 +19,46 @@ handler = Mongo.MongoDBHandler.get_instance(
 )
 
 
-#admin landing page
+# admin landing page
 @routes.route('/admin', methods=['GET'])
 def admin():
-    #grab all updated posts
+    # grab all updated posts
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
-    #grab all movie requests
+    # grab all movie requests
     allRequests = handler.find_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {})
-    #print(allPosts)
-    return render_template('admin.html', posts = allPosts, requests = allRequests)
+    # print(allPosts)
+    return render_template('admin.html', posts=allPosts, requests=allRequests)
 
-#add new movie to database
-#test data, title=Main Tulsi Tere Aangan Ki, tmdb_id=172687
+
+# add new movie to database
+# test data, title=Avatar: The Way of Water, tmdb_id=76600
 @routes.route('/addMovie', methods=['POST'])
 def addMovie():
-    movie_name = request.form['movie_name']
-    tmdb_id = request.form['tmdb_id']
-    print(movie_name, tmdb_id)
-    DBMS_Movie.new_movie(movie_name, tmdb_id)
-    return redirect(url_for('routes.admin'))
+    try:
+        movie_name = request.form['movie_name'] or None
+        tmdb_id = request.form['tmdb_id']
+        if tmdb_id:
+            tmdb_id = int(tmdb_id)
+
+        success = DBMS_Movie.new_movie(movie_name, tmdb_id)
+        if success:
+            logging.info(f"Added {movie_name} to the database.")
+        else:
+            logging.error(f"Failed to add {movie_name} to the database.")
+
+        return redirect(url_for('routes.admin'))
+
+    except KeyError as e:
+        logging.error(f"KeyError occurred while adding movie: {e}")
+        return redirect(url_for('routes.admin'))
+
+    except ValueError as e:
+        logging.error(f"ValueError occurred while adding movie: {e}")
+        return redirect(url_for('routes.admin'))
+
+    except Exception as e:
+        logging.error(f"An error occurred while adding movie: {e}")
+        return redirect(url_for('routes.admin'))
 
 
 # delete movie from database
@@ -51,10 +72,6 @@ def deleteMovie():
         else:
             print("No movie_id")
     return redirect(url_for('routes.admin'))
-    # print(movie_id)
-    # if movie_id:
-    #     DBMS_Movie.deleteMovie(movie_id)
-    # return redirect(url_for('routes.admin'))
 
 
 # edit movie in database
@@ -113,6 +130,7 @@ def editPost(postID: str = None):
     print(post)
     return render_template('forumEdit.html', post=post)
 
+
 @routes.route('/updatePost', methods=['POST'])
 def updatePost():
     subject = request.form['subject']
@@ -129,6 +147,7 @@ def updatePost():
             'comment': comment,
         }, '$set')
     return redirect(url_for('routes.post'))
+
 
 # search posts by subject
 @routes.route('/searchPosts', methods=['POST'])
