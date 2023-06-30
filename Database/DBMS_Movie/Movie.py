@@ -684,3 +684,16 @@ def get_genre(movie_id: int) -> int | None:
     if genre is None:
         return None
     return genre[0]
+
+def get_genre_name(genre_id: int) -> int | None:
+    """
+    Get genre of movie from DB (Movie_Genre table)
+    :param movie_id: TMDB ID of movie
+    :return: Genre name of movie
+    """
+    stmt = "SELECT name FROM Genre WHERE genre_id = ?"
+    cursor.execute(stmt, (genre_id,))
+    genre = cursor.fetchone()
+    if genre is None:
+        return None
+    return genre[0]

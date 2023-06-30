@@ -26,8 +26,24 @@ def admin():
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
     # grab all movie requests
     allRequests = handler.find_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {})
-    # print(allPosts)
-    return render_template('admin.html', posts=allPosts, requests=allRequests)
+
+    #get statistics
+    data = {'Genre' : 'Popularity Score'}
+    #get total popularity of all movies
+    allRating = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {}, 0)
+    for rating in allRating:
+        totalScore = 0
+        for score in rating['ratings']:
+            #add all scores together
+            totalScore += int(score)
+        #if genre already exists, add to it
+        if DBMS_Movie.get_genre_name(DBMS_Movie.get_genre(rating['movie_id'])) in data:
+            data[DBMS_Movie.get_genre_name(DBMS_Movie.get_genre(rating['movie_id']))] += int(totalScore)
+        #else create new genre
+        else:
+            data[DBMS_Movie.get_genre_name(DBMS_Movie.get_genre(rating['movie_id']))] = int(totalScore)
+        logging.info(data)
+    return render_template('admin.html', posts=allPosts, requests=allRequests, data=data)
 
 
 # add new movie to database
