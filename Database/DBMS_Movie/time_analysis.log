@@ -1,0 +1,52 @@
+INFO:root:Starting time analysis...
+INFO:root:Time taken to load page 39: 0.18769667799824674 seconds
+INFO:root:Time taken to load page 45: 0.00231135400099447 seconds
+INFO:root:Time taken to load page 99: 0.002977383001052658 seconds
+INFO:root:Time taken to load page 9: 0.003654489000837202 seconds
+INFO:root:Time taken to load page 29: 0.005963026998870191 seconds
+INFO:root:Time taken to load page 33: 0.005836361999172368 seconds
+INFO:root:Time taken to load page 82: 0.002186386000175844 seconds
+INFO:root:Time taken to load page 74: 0.004189268000118318 seconds
+INFO:root:Time taken to load page 46: 0.005747459999838611 seconds
+INFO:root:Time taken to load page 54: 0.005434861999674467 seconds
+INFO:root:Average time taken to load movie page: 0.022599726899898087 seconds
+INFO:root:Time taken to load movie Live Free or Die Hard: 1.5441372320001392 seconds
+INFO:root:Time taken to load movie Cold Blood: 1.484307427001113 seconds
+INFO:root:Time taken to load movie Underwater: 1.658857682999951 seconds
+INFO:root:Time taken to load movie The Platform: 1.4828051459990093 seconds
+INFO:root:Time taken to load movie Jumanji: The Next Level: 1.3697860480006057 seconds
+INFO:root:Time taken to load movie The Twilight Saga: Eclipse: 1.6384363940014737 seconds
+INFO:root:Time taken to load movie Sonic the Hedgehog: 1.6106500380010402 seconds
+INFO:root:Time taken to load movie Star Wars: The Rise of Skywalker: 1.1082485339993582 seconds
+INFO:root:Time taken to load movie Onward: 0.7227867169985984 seconds
+INFO:root:Time taken to load movie Emma.: 1.5383151189998898 seconds
+INFO:root:Time taken to load movie Pocahontas II: Journey to a New World: 1.3836294269985956 seconds
+INFO:root:Time taken to load movie Lara Croft: Tomb Raider - The Cradle of Life: 1.4353197180007555 seconds
+INFO:root:Average time taken to load movie page: 1.414773290250044 seconds
+INFO:root:Time analysis completed.
+INFO:root:Starting time analysis...
+INFO:root:Time taken to load page 97: 0.00282781799978693 seconds
+INFO:root:Time taken to load page 41: 0.006191305999891483 seconds
+INFO:root:Time taken to load page 75: 0.005615567999484483 seconds
+INFO:root:Time taken to load page 10: 0.00620924899885722 seconds
+INFO:root:Time taken to load page 50: 0.005857764999745996 seconds
+INFO:root:Time taken to load page 16: 0.005888677000257303 seconds
+INFO:root:Time taken to load page 61: 0.005962638999335468 seconds
+INFO:root:Time taken to load page 41: 0.005697949000023073 seconds
+INFO:root:Time taken to load page 75: 0.007118565999917337 seconds
+INFO:root:Time taken to load page 91: 0.004216717001327197 seconds
+INFO:root:Average time taken to load movie page: 0.005558625399862649 seconds
+INFO:root:Time taken to load movie Live Free or Die Hard: 0.0331493749999936 seconds
+INFO:root:Time taken to load movie Cold Blood: 0.029448216999298893 seconds
+INFO:root:Time taken to load movie Underwater: 0.03545534400109318 seconds
+INFO:root:Time taken to load movie The Platform: 0.029690792000110378 seconds
+INFO:root:Time taken to load movie Jumanji: The Next Level: 0.06863759599946206 seconds
+INFO:root:Time taken to load movie The Twilight Saga: Eclipse: 0.023074706999977934 seconds
+INFO:root:Time taken to load movie Sonic the Hedgehog: 0.03320463599993673 seconds
+INFO:root:Time taken to load movie Star Wars: The Rise of Skywalker: 0.028130471999247675 seconds
+INFO:root:Time taken to load movie Onward: 0.03852915499919618 seconds
+INFO:root:Time taken to load movie Emma.: 0.039237766000951524 seconds
+INFO:root:Time taken to load movie Pocahontas II: Journey to a New World: 0.027562540999497287 seconds
+INFO:root:Time taken to load movie Lara Croft: Tomb Raider - The Cradle of Life: 0.02808643999924243 seconds
+INFO:root:Average time taken to load movie page: 0.03451725341650066 seconds
+INFO:root:Time analysis completed.
