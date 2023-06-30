@@ -96,6 +96,9 @@ def profile(success=None):
 # Other user profile page
 @routes.route('/profile/<id>', methods=['GET', 'POST'])
 def other_profile(id):
+    # Check if user is same as current user
+    if str(id) == str(current_user.id):
+        return redirect(url_for('routes.profile'))
 
     # Get user's username and data
     userData = dbUser.get_user_by_id(id)

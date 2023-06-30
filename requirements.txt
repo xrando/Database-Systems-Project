@@ -3,3 +3,6 @@ Flask_Login==0.6.2
 mariadb==1.1.6
 pymongo==4.3.3
 tmdbsimple==2.9.1
+
+pydantic~=1.10.9
+requests~=2.31.0

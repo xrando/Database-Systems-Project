@@ -43,7 +43,7 @@ class Database:
                 self.cursor.execute("CREATE DATABASE " + database)
                 self.cursor.execute("USE " + database)
                 self.create_tables()
-                self.seed("DBMS_User.sql")
+                print("[+] Created Database and Tables")
             except mariadb.Error as e:
                 print(f"Error connecting to MariaDB Platform: {e}")
                 sys.exit(1)
@@ -98,7 +98,6 @@ class Database:
             print(f"[-] Error retrieving user from database\n {e}")
         return self.cursor.fetchone()
 
-
     def get_password_by_username(self, username: str) -> tuple:
         try:
             self.cursor.execute("SELECT id, password FROM User WHERE username = ?", (username,))
@@ -129,15 +128,15 @@ class Database:
         except mariadb.DataError as e:
             print(f"[-] Error updating user in database\n {e}")
         self.connection.commit()
-        
+
     def search_user(self, name: str) -> tuple:
         try:
             self.cursor.execute("SELECT * "
-                           "FROM User "
-                           "WHERE profilename "
-                           "LIKE ?"
-                           "AND username != 'admin' "     
-                           "LIMIT 30", ('%' + name + '%',))
+                                "FROM User "
+                                "WHERE profilename "
+                                "LIKE ?"
+                                "AND username != 'admin' "
+                                "LIMIT 30", ('%' + name + '%',))
         except mariadb.DataError as e:
             print(f"[-] Error searching for users from database\n {e}")
         return self.cursor.fetchall()
@@ -158,9 +157,8 @@ class Database:
 
 if __name__ == "__main__":
     db = Database()
-
     # Retrieving user
-    user = db.get_password_by_username("admin")
-    print(user)
-    user = db.get_user_by_id(2200559)
-    print(user)
+    # user = db.get_password_by_username("admin")
+    # print(user)
+    # user = db.get_user_by_id(2200559)
+    # print(user)
