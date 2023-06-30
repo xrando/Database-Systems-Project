@@ -6,7 +6,6 @@ import Database.Mongo as Mongo
 from Config.ConfigManager import ConfigManager
 from . import routes
 import concurrent.futures
-import time
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
@@ -69,9 +68,6 @@ def movie_page(movie_name: str = None) -> str:
     :return: Render movie page
     """
 
-    # Start time on page load
-    start_time = time.time()
-
     # Return Variables
     movie = None
     movie_details = None
@@ -95,6 +91,10 @@ def movie_page(movie_name: str = None) -> str:
                 movie_year = None
 
             movie = DBMS_Movie.movie_page(movie_name)
+
+            if movie == {} or movie is None:
+                # TODO: Convert to error page
+                raise Exception('Movie not found')
 
             movie_details = movie.get('movie')
             movie_genres = movie.get('genres')
@@ -208,12 +208,6 @@ def movie_page(movie_name: str = None) -> str:
     except (ValueError, KeyError, TypeError) as e:
         error_message = str(e)
         print(f"Error: {error_message}")
-
-    # End time after all data is loaded
-    end_time = time.time()
-
-    # Calculate time taken to collect data
-    print(f"Time taken to load data (Movie_info): {end_time - start_time} seconds")
 
     return render_template(
         'Movie/Movie_details.html',
