@@ -50,7 +50,6 @@ def updateMovie(movie_name: str = None, release_date: str = None, synopsis: str 
     return False
 
 
-
 def deleteMovie(movie_id: str = None) -> bool:
     if not movie_id:
         return False
@@ -59,16 +58,6 @@ def deleteMovie(movie_id: str = None) -> bool:
         with connection.cursor() as cursor:
             # Begin the transaction
             connection.begin()
-
-            # Delete from child tables
-            child_delete_stmts = [
-                "DELETE FROM Movie_Actor WHERE movie_id = ?",
-                "DELETE FROM Movie_Director WHERE movie_id = ?",
-                "DELETE FROM Movie_Genre WHERE movie_id = ?"
-            ]
-
-            for delete_stmt in child_delete_stmts:
-                cursor.execute(delete_stmt, (movie_id,))
 
             # Delete from parent table
             parent_delete_stmt = "DELETE FROM Movie WHERE movie_id = ?"
@@ -85,7 +74,6 @@ def deleteMovie(movie_id: str = None) -> bool:
         connection.rollback()
 
     return False
-
 
 
 def update_movie_info(title: str = None, tmdb_id: int = None) -> bool:
@@ -133,11 +121,14 @@ def update_movie_info(title: str = None, tmdb_id: int = None) -> bool:
 
     try:
         if data[0]['poster'] != new_poster:
-            handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title}, {'poster': new_poster})
+            handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
+                                    {'poster': new_poster})
         if data[0]['banner'] != new_banner:
-            handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title}, {'banner': new_banner})
+            handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
+                                    {'banner': new_banner})
         if data[0]['rating'] != new_rating:
-            handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title}, {'rating': new_rating})
+            handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
+                                    {'rating': new_rating})
     except IndexError:
         print(f"[-] Error retrieving info for: {title}\n")
         return False
