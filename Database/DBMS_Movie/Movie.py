@@ -434,7 +434,6 @@ def new_movie(title: Optional[str] = None, tmdb_id: Optional[int] = None) -> boo
         return False
 
 
-
 def check_genre(genre: str) -> int | None:
     """
     Checks if genre exists in database
@@ -605,9 +604,9 @@ def movie_providers(tmdb_id: int) -> dict:
 
 def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str, str]]:
     """
-    Get random movies based on the movie genres the user has watched
-    :param limit: Number of movies to return
+    Get random movies based on the movie genres the user has watched, with additional recommendations.
     :param user_id: User ID
+    :param limit: Number of movies to return
     :return: List of movies (title, poster_link)
     """
 
@@ -624,7 +623,7 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
                         poster = config.get("MOVIE", "DEFAULT_POSTER_URL")
                     result.append((movie_title, poster))
                 except Exception as e:
-                    print(f"Error occurred while fetching movie info for '{movie_title}': {str(e)}")
+                    logging.error(f"Error occurred while fetching movie info for '{movie_title}': {str(e)}")
         return result
 
     # Get user's watched movies and their genres from MongoDB "watchlist" collection
@@ -637,17 +636,27 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
     if genres:
         most_common_genre = genres.most_common(1)[0][0]
 
-        # Get random movies from the most common genre within +-1 year of the current date
-        stmt = "SELECT Movie.title " \
+        # Get random movies from the most common genre within +-1 year of the current date,
+        # including movies from the current year, and with the same director or actors
+        stmt = "SELECT DISTINCT Movie.title " \
                "FROM Movie " \
-               "INNER JOIN Movie_Genre ON Movie.movie_id = Movie_Genre.movie_id " \
-               "WHERE Movie_Genre.genre_id = ? " \
-               "AND Movie.release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) " \
+               "LEFT JOIN Movie_Genre " \
+               "ON Movie.movie_id = Movie_Genre.movie_id " \
+               "LEFT JOIN Movie_Director " \
+               "ON Movie.movie_id = Movie_Director.movie_id " \
+               "LEFT JOIN Movie_Actor " \
+               "ON Movie.movie_id = Movie_Actor.movie_id " \
+               "WHERE (Movie_Genre.genre_id = ? " \
+               "OR Movie_Director.director_id = ? " \
+               "OR Movie_Actor.actor_id = ?) " \
+               "AND (Movie.release_date " \
+               "BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) " \
                "AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+               "OR YEAR(Movie.release_date) = YEAR(NOW())) " \
                "ORDER BY RAND() " \
                "LIMIT ?"
 
-        cursor.execute(stmt, (most_common_genre, limit))
+        cursor.execute(stmt, (most_common_genre, user_id, user_id, limit))
         movies = cursor.fetchall()
 
         result = get_movie_info_concurrently(movies)
@@ -660,6 +669,7 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
 
     result = get_movie_info_concurrently(movies)
     return result
+
 
 
 def get_genre(movie_id: int) -> int | None:

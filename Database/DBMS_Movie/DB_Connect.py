@@ -7,6 +7,7 @@ import configparser
 import sys
 import tmdbsimple as tmdb
 import mariadb
+import logging
 
 
 class DBConnection:
@@ -46,7 +47,7 @@ class DBConnection:
             tmdb.API_KEY = config.get('TMDB', 'API_KEY')
         except configparser.Error as e:
             print(f"Available Configurations: {config.sections()}")
-            print(f"Error reading config file: {e}")
+            logging.error(f"Error reading config file: {e}")
             sys.exit(1)
 
         try:
@@ -59,6 +60,7 @@ class DBConnection:
             )
             return connection
         except mariadb.ProgrammingError as e:
+            logging.info(f"Error connecting to MariaDB Platform: {e}, attempting to create database")
             print(f"You don't have a database named {database} in your MariaDB instance, creating it now...")
             try:
                 connection = mariadb.connect(
@@ -74,12 +76,13 @@ class DBConnection:
                 from .Migration import seed
                 seed()
 
+                logging.info(f"Successfully created database {database} and seeded it with data")
                 return connection
             except mariadb.Error as e:
-                print(f"Error connecting to MariaDB Platform: {e}")
+                logging.error(f"Error creating database: {e}")
                 sys.exit(1)
         except mariadb.OperationalError as e:
-            print(f"Error connecting to MariaDB Platform: {e}")
+            logging.error(f"Error connecting to MariaDB Platform: {e}")
             sys.exit(1)
 
     def close_connection(self) -> None:

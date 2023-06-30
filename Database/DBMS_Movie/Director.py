@@ -7,6 +7,7 @@ import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
 import Database.Mongo as Mongo
+import logging
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -27,9 +28,9 @@ tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
 
 def Director(
-        director_name: str = None,
-        director_tmdb_id: str = None,
-        order_by: list = None
+    director_name: str = None,
+    director_tmdb_id: str = None,
+    order_by: list = None
 ) -> dict:
     """
     Get all movies a director has directed
@@ -47,11 +48,14 @@ def Director(
 
     orders = {"release_date": "release_date", "title": "title"}
     if order_by[0] not in orders:
+        logging.warning(f"order_by[0] is not valid: {order_by[0]}")
         raise ValueError("order_by must be one of: release_date, title")
     if order_by[1] not in ["ASC", "DESC"]:
+        logging.warning(f"order_by[1] is not valid: {order_by[1]}")
         raise ValueError("order_by[1] must be one of: ASC, DESC")
 
     if not director_name and not director_tmdb_id:
+        logging.warning("Either director_name or director_tmdb_id must be specified")
         raise ValueError("Either director_name or director_tmdb_id must be specified")
 
     stmt = "SELECT Movie.title, Movie.release_date " \
@@ -75,6 +79,7 @@ def Director(
         cursor.execute(stmt, params)
         movies = cursor.fetchall()
     except mariadb.Error as e:
+        logging.error(f"Error executing SQL statement: {e}")
         print(f"Error executing SQL statement: {e}")
         return {"movies": [], "director": None}
 
@@ -86,14 +91,14 @@ def Director(
     if director_tmdb_id:
         director_info = get_director_info(int(director_tmdb_id))
     elif director_name:
-        stmt = "SELECT tmdb_id " \
-               "FROM Director " \
-               "WHERE director_name = ?"
+        # Fetch director tmdb_ids in a single query
+        stmt = "SELECT director_name, tmdb_id FROM Director WHERE director_name = ?"
         try:
             cursor.execute(stmt, (director_name,))
-            row = cursor.fetchone()
-            if row:
-                director_tmdb_id = row[0]
+            director_rows = cursor.fetchall()
+            director_dict = {row[0]: row[1] for row in director_rows}
+            if director_name in director_dict:
+                director_tmdb_id = director_dict[director_name]
                 director_info = get_director_info(int(director_tmdb_id))
         except mariadb.Error as e:
             print(f"Error getting director's tmdb_id: {e}")

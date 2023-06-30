@@ -6,6 +6,7 @@ import Database.Mongo as Mongo
 from Config.ConfigManager import ConfigManager
 from . import routes
 import concurrent.futures
+import logging
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
@@ -35,8 +36,10 @@ def home(page: int) -> str:
 
     # TODO: Convert to error page
     if page < 1:
+        logging.error(f'Page not found: {page}')
         raise Exception('Page not found')
     elif page > total_pages:
+        logging.error(f'Page not found: {page}')
         raise Exception('Page not found')
 
     carousel = DBMS_Movie.carousel()
@@ -73,6 +76,7 @@ def movie_page(movie_name: str = None) -> str:
     """
     if not movie_name:
         # TODO: Convert to error page
+        logging.error(f'Movie name not provided.')
         return "Movie name not provided."
 
     try:
@@ -87,6 +91,7 @@ def movie_page(movie_name: str = None) -> str:
 
             if movie == {} or movie is None:
                 # TODO: Convert to error page
+                logging.error(f'Movie not found: {movie_name}')
                 raise Exception('Movie not found')
 
             movie_details = movie.get('movie')
@@ -158,7 +163,7 @@ def movie_page(movie_name: str = None) -> str:
             providers = None
 
         # get movie reviews
-        movieID = DBMS_Movie.get_movieID(movie_name)
+        movieID = DBMS_Movie.check_movie(movie_name)
         # json object containing all reviews for a movie
         data = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID})
         reviews = []
@@ -216,4 +221,7 @@ def movie_page(movie_name: str = None) -> str:
         )
     except (ValueError, KeyError, TypeError) as e:
         error_message = str(e)
-        print(f"Error: {error_message}")
+        logging.error(f"Error: {error_message}")
+    except Exception as e:
+        error_message = str(e)
+        logging.error(f"Error: {error_message}")
