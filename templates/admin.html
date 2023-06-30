@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    {% if current_user.is_authenticated %}
+    {% if current_user.is_authenticated and current_user.username == 'admin'%}
         <div class="container-fluid">
             <!-- Success Popup Modal -->
             <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
