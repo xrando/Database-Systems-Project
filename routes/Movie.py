@@ -29,9 +29,6 @@ def home(page: int) -> str:
     :return: Render of index.html
     """
 
-    # Start time on page load
-    start_time = time.time()
-
     limit = int(config.get("MOVIE", "LIMIT"))
     pages = DBMS_Movie.get_pages(pages=page, limit=limit)
     pages_left = pages["pages_left"]
@@ -48,12 +45,6 @@ def home(page: int) -> str:
     genres = DBMS_Movie.get_all_genres()
     recommendations = DBMS_Movie.movie_recommendation(current_user.id) if current_user.is_authenticated else None
     kwargs = {}
-
-    # End time after all data is loaded
-    end_time = time.time()
-
-    # Calculate time taken to collect data
-    print(f"Time taken to load data (Movie_list): {end_time - start_time} seconds")
 
     return render_template(
         'index.html',

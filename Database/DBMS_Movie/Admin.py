@@ -22,47 +22,70 @@ handler = Mongo.MongoDBHandler.get_instance(
 
 
 def updateMovie(movie_name: str = None, release_date: str = None, synopsis: str = None, movie_id: int = None) -> bool:
-    update_stmt = "UPDATE Movie " \
-                  "SET title = ?, release_date = ?, synopsis = ? " \
-                  "WHERE movie_id = ?"
+    if not all([movie_name, release_date, synopsis, movie_id]):
+        return False
+
     try:
-        cursor.execute(update_stmt, (movie_name, release_date, synopsis, movie_id))
-    except mariadb.DataError as e:
+        with connection.cursor() as cursor:
+            # Begin the transaction
+            connection.begin()
+
+            # Update the movie details
+            update_stmt = "UPDATE Movie " \
+                          "SET title = ?, release_date = ?, synopsis = ? " \
+                          "WHERE movie_id = ?"
+
+            cursor.execute(update_stmt, (movie_name, release_date, synopsis, movie_id))
+
+            # Commit the transaction
+            connection.commit()
+
+            return True
+
+    except mariadb.Error as e:
         print(f"[-] Error updating movie details from database\n {e}")
-    # movies = cursor.fetchall()
-    # print(movies)
-    return True
+        # Rollback the transaction in case of an error
+        connection.rollback()
+
+    return False
+
 
 
 def deleteMovie(movie_id: str = None) -> bool:
-    # delete from child (movie_actor, movie_director, movie_genre)
-    actor_stmt = "DELETE FROM Movie_Actor " \
-                 "WHERE movie_id = ?"
-    try:
-        cursor.execute(actor_stmt, (movie_id,))
-    except mariadb.DataError as e:
-        print(f"[-] Error deleting movie_actor from database\n {e}")
-    director_stmt = "DELETE FROM Movie_Director " \
-                    "WHERE movie_id = ?"
-    try:
-        cursor.execute(director_stmt, (movie_id,))
-    except mariadb.DataError as e:
-        print(f"[-] Error deleting movie_director from database\n {e}")
-    genre_stmt = "DELETE FROM Movie_Genre " \
-                 "WHERE movie_id = ?"
-    try:
-        cursor.execute(genre_stmt, (movie_id,))
-    except mariadb.DataError as e:
-        print(f"[-] Error deleting movie_genre from database\n {e}")
+    if not movie_id:
+        return False
 
-    # delete from parent (movie)
-    delete_stmt = "DELETE FROM Movie " \
-                  "WHERE movie_id = ?"
     try:
-        cursor.execute(delete_stmt, (movie_id,))
-    except mariadb.DataError as e:
+        with connection.cursor() as cursor:
+            # Begin the transaction
+            connection.begin()
+
+            # Delete from child tables
+            child_delete_stmts = [
+                "DELETE FROM Movie_Actor WHERE movie_id = ?",
+                "DELETE FROM Movie_Director WHERE movie_id = ?",
+                "DELETE FROM Movie_Genre WHERE movie_id = ?"
+            ]
+
+            for delete_stmt in child_delete_stmts:
+                cursor.execute(delete_stmt, (movie_id,))
+
+            # Delete from parent table
+            parent_delete_stmt = "DELETE FROM Movie WHERE movie_id = ?"
+            cursor.execute(parent_delete_stmt, (movie_id,))
+
+            # Commit the transaction
+            connection.commit()
+
+            return True
+
+    except mariadb.Error as e:
         print(f"[-] Error deleting movie from database\n {e}")
-    return True
+        # Rollback the transaction in case of an error
+        connection.rollback()
+
+    return False
+
 
 
 def update_movie_info(title: str = None, tmdb_id: int = None) -> bool:

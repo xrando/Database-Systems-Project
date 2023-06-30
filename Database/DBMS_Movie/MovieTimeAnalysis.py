@@ -1,9 +1,12 @@
 import random
-import time
-
 import requests
+import time
+import logging
 
 from Config.ConfigManager import ConfigManager
+
+logging.basicConfig(filename='time_analysis.log', level=logging.INFO)
+
 
 config_manager = ConfigManager()
 config = config_manager.get_config()
@@ -20,39 +23,47 @@ movie_details_arr = []
 
 # Movie page
 for i in range(500):
-    # random int between 1 and 100 for page number
     page = random.randint(1, 100)
     movie_page = f'http://{host}:{port}/page/{page}'
 
-    # Start timer
-    start_time = time.time()
+    try:
+        start_time = time.perf_counter()
 
-    # Create a GET request to the movie page, and time it
-    response = requests.get(movie_page)
+        response = requests.get(movie_page)
 
-    # End timer
-    end_time = time.time()
+        end_time = time.perf_counter()
 
-    # Append time taken to load page to array
-    movie_page_arr.append(end_time - start_time)
+        movie_page_arr.append(end_time - start_time)
 
-    print(f"Time taken to load page {page}: {end_time - start_time} seconds")
-    # write to csv where first column is page number, second column is time taken to load page
-    with open('movie_page.csv', 'a') as f:
-        f.write(f"{page},{end_time - start_time}\n")
+        logging.info(f"Time taken to load page {page}: {end_time - start_time} seconds")
 
-    # Sleep for random time between 0.5 and 1.5 seconds
-    time.sleep(random.uniform(0.5, 1.5))
+        with open('movie_page.csv', 'a') as f:
+            f.write(f"{page},{end_time - start_time}\n")
+
+        time.sleep(random.uniform(0.5, 1.5))
+
+    except Exception as e:
+        logging.error(f"Error occurred while loading page {page}: {str(e)}")
 
 # Movie details page
 for movie in movies:
     movie_details = f'http://{host}:{port}/movie/{movie}'
-    start_time = time.time()
-    # Create a GET request to the movie details page, and time it
-    response = requests.get(movie_details)
-    end_time = time.time()
-    movie_details_arr.append(end_time - start_time)
-    print(f"Time taken to load movie {movie}: {end_time - start_time} seconds")
 
-print(f"Average time taken to load movie page: {sum(movie_page_arr) / len(movie_page_arr)} seconds")
-print(f"Average time taken to load movie details page: {sum(movie_details_arr) / len(movie_details_arr)} seconds")
+    try:
+        start_time = time.perf_counter()
+
+        response = requests.get(movie_details)
+
+        end_time = time.perf_counter()
+
+        movie_details_arr.append(end_time - start_time)
+
+        logging.info(f"Time taken to load movie {movie}: {end_time - start_time} seconds")
+
+    except Exception as e:
+        logging.error(f"Error occurred while loading movie {movie}: {str(e)}")
+
+average_page_load_time = sum(movie_page_arr) / len(movie_page_arr)
+average_details_load_time = sum(movie_details_arr) / len(movie_details_arr)
+
+logging.info(f"Average time taken to load movie page: {average_page_load_time} seconds")
