@@ -45,8 +45,8 @@ def login_page():
         if db_password:
             # hash input password
             hashedpassword = hashlib.sha512(password.encode('UTF-8')).hexdigest()
-            print("Hashed:" + str(hashedpassword))
-            print("DB:" + str(db_password[1]))
+            # print("Hashed:" + str(hashedpassword))
+            # print("DB:" + str(db_password[1]))
             if hashedpassword == db_password[1]:
                 print("Matched, logging in...")
                 user = User(dbUser.get_user_by_id(db_password[0])[0])

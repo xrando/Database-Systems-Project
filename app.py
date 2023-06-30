@@ -16,12 +16,13 @@ app.register_blueprint(routes)
 
 @login_manager.user_loader
 def load_user(user_id):
+    dbUser = DBUser.Database()
     # Retrieve the user from the database using the provided user_id
     user_data = dbUser.get_user_by_id(user_id)
+    # print("User_loader is running")
+    # print(user_data)
     if user_data:
-        id, username, password, profilename, email, dob = user_data
-        return User(id)
-
+        return User(user_data[0])
     return None
 
 
