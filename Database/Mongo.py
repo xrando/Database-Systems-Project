@@ -1,3 +1,5 @@
+import logging
+
 from pymongo import MongoClient
 from pydantic import BaseModel, ValidationError
 import bleach
@@ -13,6 +15,7 @@ class MongoDBHandler:
 
     def __init__(self, connection_string, database_name):
         if MongoDBHandler._instance:
+            logging.error('An instance of MongoDBHandler already exists. Use get_instance() to access it.')
             raise Exception("An instance of MongoDBHandler already exists. Use get_instance() to access it.")
         self.client = MongoClient(connection_string)
         self.db = self.client[database_name]
@@ -40,12 +43,12 @@ class MongoDBHandler:
             if index:
                 for key in sanitized_document.keys():
                     collection.create_index(key)
-                    print(f"Indexing {key} field")
+                    logging.info(f'Indexing {key} field')
 
             print(collection.index_information())
             print('Inserted ID:', result.inserted_id)
         except Exception as e:
-            print(f"[-] Error inserting document into database\n {e}")
+            logging.error(f'[-] Error inserting document into database\n {e}')
 
     # def find_documents(self, collection_name, query={}, limit: int = None):
     #     # if limit is None, default to 5
@@ -70,7 +73,7 @@ class MongoDBHandler:
             collection = self.db[collection_name]
             return list(collection.find(query).limit(limit))
         except Exception as e:
-            print(f"[-] Error retrieving documents from database\n {e}")
+            logging.error(f'[-] Error retrieving documents from database\n {e}')
 
     def update_document(self, collection_name, query, update_data, option):
         try:
@@ -80,11 +83,11 @@ class MongoDBHandler:
             collection = self.db[collection_name]
             collection.update_one(query, {option: sanitized_update_data})
         except Exception as e:
-            print(f"[-] Error updating document in database\n {e}")
+            logging.error(f'[-] Error updating document in database\n {e}')
 
     def delete_documents(self, collection_name, query):
         try:
             collection = self.db[collection_name]
             collection.delete_one(query)
         except Exception as e:
-            print(f"[-] Error deleting document in database\n {e}")
+            logging.error(f'[-] Error deleting document in database\n {e}')
