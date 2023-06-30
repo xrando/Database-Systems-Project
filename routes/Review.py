@@ -23,7 +23,7 @@ def review():
     # print(movieName)
     # print(rating)
     # print(comments)
-    movieID = DBMS_Movie.get_movieID(movieName)
+    movieID = DBMS_Movie.check_movie(movieName)
     # print(movieID)
     # if movieID is None, create new movie document
     # print(handler.find_documents('reviews', {'movie_id': movieID}))

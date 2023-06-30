@@ -3,6 +3,7 @@ import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
 import Database.Mongo as Mongo
+import logging
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -29,6 +30,7 @@ def updateMovie(movie_name: str = None, release_date: str = None, synopsis: str 
         with connection.cursor() as cursor:
             # Begin the transaction
             connection.begin()
+            logging.info(f"Updating movie details for movie_id: {movie_id}")
 
             # Update the movie details
             update_stmt = "UPDATE Movie " \
@@ -40,10 +42,13 @@ def updateMovie(movie_name: str = None, release_date: str = None, synopsis: str 
             # Commit the transaction
             connection.commit()
 
+            logging.info(f"Successfully updated movie details for movie_id: {movie_id}")
+
             return True
 
     except mariadb.Error as e:
-        print(f"[-] Error updating movie details from database\n {e}")
+        # print(f"[-] Error updating movie details from database\n {e}")
+        logging.error(f"Error updating movie details from database\n {e}")
         # Rollback the transaction in case of an error
         connection.rollback()
 
@@ -58,6 +63,7 @@ def deleteMovie(movie_id: str = None) -> bool:
         with connection.cursor() as cursor:
             # Begin the transaction
             connection.begin()
+            logging.info(f"Deleting movie from database with movie_id: {movie_id}")
 
             # Delete from parent table
             parent_delete_stmt = "DELETE FROM Movie WHERE movie_id = ?"
@@ -66,10 +72,12 @@ def deleteMovie(movie_id: str = None) -> bool:
             # Commit the transaction
             connection.commit()
 
+            logging.info(f"Successfully deleted movie from database with movie_id: {movie_id}")
+
             return True
 
     except mariadb.Error as e:
-        print(f"[-] Error deleting movie from database\n {e}")
+        logging.error(f"Error deleting movie from database\n {e}")
         # Rollback the transaction in case of an error
         connection.rollback()
 
@@ -95,9 +103,11 @@ def update_movie_info(title: str = None, tmdb_id: int = None) -> bool:
 
     try:
         if title:
+            logging.info(f"Retrieving movie info from tmdb for title: {title}")
             movie_id = tmdb.Search().movie(query=title)['results'][0]['id']
             movie_info = tmdb.Movies(movie_id).info()
         elif tmdb_id:
+            logging.info(f"Retrieving movie info from tmdb for tmdb_id: {tmdb_id}")
             movie_info = tmdb.Movies(tmdb_id).info()
 
         # Update the movie info in the database if the data does not match
@@ -130,7 +140,7 @@ def update_movie_info(title: str = None, tmdb_id: int = None) -> bool:
             handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
                                     {'rating': new_rating})
     except IndexError:
-        print(f"[-] Error retrieving info for: {title}\n")
+        logging.error(f"Error retrieving movie info from tmdb for title: {title}")
         return False
 
     return True

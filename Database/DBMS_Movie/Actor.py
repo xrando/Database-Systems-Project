@@ -6,6 +6,7 @@ import tmdbsimple as tmdb
 from .DB_Connect import DBConnection
 from Config.ConfigManager import ConfigManager
 import Database.Mongo as Mongo
+import logging
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -49,6 +50,7 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
         order_by = ["release_date", "DESC"]
     orders = {"release_date": "release_date", "title": "title", "movie_id": "movie_id"}
     if order_by[0] not in orders:
+        logging.error(f"order_by[0] must be one of {list(orders.keys())}")
         raise ValueError(f"order_by[0] must be one of {list(orders.keys())}")
 
     stmt = "SELECT Movie.title, Movie.release_date, Movie_Actor.movie_character " \
@@ -62,6 +64,7 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
     elif actor_tmdb_id and not actor_name:
         stmt += "WHERE Actor.tmdb_id = ? "
     else:
+        logging.error("Either ONE actor_name or actor_tmdb_id must be specified")
         raise ValueError("Either ONE actor_name or actor_tmdb_id must be specified")
 
     # SQL Statements cannot be parameterized for ORDER BY, Parameters are sanitized by above code
