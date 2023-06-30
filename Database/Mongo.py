@@ -1,5 +1,6 @@
 from pymongo import MongoClient
-
+from pydantic import BaseModel, ValidationError
+import bleach
 
 class MongoDBHandler:
     _instance = None
@@ -15,19 +16,32 @@ class MongoDBHandler:
             raise Exception("An instance of MongoDBHandler already exists. Use get_instance() to access it.")
         self.client = MongoClient(connection_string)
         self.db = self.client[database_name]
-    # def __init__(self, connection_string, database_name):
-    #     self.client = MongoClient(connection_string)
-    #     self.db = self.client[database_name]
+
+    def sanitize_input(self, document):
+        # Sanitize input using Bleach
+        sanitized_document = {}
+        for key, value in document.items():
+            if isinstance(value, str):
+                sanitized_value = bleach.clean(value)
+                sanitized_document[key] = sanitized_value
+            else:
+                sanitized_document[key] = value
+        return sanitized_document
 
     def insert_document(self, collection_name, document, index: bool = False):
         try:
+            # Sanitize input
+            sanitized_document = self.sanitize_input(document)
+
             collection = self.db[collection_name]
-            result = collection.insert_one(document)
-            #index key fields
+            result = collection.insert_one(sanitized_document)
+
+            # Index key fields
             if index:
-                for key in document.keys():
+                for key in sanitized_document.keys():
                     collection.create_index(key)
                     print(f"Indexing {key} field")
+
             print(collection.index_information())
             print('Inserted ID:', result.inserted_id)
         except Exception as e:
@@ -39,7 +53,12 @@ class MongoDBHandler:
     #         limit = 5
     #     try:
     #         collection = self.db[collection_name]
-    #         return list(collection.find(query).limit(limit))
+    #         pipeline = [
+    #             {'$match': query},
+    #             {'$limit': limit}
+    #             # Add additional stages as needed
+    #         ]
+    #         return list(collection.aggregate(pipeline))
     #     except Exception as e:
     #         print(f"[-] Error retrieving documents from database\n {e}")
 
@@ -49,21 +68,17 @@ class MongoDBHandler:
             limit = 5
         try:
             collection = self.db[collection_name]
-            pipeline = [
-                {'$match': query},
-                {'$limit': limit}
-                # Add additional stages as needed
-            ]
-            return list(collection.aggregate(pipeline))
+            return list(collection.find(query).limit(limit))
         except Exception as e:
             print(f"[-] Error retrieving documents from database\n {e}")
 
-
-    # options = '$set'/'$push'
     def update_document(self, collection_name, query, update_data, option):
         try:
+            # Sanitize input
+            sanitized_update_data = self.sanitize_input(update_data)
+
             collection = self.db[collection_name]
-            collection.update_one(query, {option: update_data})
+            collection.update_one(query, {option: sanitized_update_data})
         except Exception as e:
             print(f"[-] Error updating document in database\n {e}")
 
@@ -73,35 +88,3 @@ class MongoDBHandler:
             collection.delete_one(query)
         except Exception as e:
             print(f"[-] Error deleting document in database\n {e}")
-
-# Example usage:
-# handler = MongoDBHandler('mongodb://localhost:27017/', 'movie_db')
-#
-# handler.insert_document('reviews', {
-#     'movie_id': 10,
-#     'ratings_arr': [4, 5, 3],
-#     'comments_arr': ['Great movie!', 'Loved the acting', 'Could have been better'],
-# })
-#
-# handler.insert_document('watchlist', {
-#     'user_id': 1,
-#     'watchlist_arr': [1, 2, 3],
-# })
-#
-# handler.insert_document('user_follows', {
-#     'user_id': 1,
-#     'following_arr': [1, 2, 3],
-# })
-#
-#
-# cursor = handler.find_documents('reviews', {'movie_id': 10})
-# for document in cursor:
-#     print(document)
-#
-# cursor = handler.find_documents('watchlist', {'user_id': 1})
-# for document in cursor:
-#     print(document)
-#
-# cursor = handler.find_documents('user_follows', {'user_id': 1})
-# for document in cursor:
-#     print(document)
