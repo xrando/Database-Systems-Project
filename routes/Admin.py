@@ -1,14 +1,13 @@
 import datetime
-
 from bson import ObjectId
 from flask import render_template, request, redirect, url_for
 from flask_login import current_user
-
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
 from Database import Mongo
 import logging
+from routes import load_stats
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
@@ -18,7 +17,6 @@ handler = Mongo.MongoDBHandler.get_instance(
     config.get('MONGODB', 'DATABASE')
 )
 
-
 # admin landing page
 @routes.route('/admin', methods=['GET'])
 def admin():
@@ -26,23 +24,8 @@ def admin():
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
     # grab all movie requests
     allRequests = handler.find_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {})
-
-    #get statistics
-    data = {'Genre' : 'Popularity Score'}
-    #get total popularity of all movies
-    allRating = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {}, 0)
-    for rating in allRating:
-        totalScore = 0
-        for score in rating['ratings']:
-            #add all scores together
-            totalScore += int(score)
-        #if genre already exists, add to it
-        if DBMS_Movie.get_genre_name(DBMS_Movie.get_genre(rating['movie_id'])) in data:
-            data[DBMS_Movie.get_genre_name(DBMS_Movie.get_genre(rating['movie_id']))] += int(totalScore)
-        #else create new genre
-        else:
-            data[DBMS_Movie.get_genre_name(DBMS_Movie.get_genre(rating['movie_id']))] = int(totalScore)
-        logging.info(data)
+    #load statistics data
+    data = load_stats()
     return render_template('admin.html', posts=allPosts, requests=allRequests, data=data)
 
 
@@ -163,16 +146,6 @@ def updatePost():
             'comment': comment,
         }, '$set')
     return redirect(url_for('routes.post'))
-
-
-# search posts by subject
-@routes.route('/searchPosts', methods=['POST'])
-def searchPost():
-    subject = request.form['search']
-    print(subject)
-    # grab all posts with subject
-    allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'subject': subject})
-    return render_template('admin.html', posts=allPosts)
 
 
 # submit movie request
