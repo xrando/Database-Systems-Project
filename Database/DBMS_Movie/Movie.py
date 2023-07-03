@@ -164,7 +164,7 @@ def get_pages(pages: int = 1, limit: int = 30) -> dict[str, int]:
 
 def carousel() -> list[tuple]:
     """
-    Returns a list of 5 movies that are within 1 month of the current date and have a banner image
+    Returns a list of 5 movies that are within 1 year of the current date and have a banner image
     :return: List of movies (title, release_date, banner)
     :rtype: list[tuple]
     """
@@ -174,8 +174,8 @@ def carousel() -> list[tuple]:
     stmt = "SELECT title, release_date " \
            "FROM Movie " \
            "WHERE release_date " \
-           "BETWEEN CURRENT_DATE() - INTERVAL 1 MONTH " \
-           "AND CURRENT_DATE() + INTERVAL 1 MONTH " \
+           "BETWEEN CURRENT_DATE() - INTERVAL 1 YEAR " \
+           "AND CURRENT_DATE() + INTERVAL 1 YEAR " \
            "ORDER BY RAND() " \
            "LIMIT ?;"
 
