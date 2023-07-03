@@ -63,5 +63,7 @@ def searchPost():
     subject = request.form['search']
     # grab all posts with subject
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'subject': subject})
+    #grab all movie requests
+    allRequests = handler.find_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {})
     data = load_stats()
-    return render_template('admin.html', posts=allPosts, data=data)
+    return render_template('admin.html', posts=allPosts, data=data, requests = allRequests)
