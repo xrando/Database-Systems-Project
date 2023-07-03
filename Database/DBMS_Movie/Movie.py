@@ -14,7 +14,7 @@ import Database.Mongo as Mongo
 import concurrent.futures
 from collections import Counter
 import logging
-from typing import Optional
+from typing import Optional, Tuple, Any, List
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -499,7 +499,7 @@ def check_movie(movie: str) -> int | None:
     return id[0]
 
 
-def get_movie_info(movie: str) -> tuple[str, str, list[float, int]] | None:
+def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list[Any] | None | Any]:
     """
     Gets movie info from TMDB API, and returns movie info (tmdb_id: int, Poster: str, Banner: str, Rating: list[float, int])
 
@@ -637,7 +637,7 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
         most_common_genre = genres.most_common(1)[0][0]
 
         # Get random movies from the most common genre within +-1 year of the current date,
-        # including movies from the current year, and with the same director or actors
+        # including movies from the current year
         stmt = "SELECT DISTINCT Movie.title " \
                "FROM Movie " \
                "LEFT JOIN Movie_Genre " \
@@ -646,30 +646,27 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
                "ON Movie.movie_id = Movie_Director.movie_id " \
                "LEFT JOIN Movie_Actor " \
                "ON Movie.movie_id = Movie_Actor.movie_id " \
-               "WHERE (Movie_Genre.genre_id = ? " \
-               "OR Movie_Director.director_id = ? " \
-               "OR Movie_Actor.actor_id = ?) " \
+               "WHERE Movie_Genre.genre_id = ? " \
                "AND (Movie.release_date " \
                "BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) " \
                "AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
                "OR YEAR(Movie.release_date) = YEAR(NOW())) " \
+               "AND Movie.movie_id NOT IN (" + ",".join(["?"] * len(watched_movies)) + ") " \
                "ORDER BY RAND() " \
                "LIMIT ?"
 
-        cursor.execute(stmt, (most_common_genre, user_id, user_id, limit))
+        cursor.execute(stmt, (most_common_genre, *watched_movies, limit))
         movies = cursor.fetchall()
 
         result = get_movie_info_concurrently(movies)
         return result
-
-    # Return random movies if no genres are found or no movies match the criteria
+        # Return random movies if no genres are found or no movies match the criteria
     stmt = "SELECT title FROM Movie ORDER BY RAND() LIMIT ?"
     cursor.execute(stmt, (limit,))
     movies = cursor.fetchall()
 
     result = get_movie_info_concurrently(movies)
     return result
-
 
 
 def get_genre(movie_id: int) -> int | None:
@@ -684,6 +681,7 @@ def get_genre(movie_id: int) -> int | None:
     if genre is None:
         return None
     return genre[0]
+
 
 def get_genre_name(genre_id: int) -> int | None:
     """
