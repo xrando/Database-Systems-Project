@@ -508,8 +508,8 @@ def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list
     :return: None if movie not found, else returns movie info (Poster: str, Banner: str, Rating: list[float, int])
     """
     poster_link = config.get('MOVIE', 'TMDB_IMAGE_URL')
-    poster = None
-    banner = None
+    poster = config.get('MOVIE', 'DEFAULT_POSTER_URL')
+    banner = config.get('MOVIE', 'DEFAULT_BANNER_URL')
     rating = None
     movie_id = None
 
@@ -534,27 +534,15 @@ def get_movie_info(movie: str) -> tuple[Any | None, Any | None, Any | None, list
             if movie_info is not None:
                 if movie_info['poster_path'] is not None:
                     poster = poster_link + movie_info['poster_path']
-                else:
-                    poster = None
                 if movie_info['backdrop_path'] is not None:
                     banner = poster_link + movie_info['backdrop_path']
-                else:
-                    banner = None
                 try:
                     rating = [movie_info['vote_average'], movie_info['vote_count']]
                 except KeyError:
                     rating = None
-            else:
-                poster = None
-                banner = None
-        except TypeError:
+        except (TypeError, IndexError):
             # Not all movies we have in the database are in the tmdb database
-            poster = None
-            banner = None
-        except IndexError:
-            # Not all movies we have in the database are in the tmdb database
-            poster = None
-            banner = None
+            logging.warning(f"Movie {movie} not found in TMDB database.")
 
         # Add movie info to MongoDB cache
         handler.insert_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {
@@ -605,6 +593,10 @@ def movie_providers(tmdb_id: int) -> dict:
 def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str, str]]:
     """
     Get random movies based on the movie genres the user has watched, with additional recommendations.
+
+    SQL Statement will grab movies that have the same genre as the user's watched movies, and then
+    randomly select a movie from that list. If the list is empty, then it will grab a random movie
+    from the database.
     :param user_id: User ID
     :param limit: Number of movies to return
     :return: List of movies (title, poster_link)
@@ -636,6 +628,9 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
     if genres:
         most_common_genre = genres.most_common(1)[0][0]
 
+        # Create a read-only transaction
+        cursor.execute("START TRANSACTION READ ONLY")
+
         # Get random movies from the most common genre within +-1 year of the current date,
         # including movies from the current year
         stmt = "SELECT DISTINCT Movie.title " \
@@ -652,17 +647,25 @@ def movie_recommendation(user_id: int = None, limit: int = 6) -> list[tuple[str,
                "AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
                "OR YEAR(Movie.release_date) = YEAR(NOW())) " \
                "AND Movie.movie_id NOT IN (" + ",".join(["?"] * len(watched_movies)) + ") " \
-               "ORDER BY RAND() " \
-               "LIMIT ?"
+                                                                                       "ORDER BY RAND() " \
+                                                                                       "LIMIT ?"
 
         cursor.execute(stmt, (most_common_genre, *watched_movies, limit))
         movies = cursor.fetchall()
 
         result = get_movie_info_concurrently(movies)
         return result
-        # Return random movies if no genres are found or no movies match the criteria
-    stmt = "SELECT title FROM Movie ORDER BY RAND() LIMIT ?"
-    cursor.execute(stmt, (limit,))
+
+        # Create a read-only transaction
+    cursor.execute("START TRANSACTION READ ONLY")
+
+    # Return random movies if no genres are found or no movies match the criteria in 1 year range
+    stmt = "SELECT title " \
+           "FROM Movie " \
+           "WHERE release_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND DATE_ADD(NOW(), INTERVAL 1 YEAR) " \
+           "ORDER BY RAND() " \
+           "LIMIT ?"
+    cursor.execute(stmt, (*watched_movies, limit))
     movies = cursor.fetchall()
 
     result = get_movie_info_concurrently(movies)
