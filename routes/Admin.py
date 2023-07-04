@@ -1,14 +1,13 @@
 import datetime
-
 from bson import ObjectId
 from flask import render_template, request, redirect, url_for
 from flask_login import current_user
-
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
 from Database import Mongo
 import logging
+from routes import load_stats
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()
@@ -18,7 +17,6 @@ handler = Mongo.MongoDBHandler.get_instance(
     config.get('MONGODB', 'DATABASE')
 )
 
-
 # admin landing page
 @routes.route('/admin', methods=['GET'])
 def admin():
@@ -26,8 +24,9 @@ def admin():
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
     # grab all movie requests
     allRequests = handler.find_documents(config.get('MONGODB', 'REQUEST_COLLECTION'), {})
-    # print(allPosts)
-    return render_template('admin.html', posts=allPosts, requests=allRequests)
+    #load statistics data
+    data = load_stats()
+    return render_template('admin.html', posts=allPosts, requests=allRequests, data=data)
 
 
 # add new movie to database
@@ -147,16 +146,6 @@ def updatePost():
             'comment': comment,
         }, '$set')
     return redirect(url_for('routes.post'))
-
-
-# search posts by subject
-@routes.route('/searchPosts', methods=['POST'])
-def searchPost():
-    subject = request.form['search']
-    print(subject)
-    # grab all posts with subject
-    allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'subject': subject})
-    return render_template('admin.html', posts=allPosts)
 
 
 # submit movie request
