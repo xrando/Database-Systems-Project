@@ -159,10 +159,6 @@
                                                 <td>
                                                     <!-- Action buttons here -->
                                                     <a href="{{ url_for('routes.deletePost', postID=post['_id']) }}" class="btn btn-danger">Delete</a>
-{#                                                    <form method="post" action="/deletePost">#}
-{#                                                        <input type="hidden" name="postid" value="{{ post['_id'] }}">#}
-{#                                                        <button type="submit" class="btn btn-danger">Delete</button>#}
-{#                                                    </form>#}
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -216,46 +212,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- View Movie Requests -->
-{#                        <div class="col-md-12">#}
-{#                            <div class="card">#}
-{#                                <div class="card-header">#}
-{#                                    <h5 class="card-title">Movie Requests</h5>#}
-{#                                </div>#}
-{#                                <div class="card-body">#}
-{#                                    <!-- Content for the second card -->#}
-{#                                    <table class="table">#}
-{#                                        <thead>#}
-{#                                        <tr>#}
-{#                                            <th>Author</th>#}
-{#                                            <th>Movie Title</th>#}
-{#                                            <th>TMDB ID</th>#}
-{#                                            <th>Message</th>#}
-{#                                            <th>Action</th>#}
-{#                                        </tr>#}
-{#                                        </thead>#}
-{#                                        <tbody>#}
-{#                                        {% for request in requests %}#}
-{#                                            <tr>#}
-{#                                                <td>{{ request['userID'] }}</td>#}
-{#                                                <td>{{ request['movieTitle'] }}</td>#}
-{#                                                <td>{{ request['tmdbId'] }}</td>#}
-{#                                                <td>{{ request['message'] }}</td>#}
-{#                                                <td>#}
-{#                                                    <!-- Action buttons here -->#}
-                                                    {#                                                    <a href="{{ url_for('routes.deleteRequest', requestID=request['_id']) }}" class="btn btn-danger">Delete</a>#}
-{#                                                    <form method="post" action="/deleteRequest">#}
-{#                                                        <input type="hidden" name="requestid" value="{{ request['_id'] }}">#}
-{#                                                        <button type="submit" class="btn btn-danger">Delete</button>#}
-{#                                                    </form>#}
-{#                                                </td>#}
-{#                                            </tr>#}
-{#                                        {% endfor %}#}
-{#                                        </tbody>#}
-{#                                    </table>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                        </div>#}
                     </div>
                 </div>
             </div>

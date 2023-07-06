@@ -20,13 +20,7 @@ def review():
     movieName = request.form['movie_name']
     rating = request.form['rating']
     comments = request.form['comment']
-    # print(movieName)
-    # print(rating)
-    # print(comments)
     movieID = DBMS_Movie.check_movie(movieName)
-    # print(movieID)
-    # if movieID is None, create new movie document
-    # print(handler.find_documents('reviews', {'movie_id': movieID}))
     if not handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID}):
         handler.insert_document(config.get('MONGODB', 'REVIEW_COLLECTION'), {
             'movie_id': movieID,
