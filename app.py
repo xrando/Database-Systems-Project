@@ -26,6 +26,12 @@ def load_user(user_id):
     return None
 
 
+# 404 Error
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
 if __name__ == '__main__':
     app.run(
         host=config.get('FLASK', 'HOST'),

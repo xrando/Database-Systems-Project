@@ -1,6 +1,5 @@
-from flask import render_template, request
+from flask import render_template, abort, request
 from flask_login import current_user
-
 import Database.DBMS_Movie as DBMS_Movie
 import Database.Mongo as Mongo
 from Config.ConfigManager import ConfigManager
@@ -34,13 +33,12 @@ def home(page: int) -> str:
     pages_left = pages["pages_left"]
     total_pages = pages["total_pages"]
 
-    # TODO: Convert to error page
     if page < 1:
         logging.error(f'Page not found: {page}')
-        raise Exception('Page not found')
+        abort(404)
     elif page > total_pages:
         logging.error(f'Page not found: {page}')
-        raise Exception('Page not found')
+        abort(404)
 
     carousel = DBMS_Movie.carousel()
     movie_list = DBMS_Movie.Movie_list(page=page, limit=limit)
@@ -68,7 +66,7 @@ def home(page: int) -> str:
 
 @routes.route('/movie/<string:movie_name>/cast', methods=['GET'])
 @routes.route('/movie/<string:movie_name>', methods=['GET', 'POST'])
-def movie_page(movie_name: str = None) -> str:
+def movie_page(movie_name: str = None):
     """
     Get all movie details and render movie page
     :param movie_name: Movie name
@@ -77,7 +75,7 @@ def movie_page(movie_name: str = None) -> str:
     if not movie_name:
         # TODO: Convert to error page
         logging.error(f'Movie name not provided.')
-        return "Movie name not provided."
+        abort(404)  # Raise a 404 error if movie name is not provided
 
     try:
         # Remove (year) from movie name
@@ -90,9 +88,9 @@ def movie_page(movie_name: str = None) -> str:
             movie = DBMS_Movie.movie_page(movie_name)
 
             if movie == {} or movie is None:
-                # TODO: Convert to error page
                 logging.error(f'Movie not found: {movie_name}')
-                raise Exception('Movie not found')
+                abort(404)  # Raise a 404 error if movie is not found
+
 
             movie_details = movie.get('movie')
             movie_genres = movie.get('genres')
@@ -222,6 +220,12 @@ def movie_page(movie_name: str = None) -> str:
     except (ValueError, KeyError, TypeError) as e:
         error_message = str(e)
         logging.error(f"Error: {error_message}")
+        abort(500)  # Raise a 500 error for internal server errors
     except Exception as e:
         error_message = str(e)
         logging.error(f"Error: {error_message}")
+        abort(500)  # Raise a 500 error for internal server errors
+
+@routes.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
