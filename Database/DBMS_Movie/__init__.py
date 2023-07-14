@@ -13,12 +13,14 @@ config_manager = ConfigManager()
 # Get the configuration
 config = config_manager.get_config()
 
-# Initialize the logger
 file = config.get('FLASK', 'LOG_FILE') or 'log.txt'
 log_dir = os.path.dirname(file)
 
-# Create the folder and file if they don't exist
-os.makedirs(log_dir, exist_ok=True)
+# Create the folder if it doesn't exist
+if log_dir:
+    os.makedirs(log_dir, exist_ok=True)
+
+# Create the file if it doesn't exist
 open(file, 'a').close()
 
 # Set the logging level to DEBUG by default
