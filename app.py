@@ -26,7 +26,13 @@ def load_user(user_id):
     return None
 
 
-# 404 Error
+# Error Site Route
+@app.route('/404')
+def error404():
+    return render_template('404.html'), 404
+
+
+# Error handling page for not found sites / locations
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
