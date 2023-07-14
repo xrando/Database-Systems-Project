@@ -1,11 +1,13 @@
+import concurrent.futures
+import logging
+
 from flask import render_template, abort, request
 from flask_login import current_user
+
 import Database.DBMS_Movie as DBMS_Movie
 import Database.Mongo as Mongo
 from Config.ConfigManager import ConfigManager
 from . import routes
-import concurrent.futures
-import logging
 
 DBMS_Movie = DBMS_Movie
 config_manager = ConfigManager()

@@ -74,7 +74,7 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
         cursor.execute(stmt, (actor_name or actor_tmdb_id,))
         movies = cursor.fetchall()
     except mariadb.Error as e:
-        print(f"Error getting movies: {e}")
+        logging.error(f"Error getting actor's movies: {e}")
 
     movie_result = []
     for movie in movies:
@@ -89,7 +89,7 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
             cursor.execute(stmt, (actor_tmdb_id,))
             actor_name = cursor.fetchone()[0]
         except mariadb.Error as e:
-            print(f"Error getting actor's name: {e}")
+            logging.error(f"Error getting actor's name: {e}")
 
         actor_info = get_actor_info(int(actor_tmdb_id))
 
@@ -101,7 +101,7 @@ def Actor(actor_name: str = None, actor_tmdb_id: str = None, order_by=None) -> d
             cursor.execute(stmt, (actor_name,))
             actor_tmdb_id = cursor.fetchone()[0]
         except [mariadb.Error, TypeError] as e:
-            print(f"Error getting actor's tmdb_id: {e}")
+            logging.error(f"Error getting actor's tmdb_id: {e}")
 
         if actor_tmdb_id is not None:
             actor_info = get_actor_info(int(actor_tmdb_id))
@@ -129,7 +129,7 @@ def get_actor_info(actor_tmdb_id: int, actor_name: str = None) -> dict:
             try:
                 data = tmdb.People(actor_tmdb_id).info()
             except Exception as e:
-                print(f"Error getting actor's info from tmdb: {e}")
+                logging.error(f"Error getting actor's info from tmdb: {e}")
                 data = None
             if data:
                 handler.insert_document(

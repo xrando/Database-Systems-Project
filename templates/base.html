@@ -49,9 +49,6 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('routes.home') }}">Home</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('routes.profile') }}">Profile</a>
-                </li>
                 {% if current_user.is_authenticated %} {% if current_user.username == 'admin' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('routes.admin') }}"
@@ -60,46 +57,22 @@
                     </li>
                 {% else %}
                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.profile') }}">Profile</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('routes.post') }}">Forum</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" type="button" data-bs-toggle="modal" data-bs-target="#myModal">Send Movie Request</a>
                     </li>
                 {% endif %}{% endif %}
-                <!-- Dropdown example
-                            <li class="nav-item dropdown">
-                              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Dropdown
-                              </a>
-                              <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Action</a></li>
-                                <li><a class="dropdown-item" href="#">Another action</a></li>
-                                <li>
-                                  <hr class="dropdown-divider">
-                                </li>
-                                <li><a class="dropdown-item" href="#">Something else here</a></li>
-                              </ul>
-                            </li>
-                            -->
-                <!-- Disabled item
-                            <li class="nav-item">
-                              <a class="nav-link disabled">Disabled</a>
-                            </li>
-                            -->
+
             </ul>
         </div>
         {% if current_user.username != 'admin' %}
             <div class="d-flex align-items-center">
             <form class="d-flex" method="POST" action="/search">
-                <!-- Select dropdown example
-                            <label for="choice">Select an option:</label>
-                            <select class="form-select" name="choice" id="choice">
-                              <option value="director">Directors</option>
-                              <option value="actor">Actors</option>
-                              <option value="movie">Movie</option>
-                              <option value="profile">Profile</option>
-                            </select>
-                            -->
+
                 <input
                         class="form-control me-2"
                         type="text"

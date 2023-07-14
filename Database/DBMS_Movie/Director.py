@@ -2,12 +2,14 @@
 # These are the functions for the Director page.                                                   #
 ####################################################################################################
 
+import logging
+
 import mariadb
 import tmdbsimple as tmdb
-from .DB_Connect import DBConnection
-from Config.ConfigManager import ConfigManager
+
 import Database.Mongo as Mongo
-import logging
+from Config.ConfigManager import ConfigManager
+from .DB_Connect import DBConnection
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -28,9 +30,9 @@ tmdb.API_KEY = config.get('TMDB', 'API_KEY')
 
 
 def Director(
-    director_name: str = None,
-    director_tmdb_id: str = None,
-    order_by: list = None
+        director_name: str = None,
+        director_tmdb_id: str = None,
+        order_by: list = None
 ) -> dict:
     """
     Get all movies a director has directed
@@ -80,7 +82,6 @@ def Director(
         movies = cursor.fetchall()
     except mariadb.Error as e:
         logging.error(f"Error executing SQL statement: {e}")
-        print(f"Error executing SQL statement: {e}")
         return {"movies": [], "director": None}
 
     result = []
@@ -101,7 +102,8 @@ def Director(
                 director_tmdb_id = director_dict[director_name]
                 director_info = get_director_info(int(director_tmdb_id))
         except mariadb.Error as e:
-            print(f"Error getting director's tmdb_id: {e}")
+            logging.error(f"Error executing SQL statement: {e}")
+            return {"movies": [], "director": None}
 
     return {"movies": result, "director": director_info}
 
@@ -132,4 +134,3 @@ def get_director_info(director_tmdb_id: int) -> dict:
         data = data[0]["data"]
 
     return data
-

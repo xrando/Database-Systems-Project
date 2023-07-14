@@ -15,13 +15,6 @@ host = config.get('FLASK', 'HOST') or '127.0.0.1'
 no_of_trials = 10
 
 
-def get_movies():
-    stmt = "SELECT title FROM Movie ORDER BY RAND() LIMIT ?"
-    cursor.execute(stmt, (no_of_trials,))
-    rows = cursor.fetchall()
-    return rows
-
-
 def cal_average_time_for_page_load():
     movie_page_arr = []
 

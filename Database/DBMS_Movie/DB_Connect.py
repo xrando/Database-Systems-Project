@@ -4,10 +4,11 @@
 # connections to the database being created.                                                       #
 ####################################################################################################
 import configparser
-import sys
-import tmdbsimple as tmdb
-import mariadb
 import logging
+import sys
+
+import mariadb
+import tmdbsimple as tmdb
 
 
 class DBConnection:

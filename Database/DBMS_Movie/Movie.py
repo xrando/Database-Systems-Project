@@ -4,17 +4,19 @@
 # The functions are organized by page.                                                             #
 ####################################################################################################
 
-import mariadb
-import tmdbsimple as tmdb
-from .DB_Connect import DBConnection
-from Config.ConfigManager import ConfigManager
-import requests
-import random
-import Database.Mongo as Mongo
 import concurrent.futures
-from collections import Counter
 import logging
-from typing import Optional, Tuple, Any, List
+import random
+from collections import Counter
+from typing import Optional, Any
+
+import mariadb
+import requests
+import tmdbsimple as tmdb
+
+import Database.Mongo as Mongo
+from Config.ConfigManager import ConfigManager
+from .DB_Connect import DBConnection
 
 # Initialize the config manager
 config_manager = ConfigManager()
@@ -689,8 +691,8 @@ def get_genre(movie_id: int) -> int | None:
 def get_genre_name(genre_id: int) -> int | None:
     """
     Get genre of movie from DB (Movie_Genre table)
-    :param movie_id: TMDB ID of movie
-    :return: Genre name of movie
+    :param genre_id: Genre ID
+    :return: Genre name of genre id
     """
     stmt = "SELECT name FROM Genre WHERE genre_id = ?"
     cursor.execute(stmt, (genre_id,))

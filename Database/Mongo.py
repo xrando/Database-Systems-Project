@@ -45,25 +45,9 @@ class MongoDBHandler:
                     collection.create_index(key)
                     logging.info(f'Indexing {key} field')
 
-            print(collection.index_information())
-            print('Inserted ID:', result.inserted_id)
+            logging.info(f'Inserted ID: {result.inserted_id}')
         except Exception as e:
             logging.error(f'[-] Error inserting document into database\n {e}')
-
-    # def find_documents(self, collection_name, query={}, limit: int = None):
-    #     # if limit is None, default to 5
-    #     if limit is None:
-    #         limit = 5
-    #     try:
-    #         collection = self.db[collection_name]
-    #         pipeline = [
-    #             {'$match': query},
-    #             {'$limit': limit}
-    #             # Add additional stages as needed
-    #         ]
-    #         return list(collection.aggregate(pipeline))
-    #     except Exception as e:
-    #         print(f"[-] Error retrieving documents from database\n {e}")
 
     def find_documents(self, collection_name, query={}, limit: int = None):
         # if limit is None, default to 5
