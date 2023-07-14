@@ -1,4 +1,6 @@
-from flask import render_template
+import logging
+
+from flask import render_template, abort
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
@@ -27,7 +29,8 @@ def director_page(director_name: str = None, tmdb_id: int = None) -> str:
     )
 
     if not director_details:
-        raise Exception('Director not found')
+        abort(404)  # Raise a 404 error if director is not found
+        logging.error(f'Director not found: {director_name}')
 
     movie_list = director_details['movies']
 

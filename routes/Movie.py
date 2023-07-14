@@ -73,7 +73,6 @@ def movie_page(movie_name: str = None):
     :return: Render movie page
     """
     if not movie_name:
-        # TODO: Convert to error page
         logging.error(f'Movie name not provided.')
         abort(404)  # Raise a 404 error if movie name is not provided
 
@@ -90,7 +89,6 @@ def movie_page(movie_name: str = None):
             if movie == {} or movie is None:
                 logging.error(f'Movie not found: {movie_name}')
                 abort(404)  # Raise a 404 error if movie is not found
-
 
             movie_details = movie.get('movie')
             movie_genres = movie.get('genres')
@@ -225,7 +223,3 @@ def movie_page(movie_name: str = None):
         error_message = str(e)
         logging.error(f"Error: {error_message}")
         abort(500)  # Raise a 500 error for internal server errors
-
-@routes.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404

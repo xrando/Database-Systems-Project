@@ -1,4 +1,6 @@
-from flask import render_template
+import logging
+
+from flask import render_template, abort
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
@@ -22,7 +24,8 @@ def actor(actor_name: str = None, tmdb_id: int = None) -> str:
     :return:
     """
     if not actor_name and not tmdb_id:
-        raise Exception('Actor name or TMDB ID must be provided')
+        abort(404)
+        logging.error("No actor name or tmdb_id provided")
 
     actor_details = DBMS_Movie.Actor(
         actor_name=actor_name if actor_name else None,
@@ -30,8 +33,8 @@ def actor(actor_name: str = None, tmdb_id: int = None) -> str:
     )
 
     if not actor_details:
-        # TODO: Convert to error page
-        raise Exception('Actor not found')
+        abort(404)
+        logging.error(f"Actor {actor_name} not found in database")
 
     movie_list = actor_details['movies']
 

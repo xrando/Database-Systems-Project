@@ -1,6 +1,7 @@
 ####################################################################################################
 # These are the imports for the DBMS_Movie package and the initialization of the package.          #
 ####################################################################################################
+import os
 
 from Config.ConfigManager import ConfigManager
 import logging
@@ -13,7 +14,15 @@ config_manager = ConfigManager()
 config = config_manager.get_config()
 
 # Initialize the logger
-logging.basicConfig(filename=config.get('FLASK', 'LOG_FILE'), level=logging.DEBUG)
+file = config.get('FLASK', 'LOG_FILE') or 'log.txt'
+log_dir = os.path.dirname(file)
+
+# Create the folder and file if they don't exist
+os.makedirs(log_dir, exist_ok=True)
+open(file, 'a').close()
+
+# Set the logging level to DEBUG by default
+logging.basicConfig(filename=file, level=logging.DEBUG)
 
 
 if config.get('TMDB', 'API_KEY') == "":

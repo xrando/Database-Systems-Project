@@ -1,4 +1,6 @@
-from flask import render_template, request, redirect
+import logging
+
+from flask import render_template, request, redirect, abort
 
 import Database.DBMS_Movie as DBMS_Movie
 import Database.Mongo as Mongo
@@ -19,18 +21,18 @@ handler = Mongo.MongoDBHandler.get_instance(
 @routes.route('/genre/<genre>', defaults={'page': 1}, methods=['GET'])
 def genre_page(genre: str, page: int) -> str:
     if genre is None:
-        # TODO: Convert to error page
-        raise Exception('Genre not found')
+        abort(404)
     limit = int(config.get("MOVIE", "LIMIT"))
     pages = DBMS_Movie.get_genre_pages(genre=genre, limit=limit)
     pages_left = pages["pages_left"]
     total_pages = pages["total_pages"]
 
-    # TODO: Convert to error page
     if page < 1:
-        raise Exception('Page not found')
+        abort(404)
+        logging.error("Page is less than 1")
     elif page > total_pages:
-        raise Exception('Page not found')
+        abort(404)
+        logging.error("Page is greater than total pages")
 
     movie_list = DBMS_Movie.Genre(genre=genre, page=page, limit=limit)
     carousel = DBMS_Movie.carousel()
