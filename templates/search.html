@@ -32,14 +32,6 @@
                                             <td><a href="{{ url_for('routes.movie_page', movie_name=movie[1]) }}">{{ movie[1] }}</a></td>
                                             <td>{{ movie[2] }}</td>
                                             <td>{{ movie[3] }}</td>
-{#                                            {% if current_user.username == 'admin' %}#}
-{#                                            <td>#}
-{#                                                <div class="btn-group">#}
-                                                    {#                                                    <a href="{{ url_for('') }}" class="btn btn-success" >Edit</a>#}
-{#                                                    <a href="{{ url_for('routes.deleteMovie', movie_name=movie[1]) }}" class="btn btn-danger">Delete</a>#}
-{#                                                </div>#}
-{#                                            </td>#}
-{#                                            {% endif %}#}
                                         </tr>
                                     {% endfor %}
                                     </tbody>
