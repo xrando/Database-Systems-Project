@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, abort
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
 from Config.ConfigManager import ConfigManager
@@ -43,11 +43,17 @@ def search():
         movie_results = DBMS_Movie.search_movies(query)
         profile_results = dbUser.search_user(query)
         return render_template('search.html', directors=director_results, actors=actor_results, movies=movie_results, profiles=profile_results)
-    return render_template('search.html')
+    else:
+        abort(404)
+        logging.error("No search input provided")
 
 @routes.route('/searchMovie', methods=['POST'])
 def search_query():
     query = request.form['search'].strip()
+    #return error page if no results
+    if not query:
+        abort(404)
+        logging.error("No movie provided")
     movies = DBMS_Movie.search_movies(query)
     #grab all updated posts
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {})
@@ -61,6 +67,10 @@ def search_query():
 @routes.route('/searchPosts', methods=['POST'])
 def searchPost():
     subject = request.form['search']
+    #return error page if no results
+    if not subject:
+        abort(404)
+        logging.error("No subject provided")
     # grab all posts with subject
     allPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'subject': subject})
     #grab all movie requests

@@ -1,6 +1,6 @@
 import datetime
 from bson import ObjectId
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, abort
 from flask_login import current_user
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
@@ -69,7 +69,7 @@ def deleteMovie():
             # delete from mariadb
             DBMS_Movie.deleteMovie(movie_id)
         else:
-            print("No movie_id")
+            logging.error("No movie_id")
     return redirect(url_for('routes.admin'))
 
 
@@ -81,15 +81,12 @@ def editMovie(movie_id: str = None):
         release_date = request.form['release_date']
         synopsis = request.form['synopsis']
         movie_id = request.form['movie_id']
-        print(movie_name, release_date, synopsis, movie_id)
         DBMS_Movie.updateMovie(movie_name, release_date, synopsis, movie_id)
         return redirect(url_for('routes.admin'))
     else:
-        print(movie_id)
         if movie_id:
             # get movie data
             movie = DBMS_Movie.get_movie_by_id(movie_id)
-            print(movie)
             return render_template('movieEdit.html', movie=movie)
 
 
@@ -100,7 +97,6 @@ def updateMovie():
     release_date = request.form['date']
     synopsis = request.form['synopsis']
     movie_id = request.form['movie_id']
-    print(movie_name, release_date, synopsis, movie_id)
     # validate user input
     if movie_name and release_date and synopsis and movie_id:
         DBMS_Movie.updateMovie(movie_name, release_date, synopsis, movie_id)
@@ -110,7 +106,6 @@ def updateMovie():
 # delete post from mongodb
 @routes.route('/deletePost/<string:postID>', methods=['GET'])
 def deletePost(postID: str = None):
-    print(postID)
     # delete from mongodb
     handler.delete_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
     if current_user.username == 'admin':
@@ -123,10 +118,8 @@ def deletePost(postID: str = None):
 
 @routes.route('/editPost/<string:postID>', methods=['GET'])
 def editPost(postID: str = None):
-    print(postID)
     # grab post
     post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
-    print(post)
     return render_template('forumEdit.html', post=post)
 
 
@@ -135,10 +128,8 @@ def updatePost():
     subject = request.form['subject']
     comment = request.form['comment']
     postID = request.form['postid']
-    print(subject, comment, postID)
     # grab post
     post = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)})
-    print(post)
     if post:
         # update post
         handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
@@ -155,7 +146,10 @@ def requestMovie():
     message = request.form['message']
     userID = request.form['userid']
     tmdbId = request.form['tmdbId']
-    print(movieTitle, message, userID)
+    #return error page if no results
+    if not movieTitle and not tmdbId and not message:
+        abort(404)
+        logging.error("No movie title, message and tmdb_id provided")
     # insert into mongodb
     handler.insert_document(config.get('MONGODB', 'REQUEST_COLLECTION'), {
         'userID': userID,
@@ -169,7 +163,6 @@ def requestMovie():
 # delete movie request
 @routes.route('/deleteRequest', methods=['POST'])
 def deleteRequest():
-    # print(requestID)
     if request.method == 'POST':
         requestID = request.form['requestid']
         # delete from mongodb

@@ -1,7 +1,7 @@
 import logging
 
 from bson import ObjectId
-from flask import render_template, request
+from flask import render_template, request, abort
 from flask_login import current_user
 from . import routes
 import Database.DBMS_Movie as DBMS_Movie
@@ -32,8 +32,10 @@ def post():
             subject = request.form['subject']
             comment = request.form['comment']
             userid = request.form['userid']
-            #name = dbUser.get_user_by_id(userid)[3]
-            #print(subject, comment, userid)
+            #return error page if no results
+            if not subject and not comment:
+                abort(404)
+                logging.error("No subject and comment provided")
             # save to mongodb
             handler.insert_document(config.get('MONGODB', 'FORUM_COLLECTION'), {
                 'subject': subject,
@@ -45,13 +47,13 @@ def post():
         # if new reply, save to mongodb
         # get reply data
         reply = request.form['reply']
+        #return error page if no results
+        if not reply:
+            abort(404)
+            logging.error("No reply provided")
         postID = request.form['postid']
         userid = request.form['userid']
-        #print(userid)
         user = dbUser.get_user_by_id(int(userid))
-        #print(user)
-        # print(reply)
-        # print(postID)
         # if post exists, save reply to mongodb
         if handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}):
             handler.update_document(config.get('MONGODB', 'FORUM_COLLECTION'), {'_id': ObjectId(postID)}, {
@@ -66,7 +68,6 @@ def post():
     if userFollows:
         userFollows = userFollows[0]['following_arr']
         for user in userFollows:
-            # print('following: ' + str(user))
             # get all posts for each following, limit = 0 returns all results
             userFollowingPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': user}, 0)
             if userFollowingPosts:
@@ -78,8 +79,6 @@ def post():
     userPosts = handler.find_documents(config.get('MONGODB', 'FORUM_COLLECTION'), {'userid': current_user.id}, 0)
     #append user posts
     if userPosts:
-        print(userPosts)
         for post in userPosts:
             posts.append((current_user.name, post))
-    print(posts)
     return render_template('forum.html', posts=posts)
