@@ -1,5 +1,7 @@
+import logging
+
 import mariadb
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, abort
 from flask_login import UserMixin, current_user, login_required
 
 from . import routes
@@ -94,14 +96,18 @@ def profile(success=None):
 
 
 # Other user profile page
+@login_required
 @routes.route('/profile/<id>', methods=['GET', 'POST'])
 def other_profile(id):
+    # Get user's username and data
+    userData = dbUser.get_user_by_id(id)
+    if not userData:
+        logging.error(f'Profile id not found.')
+        abort(404)  # Raise a 404 error if profile id does not exist
+
     # Check if user is same as current user
     if str(id) == str(current_user.id):
         return redirect(url_for('routes.profile'))
-
-    # Get user's username and data
-    userData = dbUser.get_user_by_id(id)
 
     # Check if user is followed
     userFollows = handler.find_documents(config.get('MONGODB', 'FOLLOW_COLLECTION'), {'user_id': current_user.id})
