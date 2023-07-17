@@ -44,14 +44,14 @@ def seed(seed_file: str = None) -> None:
         subprocess.run("mysql --version", shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"[-] Error: mysql is not installed\n {e}")
-        return
+        exit(1)
 
     try:
         command = f"mysql --database {database} -u {user} -p{password} -h {host} -P {port} < '{seed_file}'"
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"[-] Error seeding database\n {e}")
-        return
+        exit(1)
 
     print("[+] Database seeded successfully")
 
