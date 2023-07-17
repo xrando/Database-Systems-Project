@@ -161,7 +161,7 @@ def movie_page(movie_name: str = None):
             providers = None
 
         # get movie reviews
-        movieID = DBMS_Movie.check_movie(movie_name)
+        movieID = DBMS_Movie.check_movie(movie_name.strip())
         # json object containing all reviews for a movie
         data = handler.find_documents(config.get('MONGODB', 'REVIEW_COLLECTION'), {'movie_id': movieID})
         reviews = []
