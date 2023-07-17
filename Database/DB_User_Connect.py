@@ -80,6 +80,9 @@ class UserDBConnection:
                                   "email VARCHAR(255) NOT NULL, " \
                                   "dob DATE NOT NULL, " \
                                   "PRIMARY KEY (id, username));"
+                    cursor.execute(create_user)
+
+                create_tables(self)
 
                 logging.info(f"Successfully created database {database} and seeded it with data")
                 return connection
