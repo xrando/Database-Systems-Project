@@ -132,13 +132,13 @@ def update_movie_info(title: str = None, tmdb_id: int = None) -> bool:
     try:
         if data[0]['poster'] != new_poster:
             handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
-                                    {'poster': new_poster})
+                                    {'poster': new_poster}, '$pull')
         if data[0]['banner'] != new_banner:
             handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
-                                    {'banner': new_banner})
+                                    {'banner': new_banner}, '$pull')
         if data[0]['rating'] != new_rating:
             handler.update_document(config.get('MONGODB', 'MOVIE_INFO_COLLECTION'), {'title': title},
-                                    {'rating': new_rating})
+                                    {'rating': new_rating}, '$pull')
     except IndexError:
         logging.error(f"Error retrieving movie info from tmdb for title: {title}")
         return False
