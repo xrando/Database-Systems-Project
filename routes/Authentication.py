@@ -61,7 +61,6 @@ def login_page():
         else:
             print('Username or Password is incorrect')
             error = 'Username or Password is incorrect'
-            return redirect(url_for('routes.login_page'))
     return render_template('login.html', error=error)
 
 
