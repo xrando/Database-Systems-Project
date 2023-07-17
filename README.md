@@ -72,6 +72,14 @@ OR
 $ flask run
 ```
 
+## Usage
+The Administrators can login to the system using the following credentials:
+
+username: `admin`
+
+password: `admin`
+
+
 ## Troubleshooting
 
 The movie database will be automatically seeded with the data from the seedfile, but if you encounter any error, you can run the following command to seed the database.
